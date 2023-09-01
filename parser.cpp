@@ -1,42 +1,71 @@
 #include "define.h"
 
-void ForLoop::print()
+void print_indent(const int indent)
 {
-    printf("for %s , %s , %s do\n", 
-            begin.c_str(), end.c_str(), increment.c_str());
+    printf("%*c", indent * 4, ' ');
+}
+
+void ForLoop::print(const int indent)
+{
+    print_indent(indent);
+    printf("for %s , %s , %s do\n", begin.c_str(), end.c_str(), increment.c_str());
 
     for(auto statement : statements)
     {
-        std::visit([](auto && s) { s.print(); }, statement);
+        print_indent(indent);
+        std::visit([indent](auto&& s) { s.print(indent + 1); }, statement);
         printf("\n");
     }
 
+    print_indent(indent);
     printf("end");
 }
 
-void ForInLoop::print()
+void ForInLoop::print(const int indent)
 {
+    print_indent(indent);
     printf("for %s in %s do\n", left.c_str(), right.c_str());
 
     for(auto statement : statements)
     {
-        std::visit([](auto && s) { s.print(); }, statement);
+        print_indent(indent);
+        std::visit([indent](auto&& s) { s.print(indent + 1); }, statement);
         printf("\n");
     }
 
+    print_indent(indent);
     printf("end");
 }
 
-void WhileLoop::print()
+void WhileLoop::print(const int indent)
 {
+    print_indent(indent);
     printf("while %s do\n", condition.c_str());
 
     for(auto statement : statements)
     {
-        std::visit([](auto && s) { s.print(); }, statement);
+        print_indent(indent);
+        std::visit([indent](auto&& s) { s.print(indent + 1); }, statement);
         printf("\n");
     }
 
+    print_indent(indent);
+    printf("end");
+}
+
+void Condition::print(const int indent)
+{
+    print_indent(indent);
+    printf("if %s then\n", condition.c_str());
+
+    for(auto statement : statements)
+    {
+        print_indent(indent);
+        std::visit([indent](auto&& s) { s.print(indent + 1); }, statement);
+        printf("\n");
+    }
+
+    print_indent(indent);
     printf("end");
 }
 
@@ -45,53 +74,63 @@ namespace
 
     // Block management
 
-    void enter_block(Ast* & ast, const Token& from, const Token& to)
+    void enter_block(Ast*& ast)
     {
-        auto * body = new Ast();
+        auto* body   = new Ast();
         body->parent = ast;
 
         ast->body = body;
-        ast = body;
+        ast       = body;
     }
 
-    void exit_block(Ast* & ast)
+    void enter_block(Ast*& ast, const Token& from, const Token& to)
     {
-        ast = ast->parent;
+        auto* body   = new Ast();
+        body->parent = ast;
+
+        ast->body = body;
+        ast       = body;
     }
 
+    void exit_block(Ast*& ast)
+    {
+        if(ast->parent)
+            ast = ast->parent;
+    }
 
     // Helpers
 
-    void empty(Ast* & ast, const Token& from, const Token& to) {}
-
+    void empty(Ast*& ast, const Token& from, const Token& to)
+    {
+    }
 
     // Stack modification
 
-    void push_global(Ast* & ast, const Token& from, const Token& to)
+    void push_global(Ast*& ast, const Token& from, const Token& to)
     {
         const auto name = from.function->globals[B(from.instruction)];
         ast->stack.push_back(name);
     }
 
-    void push_local(Ast* & ast, const Token& from, const Token& to)
+    void push_local(Ast*& ast, const Token& from, const Token& to)
     {
         const auto name = from.function->locals[B(from.instruction)];
         ast->stack.push_back(name);
     }
 
-    void push_int(Ast* & ast, const Token& from, const Token& to)
+    void push_int(Ast*& ast, const Token& from, const Token& to)
     {
         const auto val = S(from.instruction);
         ast->stack.push_back(std::to_string(val));
     }
 
-    void push_num(Ast* & ast, const Token& from, const Token& to)
+    void push_num(Ast*& ast, const Token& from, const Token& to)
     {
         const auto val = from.function->numbers[B(from.instruction)];
         ast->stack.push_back(std::to_string(val));
     }
 
-    void push_string(Ast* & ast, const Token& from, const Token& to)
+    void push_string(Ast*& ast, const Token& from, const Token& to)
     {
         auto str = std::string("\"");
         str.append(from.function->globals[B(from.instruction)]);
@@ -99,7 +138,7 @@ namespace
         ast->stack.push_back(str);
     }
 
-    void push_list(Ast* & ast, const Token& from, const Token& to)
+    void push_list(Ast*& ast, const Token& from, const Token& to)
     {
         auto list = std::string("{");
 
@@ -119,7 +158,7 @@ namespace
         ast->stack.push_back(list);
     }
 
-    void push_map(Ast* & ast, const Token& from, const Token& to)
+    void push_map(Ast*& ast, const Token& from, const Token& to)
     {
         auto list = std::string("{");
 
@@ -142,36 +181,33 @@ namespace
         ast->stack.push_back(list);
     }
 
-
     // Assignment
 
-    void make_assignment(Ast* & ast, const Token& from, const Token& to)
+    void make_assignment(Ast*& ast, const Token& from, const Token& to)
     {
         Assignment ass;
-        ass.left = from.function->globals[B(from.instruction)];
+        ass.left  = from.function->globals[B(from.instruction)];
         ass.right = ast->stack.back();
         ast->stack.pop_back();
 
         ast->statements.push_back(ass);
     }
 
-
     // Call
 
-    void make_call(Ast* & ast, const Token& from, const Token& to)
+    void make_call(Ast*& ast, const Token& from, const Token& to)
     {
         Call call;
-        call.name = *ast->stack.begin();
+        call.name      = *ast->stack.begin();
         call.arguments = {ast->stack.begin() + 1, ast->stack.end()};
 
         ast->statements.push_back(call);
         ast->stack.clear();
     }
 
-
     // For loop
 
-    void make_for_loop(Ast* & ast, const Token& from, const Token& to)
+    void make_for_loop(Ast*& ast, const Token& from, const Token& to)
     {
         exit_block(ast);
 
@@ -189,13 +225,11 @@ namespace
         loop.statements = ast->body->statements;
 
         ast->statements.push_back(loop);
-
     }
-
 
     // For in loop
 
-    void make_for_in_loop(Ast* & ast, const Token& from, const Token& to)
+    void make_for_in_loop(Ast*& ast, const Token& from, const Token& to)
     {
         exit_block(ast);
 
@@ -209,10 +243,9 @@ namespace
         ast->statements.push_back(loop);
     }
 
-
     // While loop
 
-    void make_while_loop(Ast* & ast, const Token& from, const Token& to)
+    void make_while_loop(Ast*& ast, const Token& from, const Token& to)
     {
         WhileLoop loop;
 
@@ -224,9 +257,88 @@ namespace
         ast->statements.push_back(loop);
     }
 
+    // Condition
+
+    void make_condition(Ast*& ast, const Token& from, const Token& to)
+    {
+        Condition   condition;
+        std::string left;
+        std::string middle;
+        std::string right;
+
+        Operator op = OP(from.instruction);
+
+        if(op >= Operator::JMPNE && op <= Operator::JMPGE)
+        {
+            right = ast->stack.back();
+            ast->stack.pop_back();
+
+            left = ast->stack.back();
+            ast->stack.pop_back();
+
+            switch(op)
+            {
+            case Operator::JMPNE:
+                middle = " ~= ";
+                break;
+            case Operator::JMPEQ:
+                middle = " == ";
+                break;
+            case Operator::JMPLT:
+                middle = " < ";
+                break;
+            case Operator::JMPLE:
+                middle = " <= ";
+                break;
+            case Operator::JMPGT:
+                middle = " > ";
+                break;
+            case Operator::JMPGE:
+                middle = " >= ";
+                break;
+            default:
+                printf("OP %d not convered for conditions\n", op);
+            }
+        }
+        else if(op >= Operator::JMPT && op <= Operator::JMPONF)
+        {
+            switch(op)
+            {
+            case Operator::JMPT:
+                middle = " ~= nil";
+                break;
+            case Operator::JMPF:
+                middle = " == nil";
+                break;
+            case Operator::JMPONT:
+                middle = " ~= nil ";
+                break;
+            case Operator::JMPONF:
+                middle = " == nil ";
+                break;
+            default:
+                printf("OP %d not convered for conditions\n", op);
+            }
+        }
+
+        condition.condition = left.append(middle).append(right);
+
+        ast->statements.push_back(condition);
+
+        enter_block(ast);
+    }
+
+    void end_condition(Ast*& ast, const Token& from, const Token& to)
+    {
+        exit_block(ast);
+
+        Condition& condition = std::get<Condition>(ast->statements.back());
+        condition.statements = ast->body->statements;
+    }
 
     // Transitions
 
+    // clang-format off
     auto TABLE = TransitionTable
     {
         {Operator::END,         &empty},
@@ -250,14 +362,24 @@ namespace
         // For in loop
         {Operator::LFORPREP,    &enter_block},
         {Operator::LFORLOOP,    &make_for_in_loop},
-        // While loop
-        {Operator::JMP,         &empty},
-        {Operator::JMPF,        &empty},
+        // Conditions
+        {Operator::JMPNE,       &make_condition},
+        {Operator::JMPEQ,       &make_condition},
+        {Operator::JMPLT,       &make_condition},
+        {Operator::JMPLE,       &make_condition},
+        {Operator::JMPGT,       &make_condition},
+        {Operator::JMPGE,       &make_condition},
+        {Operator::JMPT,        &make_condition},
+        {Operator::JMPF,        &make_condition},
+        {Operator::JMPONT,      &make_condition},
+        {Operator::JMPONF,      &make_condition},
+        {Operator::JMP,         &end_condition},
     };
-}
+    // clang-format on
 
+}  // namespace
 
-void run_state_machine(Ast* & ast, const TokenList& tokens)
+void run_state_machine(Ast*& ast, const TokenList& tokens)
 {
     auto curr = tokens.begin();
 
@@ -267,7 +389,7 @@ void run_state_machine(Ast* & ast, const TokenList& tokens)
         return;
     }
 
-        printf("DEBUG: Go\n");
+    printf("DEBUG: Go\n");
     do
     {
         auto next = curr + 1;
@@ -279,14 +401,12 @@ void run_state_machine(Ast* & ast, const TokenList& tokens)
             return;
         }
 
-        //printf("DEBUG: %d\n", from);
+        // printf("DEBUG: %d\n", from);
 
         auto action = TABLE[from];
         action(ast, *curr, *next);
 
         curr = next;
-    }
-    while(curr != tokens.end());
-        printf("DEBUG: End\n");
+    } while(curr != tokens.end());
+    printf("DEBUG: End\n");
 }
-

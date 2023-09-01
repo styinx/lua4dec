@@ -179,7 +179,7 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
 void debug_instruction(Instruction instruction)
 {
     printf(
-        "I: 0x%08x (%11d) A: 0x%08x (%11d) B: 0x%08x (%11d) OP: %2d (0x%02x) (%s)\n",
+        "I: 0x%08x (%11d)  A: 0x%08x (%11d)  B: 0x%08x (%11d)  OP: %2d (0x%02x) (%s)\n",
         (int)instruction,
         (int)instruction,
         A(instruction),

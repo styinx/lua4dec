@@ -1,0 +1,7 @@
+.idea/
+build/
+
+*.exe
+*.swp
+*.o
+*.out
