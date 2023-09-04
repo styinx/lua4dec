@@ -1,4 +1,3 @@
-# -G "Ninja" -A x64 -DCMAKE_BUILD_TYPE=Debug -DDIR_VCPKG_ROOT:PATH="C:/Libs/vcpkg" -DVCPKG_MANIFEST_INSTALL:PATH="C:/Libs/vcpkg/installed" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static" -DCMAKE_TOOLCHAIN_FILE:PATH="C:/Libs/vcpkg/scripts/buildsystems/vcpkg.cmake" -Wno-dev
 project(lua4dec)
 
 cmake_minimum_required(VERSION 3.21)
@@ -92,10 +91,12 @@ link_directories(${LIBRARY_DIRECTORIES})
 # Sources
 
 set(SOURCES
-    parser.cpp
+    source/ast/ast.cpp
+    source/parser/parser.cpp
+    source/lua/lua.cpp
 )
 
 
 # Binaries
 
-add_executable(lua4dec lua4dec.cpp ${SOURCES})
+add_executable(lua4dec source/lua4dec.cpp ${SOURCES})

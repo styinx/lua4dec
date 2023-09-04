@@ -1,26 +1,10 @@
-#include "define.h"
+#include "lua/lua.hpp"
 
-template<typename T>
-T read(ByteIterator& ByteIterator, bool advance = true)
+String read_string(ByteIterator& iter)
 {
-    T element = *reinterpret_cast<T*>(ByteIterator);
-    ByteIterator += (advance) ? sizeof(T) : 0;
-    return element;
-}
-
-template<size_t n>
-ByteIterator readn(byte*& ByteIterator, bool advance = true)
-{
-    ByteIterator bytes = ByteIterator;
-    ByteIterator += (advance) ? n : 0;
-    return bytes;
-}
-
-String read_string(ByteIterator& ByteIterator)
-{
-    auto len = read<SizeT>(ByteIterator);
-    auto str = String(ByteIterator, ByteIterator + len - 1);  // minus zero
-    ByteIterator += len;
+    auto len = read<SizeT>(iter);
+    auto str = String(iter, iter + len - 1);  // minus zero
+    iter += len;
     return str;
 }
 
@@ -212,66 +196,3 @@ void debug_function(Function function)
     printf("\n");
 }
 
-TokenList parse_bytecode(const Function& function)
-{
-    auto tokens = TokenList();
-    tokens.reserve(function.instructions.size());
-
-    for(const auto& instruction : function.instructions)
-    {
-        Token token;
-        token.instruction = instruction;
-        token.function    = const_cast<Function*>(&function);
-        tokens.push_back(token);
-        debug_instruction(instruction);
-    }
-
-    for(const auto func : function.functions)
-    {
-        parse_bytecode(func);
-    }
-
-    return tokens;
-}
-
-int main(int argc, char** argv)
-{
-    if(argc < 2)
-    {
-        printf("Please provide a compiled lua script as argument.\n");
-    }
-
-    auto* file = fopen(argv[1], "rb");
-
-    if(file == nullptr)
-    {
-        return 1;
-    }
-
-    fseek(file, 0, SEEK_END);
-    auto len = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    auto buffer = Collection<byte>(len);
-    fread(buffer.data(), 1, len, file);
-    fclose(file);
-
-    auto* iter = buffer.data();
-
-    auto chunk = read_chunk(iter);
-
-    debug_chunk(chunk);
-    debug_function(chunk.main);
-
-    auto  tokens = parse_bytecode(chunk.main);
-    auto* ast    = new Ast();
-    run_state_machine(ast, tokens);
-
-    for(auto& statement : ast->statements)
-    {
-        std::visit([](auto&& s) { s.print(); }, statement);
-        printf("\n");
-    }
-
-    return 0;
-}

@@ -25,7 +25,7 @@ using SizeT       = size_t;
 using Number      = double;
 #endif
 
-const unsigned MAX_INT = 2147483647 - 2;
+static constexpr unsigned MAX_INT = 2147483647 - 2;
 
 enum class Operator : byte
 {
@@ -137,110 +137,31 @@ int S(Instruction instruction)
     return (instruction >> bits) - (std::numeric_limits<int>::max() >> bits);
 }
 
-// FSM and AST Definitions
+/*
+ * Read bytecode
+ */
 
-struct Assignment;
-struct Call;
-struct ForLoop;
-struct ForInLoop;
-struct WhileLoop;
-struct Condition;
-using Statement = std::variant<Assignment, Call, ForLoop, ForInLoop, WhileLoop, Condition>;
-
-void print_indent(const int indent);
-
-struct AstNode
+template<typename T>
+T read(ByteIterator& ByteIterator, bool advance = true)
 {
-    virtual void print(const int indent = 0) = 0;
-};
+    T element = *reinterpret_cast<T*>(ByteIterator);
+    ByteIterator += (advance) ? sizeof(T) : 0;
+    return element;
+}
 
-struct Assignment : AstNode
+template<size_t n>
+ByteIterator readn(byte*& ByteIterator, bool advance = true)
 {
-    std::string left;
-    std::string right;
+    ByteIterator bytes = ByteIterator;
+    ByteIterator += (advance) ? n : 0;
+    return bytes;
+}
 
-    void print(const int indent = 0) override
-    {
-        print_indent(indent);
-        printf("%s = %s", left.c_str(), right.c_str());
-    }
-};
-
-struct Call : AstNode
-{
-    std::string              name;
-    std::vector<std::string> arguments;
-
-    void print(const int indent = 0) override
-    {
-        print_indent(indent);
-        printf("%s(", name.c_str());
-
-        auto it = arguments.begin();
-        while(it != arguments.end())
-        {
-            printf("%s", (*it).c_str());
-
-            if(it != arguments.end() - 1)
-                printf(", ");
-
-            it++;
-        }
-        printf(")");
-    }
-};
-
-struct ForLoop : AstNode
-{
-    std::string            begin;
-    std::string            end;
-    std::string            increment;
-    std::vector<Statement> statements;
-
-    void print(const int indent = 0) override;
-};
-
-struct ForInLoop : AstNode
-{
-    std::string            left = "temp";
-    std::string            right;
-    std::vector<Statement> statements;
-
-    void print(const int indent = 0) override;
-};
-
-struct WhileLoop : AstNode
-{
-    std::string            condition;
-    std::vector<Statement> statements;
-
-    void print(const int indent = 0) override;
-};
-
-struct Condition : AstNode
-{
-    std::string            condition;
-    std::vector<Statement> statements;
-
-    void print(const int indent = 0) override;
-};
-
-struct Ast
-{
-    std::vector<std::string> stack;
-    std::vector<Statement>   statements;
-    Ast*                     body;
-    Ast*                     parent;
-};
-
-struct Token
-{
-    Instruction instruction;
-    Function*   function;
-};
-
-using TokenList       = std::vector<Token>;
-using Action          = void (*)(Ast*&, const Token&, const Token&);
-using TransitionTable = std::unordered_map<Operator, Action>;
-
-void run_state_machine(Ast*& ast, const TokenList& tokens);
+String read_string(ByteIterator&);
+String normalize(String&&);
+ChunkHeader read_header(ByteIterator&);
+Function read_function(ByteIterator&);
+Chunk read_chunk(ByteIterator&);
+void debug_instruction(Instruction);
+void debug_chunk(Chunk chunk);
+void debug_function(Function function);
