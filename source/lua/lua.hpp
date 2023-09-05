@@ -142,18 +142,18 @@ int S(Instruction instruction)
  */
 
 template<typename T>
-T read(ByteIterator& ByteIterator, bool advance = true)
+T read(ByteIterator& iter, bool advance = true)
 {
-    T element = *reinterpret_cast<T*>(ByteIterator);
-    ByteIterator += (advance) ? sizeof(T) : 0;
+    T element = *reinterpret_cast<T*>(iter);
+    iter += (advance) ? sizeof(T) : 0;
     return element;
 }
 
 template<size_t n>
-ByteIterator readn(byte*& ByteIterator, bool advance = true)
+ByteIterator readn(ByteIterator& iter, bool advance = true)
 {
-    ByteIterator bytes = ByteIterator;
-    ByteIterator += (advance) ? n : 0;
+    ByteIterator bytes = iter;
+    iter += (advance) ? n : 0;
     return bytes;
 }
 

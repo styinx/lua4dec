@@ -2,32 +2,44 @@
 
 Collection<byte> read_file(const char * filename)
 {
-    auto* file = fopen(filename, "rb");
+    auto* stream = fopen(filename, "rb");
 
-    if(file == nullptr)
+    if(stream == nullptr)
     {
         return {};
     }
 
-    fseek(file, 0, SEEK_END);
-    auto len = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    fseek(stream, 0, SEEK_END);
+    auto len = ftell(stream);
+    fseek(stream, 0, SEEK_SET);
+
+    printf("%ld", len);
+    fflush(stdout);
 
     auto buffer = Collection<byte>(len);
-    fread(buffer.data(), 1, len, file);
-    fclose(file);
+    fread(buffer.data(), 1, len, stream);
+    fclose(stream);
 
     return buffer;
 }
 
 int main(int argc, char** argv)
 {
+    Collection<byte> buffer;
+
     if(argc < 2)
     {
         printf("Please provide a compiled lua script as argument.\n");
+        return -1;
     }
-
-    auto buffer = read_file(argv[1]);
+    else if(argc == 2)
+    {
+        buffer = read_file(argv[1]);
+    }
+    else
+    {
+        //buffer = read_stream(stdin);
+    }
 
     auto* iter = buffer.data();
     auto chunk = read_chunk(iter);

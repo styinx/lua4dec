@@ -47,7 +47,7 @@ set(CMAKE_CXX_STANDARD 17)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # Clang
     #
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # GCC
-    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -std=c++11")
+    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -std=c++17")
     set(COMPILER_FLAGS_DEBUG "-MTd")
     set(COMPILER_FLAGS_RELEASE "-O3 -DNDEBUG -MT")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") # MSVC
@@ -92,9 +92,18 @@ link_directories(${LIBRARY_DIRECTORIES})
 
 set(SOURCES
     source/ast/ast.cpp
-    source/parser/parser.cpp
+    source/ast/ast.hpp
     source/lua/lua.cpp
+    source/lua/lua.hpp
+    source/parser/parser.cpp
+    source/parser/parser.hpp
 )
+
+source_group("source"         FILES source/lua4dec.cpp)
+source_group("source/ast"     FILES source/ast/ast.cpp source/ast/ast.hpp)
+source_group("source/lua"     FILES source/lua/lua.cpp source/lua/lua.hpp)
+source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parser.hpp)
+
 
 
 # Binaries
