@@ -64,6 +64,8 @@ add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 
 # Dependencies
 
+add_subdirectory(lua4)
+
 
 # CMAKE
 
@@ -109,3 +111,4 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 # Binaries
 
 add_executable(lua4dec source/lua4dec.cpp ${SOURCES})
+add_executable(test test/test.cpp)

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     if(argc < 2)
     {
         printf("Please provide a compiled lua script as argument.\n");
-        return -1;
+        return 1;
     }
     else if(argc == 2)
     {
@@ -38,7 +38,8 @@ int main(int argc, char** argv)
     }
     else
     {
-        //buffer = read_stream(stdin);
+        // pipe it here
+        return 2;
     }
 
     auto* iter = buffer.data();
