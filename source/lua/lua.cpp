@@ -23,11 +23,11 @@ ChunkHeader read_header(ByteIterator& iter)
     ChunkHeader header;
 
     // Read signature
-    assert(read<byte>(iter) == 0x1B);  // .
-    assert(read<byte>(iter) == 0x4C);  // L
-    assert(read<byte>(iter) == 0x75);  // u
-    assert(read<byte>(iter) == 0x61);  // a
-    assert(read<byte>(iter) == 0x40);  // @ (4.0)
+    assert(read<byte>(iter) == 0x1B && "Header mismatch");  // .
+    assert(read<byte>(iter) == 0x4C && "Header mismatch");  // L
+    assert(read<byte>(iter) == 0x75 && "Header mismatch");  // u
+    assert(read<byte>(iter) == 0x61 && "Header mismatch");  // a
+    assert(read<byte>(iter) == 0x40 && "Header mismatch");  // @ (4.0)
 
     // Read size of types and registers
     header.is_little_endian      = read<byte>(iter) == 0x01;
@@ -40,9 +40,9 @@ ChunkHeader read_header(ByteIterator& iter)
 
     auto bytes_for_testnum = read<byte>(iter);
 
-    assert(sizeof(SizeT) == header.bytes_for_size_t);
+    assert(sizeof(SizeT) == header.bytes_for_size_t && "size_t mismatch");
 
-    assert(3.14159265358979323846e8 - read<Number>(iter) < 0.0000001);
+    assert(3.14159265358979323846e8 - read<Number>(iter) < 0.0000001 && "magic mismatch");
 
     return header;
 }

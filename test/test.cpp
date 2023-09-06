@@ -15,8 +15,6 @@ int main(int argc, char ** argv)
     fs::path decompiler(argv[2]);
     fs::path scripts(argv[3]);
 
-    assert();
-
     std::string luac(compiler.u8string());
     std::string luadec(decompiler.u8string());
 

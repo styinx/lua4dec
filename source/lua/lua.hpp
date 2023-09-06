@@ -162,6 +162,7 @@ String normalize(String&&);
 ChunkHeader read_header(ByteIterator&);
 Function read_function(ByteIterator&);
 Chunk read_chunk(ByteIterator&);
+
 void debug_instruction(Instruction);
 void debug_chunk(Chunk chunk);
 void debug_function(Function function);
