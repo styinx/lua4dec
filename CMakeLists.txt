@@ -111,4 +111,4 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 # Binaries
 
 add_executable(lua4dec source/lua4dec.cpp ${SOURCES})
-add_executable(test test/test.cpp)
+add_executable(test tests/test.cpp)
