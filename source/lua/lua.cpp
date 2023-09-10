@@ -38,7 +38,7 @@ ChunkHeader read_header(ByteIterator& iter)
     header.bits_for_operator     = read<byte>(iter);
     header.bits_for_register_b   = read<byte>(iter);
 
-    auto bytes_for_testnum = read<byte>(iter);
+    /*auto bytes_for_testnum =*/ read<byte>(iter);
 
     assert(sizeof(SizeT) == header.bytes_for_size_t && "size_t mismatch");
 
@@ -61,8 +61,8 @@ Function read_function(ByteIterator& iter)
     for(int i = 0; i < num_locals; i++)
     {
         function.locals.emplace_back(read_string(iter));
-        auto start_pc = read<int>(iter);
-        auto end_pc   = read<int>(iter);
+        /*auto start_pc =*/ read<int>(iter);
+        /*auto end_pc   =*/ read<int>(iter);
     }
 
     auto num_lineinfo = read<int>(iter);
@@ -163,19 +163,20 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
 void debug_instruction(Instruction instruction)
 {
     printf(
-        "I: 0x%08x (%11d)  A: 0x%08x (%11d)  B: 0x%08x (%11d)  OP: %2d (0x%02x) (%s)\n",
+        "I: 0x%08x (%11d)  A: 0x%08x (%11d)  B: 0x%08x (%11d)  OP: %2d "
+        "(0x%02x) (%s)\n",
         (int)instruction,
         (int)instruction,
         A(instruction),
         A(instruction),
         B(instruction),
         B(instruction),
-        OP(instruction),
-        OP(instruction),
+        (int)OP(instruction),
+        (int)OP(instruction),
         OP_TO_STR[OP(instruction)].c_str());
 }
 
-void debug_chunk(Chunk chunk)
+void debug_chunk(Chunk /*chunk*/)
 {
     // printf("%s\n", chunk.name);
 }
@@ -189,10 +190,9 @@ void debug_function(Function function)
     printf("Stack: %d\n", function.max_stack_size);
 
     printf("Globals: %zu\n", function.globals.size());
-    for(int i = 0; i < function.globals.size(); ++i)
+    for(size_t i = 0; i < function.globals.size(); ++i)
     {
         printf("\t\"%s\"\n", function.globals[i].c_str());
     }
     printf("\n");
 }
-

@@ -27,13 +27,17 @@ end
 print()
 
 if i < 5 then
-    i = 7
+    m = 7
 elseif i == 5 then
-    i = 8
+    n = 8
 else
-    i = 9
+    o = 9
 end
 
 closure = function()
+    cl = 1
+end
 
+function myclosure()
+    mycl = 2
 end

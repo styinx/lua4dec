@@ -157,11 +157,11 @@ ByteIterator readn(ByteIterator& iter, bool advance = true)
     return bytes;
 }
 
-String read_string(ByteIterator&);
-String normalize(String&&);
+String      read_string(ByteIterator&);
+String      normalize(String&&);
 ChunkHeader read_header(ByteIterator&);
-Function read_function(ByteIterator&);
-Chunk read_chunk(ByteIterator&);
+Function    read_function(ByteIterator&);
+Chunk       read_chunk(ByteIterator&);
 
 void debug_instruction(Instruction);
 void debug_chunk(Chunk chunk);

@@ -8,8 +8,10 @@ struct ForLoop;
 struct ForInLoop;
 struct WhileLoop;
 struct Condition;
+struct Closure;
 
-using Statement = std::variant<Assignment, Call, ForLoop, ForInLoop, WhileLoop, Condition>;
+using Statement =
+    std::variant<Assignment, Call, ForLoop, ForInLoop, WhileLoop, Condition, Closure>;
 
 struct Ast
 {
@@ -58,20 +60,26 @@ struct Condition
     std::vector<Statement> statements;
 };
 
+struct Closure
+{
+    std::string            name;
+    std::vector<Statement> statements;
+};
 
 /*
  * Stuff to print the AST
  */
 
-void print_ast(const Ast &);
+void print_ast(const Ast&);
 
 void print_indent(const int indent);
 
 void print_statements(const std::vector<Statement>&, const int indent = 0);
 
-void print(const Assignment &, const int indent = 0);
-void print(const Call &, const int indent = 0);
-void print(const ForLoop &, const int indent = 0);
-void print(const ForInLoop &, const int indent = 0);
-void print(const WhileLoop &, const int indent = 0);
-void print(const Condition &, const int indent = 0);
+void print(const Assignment&, const int indent = 0);
+void print(const Call&, const int indent = 0);
+void print(const ForLoop&, const int indent = 0);
+void print(const ForInLoop&, const int indent = 0);
+void print(const WhileLoop&, const int indent = 0);
+void print(const Condition&, const int indent = 0);
+void print(const Closure&, const int indent = 0);

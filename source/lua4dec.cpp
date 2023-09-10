@@ -1,6 +1,6 @@
 #include "parser/parser.hpp"
 
-Collection<byte> read_file(const char * filename)
+Collection<byte> read_file(const char* filename)
 {
     auto* stream = fopen(filename, "rb");
 
@@ -42,15 +42,15 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    auto* iter = buffer.data();
-    auto chunk = read_chunk(iter);
+    auto* iter  = buffer.data();
+    auto  chunk = read_chunk(iter);
 
     debug_chunk(chunk);
     debug_function(chunk.main);
 
     auto  tokens = parse_bytecode(chunk.main);
     auto* ast    = new Ast();
-    run_state_machine(ast, tokens);
+    run_parser_machine(ast, tokens);
 
     print_ast(*ast);
 

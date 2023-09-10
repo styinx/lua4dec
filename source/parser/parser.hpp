@@ -7,9 +7,9 @@ struct Token
     Function*   function;
 };
 
-using TokenList       = std::vector<Token>;
-using Action          = void (*)(Ast*&, const Token&, const Token&);
-using TransitionTable = std::unordered_map<Operator, Action>;
+using TokenList   = std::vector<Token>;
+using Action      = void (*)(Ast*&, const Token&);
+using ActionTable = std::unordered_map<Operator, Action>;
 
 TokenList parse_bytecode(const Function&);
-void run_state_machine(Ast*& ast, const TokenList&);
+void      run_parser_machine(Ast*& ast, const TokenList&);

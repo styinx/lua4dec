@@ -1,6 +1,6 @@
 #include "ast/ast.hpp"
 
-void print_ast(const Ast & ast)
+void print_ast(const Ast& ast)
 {
     print_statements(ast.statements);
 }
@@ -47,9 +47,13 @@ void print(const Call& call, const int indent)
 void print(const ForLoop& loop, const int indent)
 {
     print_indent(indent);
-    printf("for %s , %s , %s do\n", loop.begin.c_str(), loop.end.c_str(), loop.increment.c_str());
+    printf(
+        "for %s , %s , %s do\n",
+        loop.begin.c_str(),
+        loop.end.c_str(),
+        loop.increment.c_str());
 
-    print_statements(loop.statements);
+    print_statements(loop.statements, indent + 1);
 
     print_indent(indent);
     printf("end");
@@ -60,7 +64,7 @@ void print(const ForInLoop& loop, const int indent)
     print_indent(indent);
     printf("for %s in %s do\n", loop.left.c_str(), loop.right.c_str());
 
-    print_statements(loop.statements);
+    print_statements(loop.statements, indent + 1);
 
     print_indent(indent);
     printf("end");
@@ -71,7 +75,7 @@ void print(const WhileLoop& loop, const int indent)
     print_indent(indent);
     printf("while %s do\n", loop.condition.c_str());
 
-    print_statements(loop.statements);
+    print_statements(loop.statements, indent + 1);
 
     print_indent(indent);
     printf("end");
@@ -82,9 +86,19 @@ void print(const Condition& condition, const int indent)
     print_indent(indent);
     printf("if %s then\n", condition.condition.c_str());
 
-    print_statements(condition.statements);
+    print_statements(condition.statements, indent + 1);
 
     print_indent(indent);
     printf("end");
 }
 
+void print(const Closure& closure, const int indent)
+{
+    print_indent(indent);
+    printf("%s = function()\n", closure.name.c_str());
+
+    print_statements(closure.statements, indent + 1);
+
+    print_indent(indent);
+    printf("end");
+}
