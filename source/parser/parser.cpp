@@ -266,7 +266,7 @@ void make_condition(Ast*& ast, const Token& token)
     enter_block(ast);
 }
 
-void end_condition(Ast*& ast, const Token& token)
+void end_condition(Ast*& ast, const Token& /*token*/)
 {
     exit_block(ast);
 
@@ -276,7 +276,7 @@ void end_condition(Ast*& ast, const Token& token)
     // assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
-void make_closure(Ast*& ast, const Token& token)
+void make_closure(Ast*& ast, const Token& /*token*/)
 {
     Closure closure;
     //closure.statements = ast->statements;
@@ -301,7 +301,7 @@ TokenList parse_bytecode(const Function& function)
         debug_instruction(instruction);
     }
 
-    for(const auto func : function.functions)
+    for(const auto& func : function.functions)
     {
         parse_bytecode(func);
     }

@@ -21,4 +21,4 @@ jobs:
         submodules: 'true'
 
     - name: Test
-      run: test lua4/luac lua4dec test/scripts/
+      run: ./test ./lua4/luac ./lua4dec test/scripts/

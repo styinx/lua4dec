@@ -17,7 +17,7 @@ Collection<byte> read_file(const char* filename)
     fflush(stdout);
 
     auto buffer = Collection<byte>(len);
-    fread(buffer.data(), 1, len, stream);
+    (void)fread(buffer.data(), 1, len, stream);
     fclose(stream);
 
     return buffer;
