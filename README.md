@@ -3,7 +3,8 @@
 Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ## Build
-![master](https://github.com/styinx/lua4dec/actions/workflows/cmake-multi-platform.yml/badge.svg?branch=master)
+![build master](https://github.com/styinx/lua4dec/actions/workflows/build.yml/badge.svg?branch=master)
+![test master](https://github.com/styinx/lua4dec/actions/workflows/test.yml/badge.svg?branch=master)
 
 ### CMake
 

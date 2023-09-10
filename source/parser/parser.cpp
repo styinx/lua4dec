@@ -11,7 +11,7 @@ void enter_block(Ast*& ast)
     ast       = body;
 }
 
-void enter_block(Ast*& ast, const Token& token)
+void enter_block(Ast*& ast, const Token& /*token*/)
 {
     auto* body   = new Ast();
     body->parent = ast;
@@ -66,7 +66,7 @@ void push_string(Ast*& ast, const Token& token)
     ast->stack.push_back(str);
 }
 
-void push_list(Ast*& ast, const Token& token)
+void push_list(Ast*& ast, const Token& /*token*/)
 {
     auto list = std::string("{");
 
@@ -86,7 +86,7 @@ void push_list(Ast*& ast, const Token& token)
     ast->stack.push_back(list);
 }
 
-void push_map(Ast*& ast, const Token& token)
+void push_map(Ast*& ast, const Token& /*token*/)
 {
     auto list = std::string("{");
 
@@ -125,7 +125,7 @@ void make_assignment(Ast*& ast, const Token& token)
 
 // Call
 
-void make_call(Ast*& ast, const Token& token)
+void make_call(Ast*& ast, const Token& /*token*/)
 {
     Call call;
     call.name      = *ast->stack.begin();
@@ -139,7 +139,7 @@ void make_call(Ast*& ast, const Token& token)
 
 // For loop
 
-void make_for_loop(Ast*& ast, const Token& token)
+void make_for_loop(Ast*& ast, const Token& /*token*/)
 {
     exit_block(ast);
 
@@ -163,7 +163,7 @@ void make_for_loop(Ast*& ast, const Token& token)
 
 // For in loop
 
-void make_for_in_loop(Ast*& ast, const Token& token)
+void make_for_in_loop(Ast*& ast, const Token& /*token*/)
 {
     exit_block(ast);
 
@@ -181,7 +181,7 @@ void make_for_in_loop(Ast*& ast, const Token& token)
 
 // While loop
 
-void make_while_loop(Ast*& ast, const Token& token)
+void make_while_loop(Ast*& ast, const Token& /*token*/)
 {
     WhileLoop loop;
 
@@ -255,7 +255,7 @@ void make_condition(Ast*& ast, const Token& token)
             middle = " == nil ";
             break;
         default:
-            printf("OP %d not convered for conditions\n", op);
+            printf("OP %d not convered for conditions\n", (int)op);
         }
     }
 
