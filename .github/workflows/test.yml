@@ -14,6 +14,17 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            test: ./test
+            compiler: ./lua4/luac
+            decompiler: ./lua4dec
+            scripts: ./tests/scripts/
+          - os: windows-latest
+            test: test.exe
+            compiler: .\lua4\luac.exe
+            decompiler: lua4dec.exe
+            scripts: .\tests\scripts\
 
     steps:
     - uses: actions/checkout@v3
@@ -21,4 +32,4 @@ jobs:
         submodules: 'true'
 
     - name: Test
-      run: ./test ./lua4/luac ./lua4dec test/scripts/
+      run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}

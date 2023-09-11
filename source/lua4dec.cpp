@@ -17,8 +17,14 @@ Collection<byte> read_file(const char* filename)
     fflush(stdout);
 
     auto buffer = Collection<byte>(len);
-    fread(buffer.data(), 1, len, stream);
+    auto bytes_read = fread(buffer.data(), 1, len, stream);
     fclose(stream);
+    
+    if(len != bytes_read)
+    {
+        printf("Reading error %ld != %ld.\n", len, bytes_read);
+        return {};
+    }
 
     return buffer;
 }

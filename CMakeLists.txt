@@ -47,7 +47,7 @@ set(CMAKE_CXX_STANDARD 17)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # Clang
     #
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # GCC
-    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -std=c++17 -Wunused-result")
+    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -std=c++17")
     set(COMPILER_FLAGS_DEBUG "-MTd")
     set(COMPILER_FLAGS_RELEASE "-O3 -DNDEBUG -MT")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") # MSVC
