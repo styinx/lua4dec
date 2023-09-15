@@ -2,12 +2,12 @@
 
 void print_ast(const Ast& ast)
 {
-    print_statements(ast.statements);
+    print_statements(ast.statements, 0);
 }
 
 void print_indent(const int indent)
 {
-    printf("%*c", indent * 4, ' ');
+    printf("%*s", indent * 4, "");
 }
 
 void print_statements(const std::vector<Statement>& statements, const int indent)
@@ -15,7 +15,7 @@ void print_statements(const std::vector<Statement>& statements, const int indent
     for(auto statement : statements)
     {
         print_indent(indent);
-        std::visit([indent](auto&& s) { print(s, indent + 0); }, statement);
+        std::visit([indent](auto&& s) { print(s, indent); }, statement);
         printf("\n");
     }
 }

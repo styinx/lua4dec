@@ -119,22 +119,19 @@ void make_assignment(Ast*& ast, const Token& token)
     ast->stack.pop_back();
 
     ast->statements.push_back(ass);
-
-    // assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 // Call
 
 void make_call(Ast*& ast, const Token& /*token*/)
 {
+    // TODO: We can not be sure that the lowest element on the stack is the function name ...
     Call call;
     call.name      = *ast->stack.begin();
     call.arguments = {ast->stack.begin() + 1, ast->stack.end()};
 
     ast->statements.push_back(call);
     ast->stack.clear();
-
-    assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 // For loop
@@ -157,8 +154,6 @@ void make_for_loop(Ast*& ast, const Token& /*token*/)
     loop.statements = ast->body->statements;
 
     ast->statements.push_back(loop);
-
-    assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 // For in loop
@@ -175,8 +170,6 @@ void make_for_in_loop(Ast*& ast, const Token& /*token*/)
     loop.statements = ast->body->statements;
 
     ast->statements.push_back(loop);
-
-    assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 // While loop
@@ -191,8 +184,6 @@ void make_while_loop(Ast*& ast, const Token& /*token*/)
     loop.statements = ast->body->statements;
 
     ast->statements.push_back(loop);
-
-    assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 // Condition
@@ -217,22 +208,22 @@ void make_condition(Ast*& ast, const Token& token)
         switch(op)
         {
         case Operator::JMPNE:
-            middle = " ~= ";
-            break;
-        case Operator::JMPEQ:
             middle = " == ";
             break;
+        case Operator::JMPEQ:
+            middle = " ~= ";
+            break;
         case Operator::JMPLT:
-            middle = " < ";
+            middle = " >= ";
             break;
         case Operator::JMPLE:
-            middle = " <= ";
-            break;
-        case Operator::JMPGT:
             middle = " > ";
             break;
+        case Operator::JMPGT:
+            middle = " <= ";
+            break;
         case Operator::JMPGE:
-            middle = " >= ";
+            middle = " < ";
             break;
         default:
             printf("OP %d not convered for conditions\n", (int)op);
@@ -272,14 +263,11 @@ void end_condition(Ast*& ast, const Token& /*token*/)
 
     Condition& condition = std::get<Condition>(ast->statements.back());
     condition.statements = ast->body->statements;
-
-    // assert(ast->stack.size() == 0 && "Stack not empty");
 }
 
 void make_closure(Ast*& ast, const Token& /*token*/)
 {
     Closure closure;
-    //closure.statements = ast->statements;
 
     ast->stack.push_back("fun");
     //ast->statements.push_back(closure);
