@@ -16,10 +16,10 @@ Collection<byte> read_file(const char* filename)
     printf("%ld", len);
     fflush(stdout);
 
-    auto buffer = Collection<byte>(len);
+    auto buffer     = Collection<byte>(len);
     auto bytes_read = (long)fread(buffer.data(), 1, len, stream);
     fclose(stream);
-    
+
     if(len != bytes_read)
     {
         printf("Reading error %ld != %ld.\n", len, bytes_read);
@@ -54,9 +54,8 @@ int main(int argc, char** argv)
     debug_chunk(chunk);
     debug_function(chunk.main);
 
-    auto  tokens = parse_bytecode(chunk.main);
-    auto* ast    = new Ast();
-    run_parser_machine(ast, tokens);
+    auto* ast = new Ast();
+    parse_function(ast, chunk.main);
 
     print_ast(*ast);
 

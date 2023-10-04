@@ -11,7 +11,7 @@ void enter_block(Ast*& ast)
     ast       = body;
 }
 
-void enter_block(Ast*& ast, const Token& /*token*/)
+void enter_block(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     auto* body   = new Ast();
     body->parent = ast;
@@ -28,45 +28,44 @@ void exit_block(Ast*& ast)
 
 // Helpers
 
-void empty(Ast*& /*ast*/, const Token& /*token*/)
+void empty(Ast*&, const Instruction&, const Function&)
 {
 }
 
 // Stack modification
-
-void push_global(Ast*& ast, const Token& token)
+void push_global(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = token.function->globals[B(token.instruction)];
+    const auto name = function.globals[B(instruction)];
     ast->stack.push_back(name);
 }
 
-void push_local(Ast*& ast, const Token& token)
+void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = token.function->locals[B(token.instruction)];
+    const auto name = function.locals[B(instruction)];
     ast->stack.push_back(name);
 }
 
-void push_int(Ast*& ast, const Token& token)
+void push_int(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto val = S(token.instruction);
+    const auto val = S(instruction);
     ast->stack.push_back(std::to_string(val));
 }
 
-void push_num(Ast*& ast, const Token& token)
+void push_num(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto val = token.function->numbers[B(token.instruction)];
+    const auto val = function.numbers[B(instruction)];
     ast->stack.push_back(std::to_string(val));
 }
 
-void push_string(Ast*& ast, const Token& token)
+void push_string(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     auto str = std::string("\"");
-    str.append(token.function->globals[B(token.instruction)]);
+    str.append(function.globals[B(instruction)]);
     str.append("\"");
     ast->stack.push_back(str);
 }
 
-void push_list(Ast*& ast, const Token& /*token*/)
+void push_list(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     auto list = std::string("{");
 
@@ -86,7 +85,7 @@ void push_list(Ast*& ast, const Token& /*token*/)
     ast->stack.push_back(list);
 }
 
-void push_map(Ast*& ast, const Token& /*token*/)
+void push_map(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     auto list = std::string("{");
 
@@ -111,10 +110,10 @@ void push_map(Ast*& ast, const Token& /*token*/)
 
 // Assignment
 
-void make_assignment(Ast*& ast, const Token& token)
+void make_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     Assignment ass;
-    ass.left  = token.function->globals[B(token.instruction)];
+    ass.left  = function.globals[B(instruction)];
     ass.right = ast->stack.back();
     ast->stack.pop_back();
 
@@ -123,7 +122,7 @@ void make_assignment(Ast*& ast, const Token& token)
 
 // Call
 
-void make_call(Ast*& ast, const Token& /*token*/)
+void make_call(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     // TODO: We can not be sure that the lowest element on the stack is the function name ...
     Call call;
@@ -136,7 +135,7 @@ void make_call(Ast*& ast, const Token& /*token*/)
 
 // For loop
 
-void make_for_loop(Ast*& ast, const Token& /*token*/)
+void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     exit_block(ast);
 
@@ -158,7 +157,7 @@ void make_for_loop(Ast*& ast, const Token& /*token*/)
 
 // For in loop
 
-void make_for_in_loop(Ast*& ast, const Token& /*token*/)
+void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     exit_block(ast);
 
@@ -174,7 +173,7 @@ void make_for_in_loop(Ast*& ast, const Token& /*token*/)
 
 // While loop
 
-void make_while_loop(Ast*& ast, const Token& /*token*/)
+void make_while_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     WhileLoop loop;
 
@@ -188,14 +187,14 @@ void make_while_loop(Ast*& ast, const Token& /*token*/)
 
 // Condition
 
-void make_condition(Ast*& ast, const Token& token)
+void make_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Condition   condition;
     std::string left;
     std::string middle;
     std::string right;
 
-    Operator op = OP(token.instruction);
+    const auto op = OP(instruction);
 
     if(op >= Operator::JMPNE && op <= Operator::JMPGE)
     {
@@ -257,7 +256,7 @@ void make_condition(Ast*& ast, const Token& token)
     enter_block(ast);
 }
 
-void end_condition(Ast*& ast, const Token& /*token*/)
+void end_condition(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     exit_block(ast);
 
@@ -265,37 +264,15 @@ void end_condition(Ast*& ast, const Token& /*token*/)
     condition.statements = ast->body->statements;
 }
 
-void make_closure(Ast*& ast, const Token& /*token*/)
+void make_closure(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     Closure closure;
 
     ast->stack.push_back("fun");
-    //ast->statements.push_back(closure);
+    // ast->statements.push_back(closure);
 }
 
 // Public functions
-
-TokenList parse_bytecode(const Function& function)
-{
-    auto tokens = TokenList();
-    tokens.reserve(function.instructions.size());
-
-    for(const auto& instruction : function.instructions)
-    {
-        Token token;
-        token.instruction = instruction;
-        token.function    = const_cast<Function*>(&function);
-        tokens.push_back(token);
-        debug_instruction(instruction);
-    }
-
-    for(const auto& func : function.functions)
-    {
-        parse_bytecode(func);
-    }
-
-    return tokens;
-}
 
 // clang-format off
 auto TABLE = ActionTable
@@ -338,33 +315,26 @@ auto TABLE = ActionTable
 };
 
 // clang-format on
-void run_parser_machine(Ast*& ast, const TokenList& tokens)
+
+void parse_function(Ast*& ast, const Function& function)
 {
-    auto curr = tokens.begin();
+    auto curr = function.instructions.begin();
     auto next = curr + 1;
 
-    if(tokens.size() < 2)
+    while(next != function.instructions.end())
     {
-        printf("DEBUG: Too few tokens\n");
-        return;
-    }
+        auto op = Operator(OP(*curr));
 
-    printf("DEBUG: Go\n");
-    while(next != tokens.end())
-    {
-        auto token = Operator(OP((*curr).instruction));
-
-        if(TABLE.count(token) == 0)
+        if(TABLE.count(op) == 0)
         {
-            printf("DEBUG: No action for %d in table\n", (int)token);
+            printf("DEBUG: No action for %d in table\n", (int)op);
             return;
         }
 
-        auto action = TABLE[token];
-        action(ast, *curr);
+        auto action = TABLE[op];
+        action(ast, *curr, function);
 
         curr = next;
         next += 1;
     }
-    printf("DEBUG: End\n");
 }
