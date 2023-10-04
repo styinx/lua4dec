@@ -28,6 +28,14 @@ else
     o = 9
 end
 
+function add(x, y)
+    s = 19
+end
+
 clo = function(u, v) 
     w = 12
+end
+
+clo1 = function(u, v) 
+    r = 13
 end

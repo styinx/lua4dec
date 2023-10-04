@@ -264,12 +264,19 @@ void end_condition(Ast*& ast, const Instruction& /*instruction*/, const Function
     condition.statements = ast->body->statements;
 }
 
-void make_closure(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     Closure closure;
 
+    // TODO: only placeholder for the actual function
     ast->stack.push_back("fun");
-    // ast->statements.push_back(closure);
+
+    enter_block(ast);
+    parse_function(ast, function.functions[A(instruction)]);
+    exit_block(ast);
+
+    closure.statements = ast->body->statements;
+    ast->statements.push_back(closure);
 }
 
 // Public functions
@@ -318,12 +325,9 @@ auto TABLE = ActionTable
 
 void parse_function(Ast*& ast, const Function& function)
 {
-    auto curr = function.instructions.begin();
-    auto next = curr + 1;
-
-    while(next != function.instructions.end())
+    for(const auto& i : function.instructions)
     {
-        auto op = Operator(OP(*curr));
+        auto op = Operator(OP(i));
 
         if(TABLE.count(op) == 0)
         {
@@ -331,10 +335,6 @@ void parse_function(Ast*& ast, const Function& function)
             return;
         }
 
-        auto action = TABLE[op];
-        action(ast, *curr, function);
-
-        curr = next;
-        next += 1;
+        TABLE[op](ast, i, function);
     }
 }

@@ -47,11 +47,7 @@ void print(const Call& call, const int indent)
 void print(const ForLoop& loop, const int indent)
 {
     print_indent(indent);
-    printf(
-        "for %s , %s , %s do\n",
-        loop.begin.c_str(),
-        loop.end.c_str(),
-        loop.increment.c_str());
+    printf("for %s , %s , %s do\n", loop.begin.c_str(), loop.end.c_str(), loop.increment.c_str());
 
     print_statements(loop.statements, indent + 1);
 

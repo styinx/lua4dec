@@ -192,14 +192,28 @@ void debug_function(Function function)
     printf("Stack: %d\n", function.max_stack_size);
 
     printf("Globals: %zu\n", function.globals.size());
-    for(size_t i = 0; i < function.globals.size(); ++i)
+    for(const auto& g : function.globals)
     {
-        printf("\t\"%s\"\n", function.globals[i].c_str());
+        printf("\t\"%s\"\n", g.c_str());
     }
+
     printf("Locals: %zu\n", function.locals.size());
-    for(size_t i = 0; i < function.locals.size(); ++i)
+    for(const auto& l : function.locals)
     {
-        printf("\t\"%s\"\n", function.locals[i].c_str());
+        printf("\t\"%s\"\n", l.c_str());
+    }
+    printf("\n");
+
+    printf("Instructions: %zu\n", function.instructions.size());
+    for(const auto& i : function.instructions)
+    {
+        debug_instruction(i);
+    }
+    printf("\n");
+
+    for(const auto& fun : function.functions)
+    {
+        debug_function(fun);
     }
     printf("\n");
 }

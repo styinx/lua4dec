@@ -10,8 +10,7 @@ struct WhileLoop;
 struct Condition;
 struct Closure;
 
-using Statement =
-    std::variant<Assignment, Call, ForLoop, ForInLoop, WhileLoop, Condition, Closure>;
+using Statement = std::variant<Assignment, Call, ForLoop, ForInLoop, WhileLoop, Condition, Closure>;
 
 struct Ast
 {

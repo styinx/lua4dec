@@ -13,9 +13,6 @@ Collection<byte> read_file(const char* filename)
     auto len = ftell(stream);
     fseek(stream, 0, SEEK_SET);
 
-    printf("%ld", len);
-    fflush(stdout);
-
     auto buffer     = Collection<byte>(len);
     auto bytes_read = (long)fread(buffer.data(), 1, len, stream);
     fclose(stream);
@@ -25,6 +22,9 @@ Collection<byte> read_file(const char* filename)
         printf("Reading error %ld != %ld.\n", len, bytes_read);
         return {};
     }
+
+    printf("Read %ld bytes from file.\n", len);
+    fflush(stdout);
 
     return buffer;
 }
