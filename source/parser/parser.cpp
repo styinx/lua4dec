@@ -36,85 +36,70 @@ void empty(Ast*&, const Instruction&, const Function&)
 void push_global(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name = function.globals[B(instruction)];
-    ast->stack.push_back(name);
+    ast->stack.push_back(Identifier(name));
 }
 
 void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name = function.locals[B(instruction)];
-    ast->stack.push_back(name);
+    ast->stack.push_back(Identifier(name));
 }
 
 void push_int(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto val = S(instruction);
-    ast->stack.push_back(std::to_string(val));
+    const auto value = S(instruction);
+    ast->stack.push_back(AstInt(value));
 }
 
 void push_num(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto val = function.numbers[B(instruction)];
-    ast->stack.push_back(std::to_string(val));
+    const auto value = function.numbers[B(instruction)];
+    ast->stack.push_back(AstNumber(value));
 }
 
 void push_string(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    auto str = std::string("\"");
-    str.append(function.globals[B(instruction)]);
-    str.append("\"");
-    ast->stack.push_back(str);
+    const auto value = function.globals[B(instruction)];
+    ast->stack.push_back(AstString(value));
 }
 
 void push_list(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    auto list = std::string("{");
-
-    auto it = ast->stack.begin();
-    while(it != ast->stack.end())
+    Collection<Expression> list;
+    for(const auto& e : ast->stack)
     {
-        list.append((*it).c_str());
-
-        if(it != ast->stack.end() - 1)
-            list.append(", ");
-
-        it++;
+        list.push_back(std::get<Expression>(e));
     }
-    list.append("}");
 
     ast->stack.clear();
-    ast->stack.push_back(list);
+    ast->stack.push_back(AstList(list));
 }
 
 void push_map(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    auto list = std::string("{");
-
-    auto it = ast->stack.begin();
-    while(it != ast->stack.end())
+    Collection<std::pair<Expression, Expression>> list;
+    for(auto it = ast->stack.begin(); it != ast->stack.end();)
     {
-        list.append((*it).c_str());
-        list.append(" = ");
+        const auto first = std::get<Expression>(*it);
         it++;
-        list.append((*it).c_str());
 
-        if(it != ast->stack.end() - 1)
-            list.append(", ");
-
+        const auto second = std::get<Expression>(*it);
         it++;
+
+        list.push_back(std::make_pair(first, second));
     }
-    list.append("}");
 
     ast->stack.clear();
-    ast->stack.push_back(list);
+    ast->stack.push_back(AstMap(list));
 }
 
 // Assignment
 
 void make_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    Assignment ass;
-    ass.left  = function.globals[B(instruction)];
-    ass.right = ast->stack.back();
+    auto       left  = Identifier(function.globals[B(instruction)]);
+    auto       right = std::get<Expression>(ast->stack.back());
+    Assignment ass(left, right);
     ast->stack.pop_back();
 
     ast->statements.push_back(ass);
@@ -125,9 +110,10 @@ void make_assignment(Ast*& ast, const Instruction& instruction, const Function& 
 void make_call(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     // TODO: We can not be sure that the lowest element on the stack is the function name ...
-    Call call;
-    call.name      = *ast->stack.begin();
-    call.arguments = {ast->stack.begin() + 1, ast->stack.end()};
+    auto ex = std::get<Expression>(*ast->stack.begin());
+    // auto name = std::get<Identifier>(ex);
+    Call call(Identifier("call"), Collection<Expression>{});
+    // call.arguments = {ast->stack.begin() + 1, ast->stack.end()};
 
     ast->statements.push_back(call);
     ast->stack.clear();
@@ -139,19 +125,16 @@ void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function
 {
     exit_block(ast);
 
-    ForLoop loop;
-
-    loop.increment = ast->stack.back();
+    auto increment = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
 
-    loop.end = ast->stack.back();
+    auto end = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
 
-    loop.begin = ast->stack.back();
+    auto begin = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
 
-    loop.statements = ast->body->statements;
-
+    ForLoop loop(begin, end, increment, ast->body->statements);
     ast->statements.push_back(loop);
 }
 
@@ -163,7 +146,7 @@ void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Funct
 
     ForInLoop loop;
 
-    loop.right = ast->stack.back();
+    // loop.right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
     ast->stack.pop_back();
 
     loop.statements = ast->body->statements;
@@ -173,85 +156,83 @@ void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Funct
 
 // While loop
 
-void make_while_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_while_loop(Ast*& /*ast*/, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    WhileLoop loop;
-
-    loop.condition = ast->stack.back();
-    ast->stack.pop_back();
-
-    loop.statements = ast->body->statements;
-
-    ast->statements.push_back(loop);
+    // TODO: while loop does not really exist in byte code
 }
 
 // Condition
 
 void make_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    Condition   condition;
-    std::string left;
-    std::string middle;
-    std::string right;
+    std::string operation;
 
     const auto op = OP(instruction);
 
     if(op >= Operator::JMPNE && op <= Operator::JMPGE)
     {
-        right = ast->stack.back();
+        auto right = std::get<Expression>(ast->stack.back());
         ast->stack.pop_back();
 
-        left = ast->stack.back();
+        auto left = std::get<Expression>(ast->stack.back());
         ast->stack.pop_back();
 
         switch(op)
         {
         case Operator::JMPNE:
-            middle = " == ";
+            operation = "==";
             break;
         case Operator::JMPEQ:
-            middle = " ~= ";
+            operation = "~=";
             break;
         case Operator::JMPLT:
-            middle = " >= ";
+            operation = ">=";
             break;
         case Operator::JMPLE:
-            middle = " > ";
+            operation = ">";
             break;
         case Operator::JMPGT:
-            middle = " <= ";
+            operation = "<=";
             break;
         case Operator::JMPGE:
-            middle = " < ";
+            operation = "<";
             break;
         default:
-            printf("OP %d not convered for conditions\n", (int)op);
+            printf("OP %d not covered for conditions\n", (int)op);
         }
+
+        ast->statements.push_back(
+            Condition(AstOperation(operation, {left, right}), Collection<Statement>{}));
     }
     else if(op >= Operator::JMPT && op <= Operator::JMPONF)
     {
         switch(op)
         {
         case Operator::JMPT:
-            middle = " ~= nil";
+            operation = "~= nil";
             break;
         case Operator::JMPF:
-            middle = " == nil";
+            operation = "== nil";
             break;
         case Operator::JMPONT:
-            middle = " ~= nil ";
+            operation = "~= nil";
             break;
         case Operator::JMPONF:
-            middle = " == nil ";
+            operation = "== nil";
             break;
         default:
-            printf("OP %d not convered for conditions\n", (int)op);
+            printf("OP %d not covered for conditions\n", (int)op);
         }
+
+        Expression e1 = AstNumber(1);
+        Expression e2 = AstNumber(1);
+        ast->statements.push_back(
+            Condition(AstOperation(operation, {e1, e2}), Collection<Statement>{}));
     }
-
-    condition.condition = left.append(middle).append(right);
-
-    ast->statements.push_back(condition);
+    else
+    {
+        assert(false);
+    }
 
     enter_block(ast);
 }
@@ -266,17 +247,11 @@ void end_condition(Ast*& ast, const Instruction& /*instruction*/, const Function
 
 void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    Closure closure;
-
-    // TODO: only placeholder for the actual function
-    ast->stack.push_back("fun");
-
     enter_block(ast);
     parse_function(ast, function.functions[A(instruction)]);
     exit_block(ast);
 
-    closure.statements = ast->body->statements;
-    ast->statements.push_back(closure);
+    ast->stack.push_back(Closure(ast->body->statements));
 }
 
 // Public functions
