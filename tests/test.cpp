@@ -5,7 +5,7 @@ namespace fs = std::filesystem;
 
 int main(int argc, char ** argv)
 {
-    if(argc < 5)
+    if(argc < 4)
     {
         printf("Please provide path to compiler, decompiler, lua scripts.\n");
         return 1;

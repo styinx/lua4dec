@@ -51,8 +51,10 @@ int main(int argc, char** argv)
     auto* iter  = buffer.data();
     auto  chunk = read_chunk(iter);
 
+#ifndef NDEBUG
     debug_chunk(chunk);
     debug_function(chunk.main);
+#endif
 
     auto* ast = new Ast();
     parse_function(ast, chunk.main);
