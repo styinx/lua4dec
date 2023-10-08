@@ -31,6 +31,10 @@ jobs:
       uses: actions/cache@v3
       with:
         key: binaries-${{ matrix.os }}-${{ github.sha }}
+        path: |
+          ${{ github.workspace }}/${{ matrix.test }}
+          ${{ github.workspace }}/${{ matrix.compiler }}
+          ${{ github.workspace }}/${{ matrix.decompiler }}
         
     - name: Test
       run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
