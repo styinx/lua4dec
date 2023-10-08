@@ -48,9 +48,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${DIR_ROOT}")
 set(CMAKE_CXX_STANDARD 17)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # Clang
-    set(COMPILER_FLAGS "-Wno-format")
+    #
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # GCC
-    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -std=c++17")
+    set(COMPILER_FLAGS "-Wall -Wextra -ansi -pedantic -Wno-format -std=c++17")
     set(COMPILER_FLAGS_DEBUG "-MTd")
     set(COMPILER_FLAGS_RELEASE "-O3 -DNDEBUG -MT")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") # MSVC
