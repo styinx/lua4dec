@@ -27,9 +27,10 @@ jobs:
             scripts: .\tests\scripts\
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'true'
+    - name: Download Build Results
+      uses: actions/download-artifact@v3
+        with:
+          name: binaries
 
     - name: Test
-      run: ls -R && ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
+      run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
