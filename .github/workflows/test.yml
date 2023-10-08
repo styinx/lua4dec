@@ -32,4 +32,4 @@ jobs:
         submodules: 'true'
 
     - name: Test
-      run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
+      run: ls -R && ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
