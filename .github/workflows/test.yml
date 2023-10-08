@@ -30,7 +30,7 @@ jobs:
     - name: Download Build Results
       uses: actions/download-artifact@v3
       with:
-        name: binaries
+        name: binaries_${{ matrix.os }}
 
     - name: Test
       run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
