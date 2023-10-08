@@ -13,18 +13,18 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest, ubuntu-latest]
         include:
-          - os: ubuntu-latest
-            test: ./test
-            compiler: ./lua4/luac
-            decompiler: ./lua4dec
-            scripts: ./tests/scripts/
           - os: windows-latest
             test: test.exe
             compiler: .\lua4\luac.exe
             decompiler: lua4dec.exe
             scripts: .\tests\scripts\
+          - os: ubuntu-latest
+            test: ./test
+            compiler: ./lua4/luac
+            decompiler: ./lua4dec
+            scripts: ./tests/scripts/
 
     steps:
     - name: Download Build Results
