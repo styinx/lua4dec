@@ -59,7 +59,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Upload Build Results
-      uses: actions/download-artifact@v3
+      uses: actions/upload-artifact@v3
       with:
         name: binaries
         path: ./
