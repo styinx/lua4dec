@@ -21,9 +21,15 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
+            test: ./test
+            compiler: ./lua4/luac
+            decompiler: ./lua4dec
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
+            test: test.exe
+            compiler: .\lua4\luac.exe
+            decompiler: lua4dec.exe
         exclude:
           - os: windows-latest
             c_compiler: clang
@@ -56,5 +62,8 @@ jobs:
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
       with:
-        name: binaries_${{ matrix.os }}
-        path: ./
+        name: binaries-${{ matrix.os }}
+        path: |
+          ${{ github.workspace }}/${{ matrix.test }}
+          ${{ github.workspace }}/${{ matrix.compiler }}
+          ${{ github.workspace }}/${{ matrix.decompiler }}
