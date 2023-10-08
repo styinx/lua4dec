@@ -22,14 +22,14 @@ jobs:
             c_compiler: cl
             cpp_compiler: cl
             test: test.exe
-            compiler: .\lua4\luac.exe
+            compiler: lua4/luac.exe
             decompiler: lua4dec.exe
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            test: ./test
-            compiler: ./lua4/luac
-            decompiler: ./lua4dec
+            test: test
+            compiler: lua4/luac
+            decompiler: lua4dec
         exclude:
           - os: windows-latest
             c_compiler: clang
