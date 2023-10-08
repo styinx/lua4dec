@@ -27,8 +27,10 @@ jobs:
             scripts: ./tests/scripts/
 
     steps:
-    - name: Test
+    - name: Load Cache
       uses: actions/cache@v3
       with:
         key: binaries-${{ matrix.os }}-${{ github.sha }}
+        
+    - name: Test
       run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
