@@ -10,11 +10,7 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 - Call
 
 ## Build
-![build master](https://github.com/styinx/lua4dec/actions/workflows/build.yml/badge.svg?branch=master)
-![test master](https://github.com/styinx/lua4dec/actions/workflows/test.yml/badge.svg?branch=master)
-
-[build master](https://github.com/styinx/lua4dec/actions/workflows/build.yml)
-[test master](https://github.com/styinx/lua4dec/actions/workflows/test.yml)
+[![Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/main.yml)
 
 ### CMake
 
