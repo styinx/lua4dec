@@ -62,7 +62,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
-      run: ${{ matrix.lua_test }} ${{ matrix.lua_compiler }} ${{ matrix.lua_decomiler }} ${{ matrix.lua_scripts }}
+      run: ${{ matrix.lua_test }} ${{ matrix.lua_compiler }} ${{ matrix.lua_decompiler }} ${{ matrix.lua_scripts }}
 
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
