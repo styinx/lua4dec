@@ -21,13 +21,17 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-            bin: .exe
-            sep: '\\'
+            lua_compiler: ${{ github.workspace }}/lua4/luac.exe
+            lua_decompiler: ${{ github.workspace }}/lua4dec.exe
+            lua_scripts: ${{ github.workspace }}/tests/scripts/
+            lua_test: ${{ github.workspace }}/test.exe
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            bin: ''
-            sep: '/'
+            lua_compiler: ./${{ github.workspace }}/lua4/luac
+            lua_decompiler: ./${{ github.workspace }}/lua4dec
+            lua_scripts: ./${{ github.workspace }}/tests/scripts/
+            lua_test: ./${{ github.workspace }}/test
         exclude:
           - os: windows-latest
             c_compiler: clang
@@ -58,7 +62,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
-      run: .${{ matrix.sep }}test${{ matrix.bin }} .${{ matrix.sep }}lua4${{ matrix.sep }}luac${{ matrix.bin }} .${{ matrix.sep }}lua4dec${{ matrix.bin }} .${{ matrix.sep }}test${{ matrix.sep }}scripts${{ matrix.sep }}
+      run: ./test${{ matrix.bin }} ./lua4/luac${{ matrix.bin }} ./lua4dec${{ matrix.bin }} ./test/scripts/
 
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
