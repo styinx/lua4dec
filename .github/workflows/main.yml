@@ -24,14 +24,14 @@ jobs:
             test: test.exe
             compiler: lua4/luac.exe
             decompiler: lua4dec.exe
-            scripts: ./tests/scripts/
+            scripts: tests/scripts/
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            test: ./test
-            compiler: ./lua4/luac
-            decompiler: ./lua4dec
-            scripts: ./tests/scripts/
+            test: test
+            compiler: lua4/luac
+            decompiler: lua4dec
+            scripts: tests/scripts/
         exclude:
           - os: windows-latest
             c_compiler: clang
