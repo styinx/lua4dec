@@ -27,10 +27,10 @@ jobs:
             scripts: ./tests/scripts/
 
     steps:
-    - name: Load Cache
+    - name: Download Build Results
       uses: actions/cache@v3
       with:
-        key: binaries-${{ matrix.os }}-${{ github.sha }}
+        name: binaries-${{ matrix.os }}-${{ github.sha }}
         path: |
           ${{ github.workspace }}/${{ matrix.test }}
           ${{ github.workspace }}/${{ matrix.compiler }}

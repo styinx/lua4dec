@@ -59,10 +59,10 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Cache Build Results
-      uses: actions/cache@v3
+    - name: Upload Build Results
+      uses: actions/upload@v3
       with:
-        key: binaries-${{ matrix.os }}-${{ github.sha }}
+        name: binaries-${{ matrix.os }}-${{ github.sha }}
         path: |
           ${{ github.workspace }}/${{ matrix.test }}
           ${{ github.workspace }}/${{ matrix.compiler }}
