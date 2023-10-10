@@ -21,17 +21,11 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-            test: test.exe
-            compiler: lua4/luac.exe
-            decompiler: lua4dec.exe
-            scripts: tests/scripts/
+            bin: .exe
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            test: test
-            compiler: lua4/luac
-            decompiler: lua4dec
-            scripts: tests/scripts/
+            bin: ''
         exclude:
           - os: windows-latest
             c_compiler: clang
@@ -62,13 +56,12 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
-      run: ${{ matrix.test }} ${{ matrix.compiler }} ${{ matrix.decompiler }} ${{ matrix.scripts }}
+      run: ./test${{ matrix.bin }} ./lua4/luac${{ matrix.bin }} ./lua4dec${{ matrix.bin }} test/scripts/
 
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
       with:
         name: binaries-${{ matrix.os }}-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/${{ matrix.test }}
-          ${{ github.workspace }}/${{ matrix.compiler }}
-          ${{ github.workspace }}/${{ matrix.decompiler }}
+          ${{ github.workspace }}/lua4/luac${{ matrix.bin }}
+          ${{ github.workspace }}/lua4dec${{ matrix.bin }}
