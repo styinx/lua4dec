@@ -21,17 +21,17 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-            lua_compiler: ${{ github.workspace }}/lua4/luac.exe
-            lua_decompiler: ${{ github.workspace }}/lua4dec.exe
-            lua_scripts: ${{ github.workspace }}/tests/scripts/
-            lua_test: ${{ github.workspace }}/test.exe
+            lua_compiler: lua4/luac.exe
+            lua_decompiler: lua4dec.exe
+            lua_scripts: tests/scripts/
+            lua_test: test.exe
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
-            lua_compiler: ./${{ github.workspace }}/lua4/luac
-            lua_decompiler: ./${{ github.workspace }}/lua4dec
-            lua_scripts: ./${{ github.workspace }}/tests/scripts/
-            lua_test: ./${{ github.workspace }}/test
+            lua_compiler: ./lua4/luac
+            lua_decompiler: ./lua4dec
+            lua_scripts: ./tests/scripts/
+            lua_test: ./test
         exclude:
           - os: windows-latest
             c_compiler: clang
