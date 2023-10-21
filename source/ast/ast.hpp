@@ -36,9 +36,11 @@ struct Ast
 struct Closure
 {
     Collection<Statement> statements;
+    Collection<String>    arguments;
 
-    Closure(const Collection<Statement> s)
+    Closure(const Collection<Statement>& s, const Collection<String> a)
         : statements(s)
+        , arguments(a)
     {
     }
 };

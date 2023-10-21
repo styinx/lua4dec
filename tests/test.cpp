@@ -29,7 +29,10 @@ int main(int argc, char ** argv)
 
         if(ext.compare(".lua") == 0)
         {
-            int res = system(luac.append(" ").append(name).append(" -o s.out").c_str());
+            std::string cmd = luac;
+            cmd.append(" -o ").append(name).append(".out ").append(name);
+
+            int res = system(cmd.c_str());
             printf("%s %s\n", res == -1 ? "ERR" : "OK ", name.c_str());
         }
     }
@@ -43,7 +46,10 @@ int main(int argc, char ** argv)
 
         if(ext.compare(".out") == 0)
         {
-            int res = system(luadec.append(" ").append(name).c_str());
+            std::string cmd = luac;
+            cmd.append(" ").append(name);
+
+            int res = system(cmd.c_str());
             printf("%s %s\n", res == -1 ? "ERR" : "OK ", name.c_str());
         }
     }

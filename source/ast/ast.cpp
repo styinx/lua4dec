@@ -7,12 +7,12 @@ void print_ast(const Ast& ast)
 
 void print_indent(const int indent)
 {
-    printf("%*s", indent * 4, "");
+    printf("%*s", indent * 2, "");
 }
 
 void print_statements(const std::vector<Statement>& statements, const int indent)
 {
-    for(auto statement : statements)
+    for(const auto& statement : statements)
     {
         print_indent(indent);
         std::visit([indent](auto&& s) { print(s, indent); }, statement);
@@ -24,7 +24,17 @@ void print_statements(const std::vector<Statement>& statements, const int indent
 
 void print(const Closure& closure, const int indent)
 {
-    printf("function()\n");
+    printf("function(");
+
+    for(const auto& arg : closure.arguments)
+    {
+        printf("%s", arg.c_str());
+
+        if(&arg != &closure.arguments.back())
+            printf(", ");
+    }
+
+    printf(")\n");
 
     print_statements(closure.statements, indent + 1);
 

@@ -78,6 +78,8 @@ enum class Operator : byte
     CLOSURE = 0x30,
 };
 
+extern std::unordered_map<Operator, std::string> OP_TO_STR;
+
 struct ChunkHeader
 {
     bool is_little_endian;
@@ -120,11 +122,17 @@ Operator OP(Instruction instruction)
 template<byte bits = 15>
 unsigned int A(Instruction instruction)
 {
-    return (instruction >> bits);
+    return (instruction >> bits) & ((1 << bits) - 1);
 }
 
 template<byte bits = 6>
 unsigned int B(Instruction instruction)
+{
+    return (instruction >> bits) & ((1 << bits) - 1);
+}
+
+template<byte bits = 6>
+unsigned int U(Instruction instruction)
 {
     return (instruction >> bits);
 }

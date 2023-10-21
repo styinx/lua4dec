@@ -39,3 +39,7 @@ end
 clo1 = function(u, v) 
     r = 13
 end
+
+clo2 = function(x, a) 
+    r = 13
+end
