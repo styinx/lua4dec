@@ -9,8 +9,8 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 - Conditions: create "else if" blocks
 - For In
-- Self / Dot
 - Table
+- closure parameters
 
 ## Build
 [![Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/main.yml)
@@ -19,10 +19,8 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ```
 mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-cd ..
+cmake -B build
+cmake --build build --config Release
 ```
 
 ### Make
