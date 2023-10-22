@@ -1,5 +1,15 @@
 #include "ast/ast.hpp"
 
+void print_stack(const Ast& ast)
+{
+    printf(" === STACK ===\n");
+    for(const auto& e : ast.stack)
+    {
+        // TODO
+    }
+    printf(" =============\n");
+}
+
 void print_ast(const Ast& ast)
 {
     print_statements(ast.statements, 0);
@@ -24,17 +34,13 @@ void print_statements(const std::vector<Statement>& statements, const int indent
 
 void print(const Closure& closure, const int indent)
 {
-    printf("function(");
+    printf("function()\n");
 
     for(const auto& arg : closure.arguments)
     {
-        printf("%s", arg.c_str());
-
-        if(&arg != &closure.arguments.back())
-            printf(", ");
+        print(arg, indent + 1);
+        printf("\n");
     }
-
-    printf(")\n");
 
     print_statements(closure.statements, indent + 1);
 
@@ -87,14 +93,19 @@ void print(const AstNumber& number, const int /*indent*/)
 
 void print(const AstOperation& operation, const int indent)
 {
-    // TODO
-    if(operation.ex.size() > 0)
-        std::visit([indent](auto&& e) { print(e, indent); }, operation.ex[0]);
+    if(operation.ex.size() == 1)
+        printf("%s ", operation.op.c_str());
 
-    printf("%s", operation.op.c_str());
+    auto it = operation.ex.rbegin();
+    while(it != operation.ex.rend())
+    {
+        std::visit([indent](auto&& e) { print(e, indent); }, *it);
 
-    if(operation.ex.size() > 1)
-        std::visit([indent](auto&& e) { print(e, indent); }, operation.ex[1]);
+        it++;
+
+        if(it != operation.ex.rend())
+            printf(" %s ", operation.op.c_str());
+    }
 }
 
 void print(const AstString& string, const int /*indent*/)
@@ -166,6 +177,31 @@ void print(const ForInLoop& loop, const int indent)
 
     print_indent(indent);
     printf("end");
+}
+
+void print(const LocalAssignment& assignment, const int indent)
+{
+    print_indent(indent);
+    printf("local %s = ", assignment.left.name.c_str());
+    std::visit([indent](auto&& e) { print(e, indent); }, assignment.right);
+}
+
+void print(const TailCall& call, const int indent)
+{
+    print_indent(indent);
+    printf("return %s(", call.name.name.c_str());
+
+    auto it = call.arguments.begin();
+    while(it != call.arguments.end())
+    {
+        std::visit([indent](auto&& e) { print(e, indent); }, *it);
+
+        if(it != call.arguments.end() - 1)
+            printf(", ");
+
+        it++;
+    }
+    printf(")");
 }
 
 void print(const WhileLoop& loop, const int indent)

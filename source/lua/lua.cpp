@@ -164,7 +164,7 @@ void debug_instruction(Instruction instruction)
 {
     printf(
         "I: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) "
-        "| A: %5d (0x%04x) | B: %2d (0x%02x) | U: %10d (0x%08x) | S: %9d (0x%08x)\n",
+        "| A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)\n",
         (int)instruction,
         (int)instruction,
         (int)OP(instruction),
@@ -194,15 +194,17 @@ void debug_function(Function function)
     printf("Stack: %d\n", function.max_stack_size);
 
     printf("Globals: %zu\n", function.globals.size());
+    unsigned i = 0;
     for(const auto& g : function.globals)
     {
-        printf("\t\"%s\"\n", g.c_str());
+        printf("\t%d: \"%s\"\n", i++, g.c_str());
     }
 
     printf("Locals: %zu\n", function.locals.size());
+    i = 0;
     for(const auto& l : function.locals)
     {
-        printf("\t\"%s\"\n", l.c_str());
+        printf("\t%d: \"%s\"\n", i++, l.c_str());
     }
     printf("\n");
 

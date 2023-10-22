@@ -45,13 +45,36 @@ void pop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*functi
 
 void push_global(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = function.globals[B(instruction)];
+    const auto name = function.globals[U(instruction)];
     ast->stack.push_back(Identifier(name));
+}
+
+void push_dotted(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto name   = function.globals[U(instruction)];
+    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+    ast->stack.push_back(Identifier(parent.name + "." + name));
+}
+
+void push_indexed(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto name   = function.locals[U(instruction)];
+    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+    ast->stack.push_back(Identifier(parent.name + "[" + name + "]"));
+}
+
+void push_self(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto name   = function.globals[U(instruction)];
+    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.push_back(Identifier(parent.name + "." + name));
 }
 
 void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = function.locals[B(instruction)];
+    const auto name = function.locals[U(instruction)];
     ast->stack.push_back(Identifier(name));
 }
 
@@ -63,13 +86,13 @@ void push_int(Ast*& ast, const Instruction& instruction, const Function& /*funct
 
 void push_num(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto value = function.numbers[B(instruction)];
+    const auto value = function.numbers[U(instruction)];
     ast->stack.push_back(AstNumber(value));
 }
 
 void push_string(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto value = function.globals[B(instruction)];
+    const auto value = function.globals[U(instruction)];
     ast->stack.push_back(AstString(value));
 }
 
@@ -109,53 +132,53 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 // Operations
 void add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("+", {left, right}));
 }
 
 void addi(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
-    const auto right = AstNumber(S(instruction));
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = AstNumber(S(instruction));
     ast->stack.push_back(AstOperation("+", {left, right}));
 }
 
 void sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("-", {left, right}));
 }
 
 void mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("*", {left, right}));
 }
 
 void div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("/", {left, right}));
 }
 
 void pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left  = std::get<Expression>(ast->stack.back());
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("^", {left, right}));
 }
@@ -182,7 +205,7 @@ void not(Ast * &ast, const Instruction& /*instruction*/, const Function& /*funct
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("TODO !", {right}));
+    ast->stack.push_back(AstOperation("not", {right}));
 }
 
 // Assignment
@@ -211,9 +234,12 @@ void make_local_assignment(Ast*& ast, const Instruction& instruction, const Func
 
 void make_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // A represents the first position on the stack after call name and arguments.
+    // A represents the number of elements to keep on the stack. All popped elements
+    // make up the name and the argument of the function.
+
     Collection<Expression> args;
-    for(size_t i = ast->stack.size(); i > A(instruction) + 1; --i)
+    const auto             keep_stack_elements = A(instruction);
+    while(ast->stack.size() > keep_stack_elements + 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -225,6 +251,27 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
     std::reverse(args.begin(), args.end());
 
     ast->statements.push_back(Call(name, args));
+}
+
+void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    // A represents the number of elements to keep on the stack. All popped elements
+    // make up the name and the argument of the function.
+
+    Collection<Expression> args;
+    const auto             keep_stack_elements = A(instruction);
+    while(ast->stack.size() > keep_stack_elements + 1)
+    {
+        args.push_back(std::get<Expression>(ast->stack.back()));
+        ast->stack.pop_back();
+    }
+
+    auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+
+    std::reverse(args.begin(), args.end());
+
+    ast->statements.push_back(TailCall(name, args));
 }
 
 // For loop
@@ -363,10 +410,22 @@ void end_condition(Ast*& ast, const Instruction& /*instruction*/, const Function
 void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     enter_block(ast);
+
     parse_function(ast, function.functions[A(instruction)]);
+
+    // Leftover elements on the stack make up the local variables.
+    const auto                  locals = function.functions[A(instruction)].locals;
+    Collection<LocalAssignment> args;
+    unsigned                    i = 0;
+    for(const auto& e : ast->stack)
+    {
+        const auto ass = LocalAssignment(Identifier(locals[i++]), std::get<Expression>(e));
+        args.push_back(ass);
+    }
+
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->body->statements, function.functions[A(instruction)].locals));
+    ast->stack.push_back(Closure(ast->body->statements, args));
 }
 
 // Public functions
@@ -375,6 +434,7 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 auto TABLE = ActionTable
 {
     {Operator::END,         &empty},
+    {Operator::RETURN,      &empty}, // TODO
     // Stack modification
     {Operator::PUSHNIL,     &push_nil},
     {Operator::POP,         &pop},
@@ -382,12 +442,17 @@ auto TABLE = ActionTable
     {Operator::PUSHSTRING,  &push_string},
     {Operator::PUSHNUM,     &push_num},
     {Operator::PUSHNEGNUM,  &push_num},
-    {Operator::GETGLOBAL,   &push_global},
+    {Operator::PUSHUPVALUE, &empty}, // TODO
     {Operator::GETLOCAL,    &push_local},
+    {Operator::GETGLOBAL,   &push_global},
     {Operator::GETTABLE,    &empty}, // TODO
+    {Operator::GETDOTTED,   &push_dotted},
+    {Operator::GETINDEXED,  &push_indexed},
+    {Operator::PUSHSELF,    &push_self},
     {Operator::CREATETABLE, &empty}, // TODO
     {Operator::SETLIST,     &push_list},
     {Operator::SETMAP,      &push_map},
+    {Operator::PUSHNILJMP,  &empty}, // TODO
     // Operations
     {Operator::ADD,         &add},
     {Operator::ADDI,        &addi},
@@ -400,9 +465,11 @@ auto TABLE = ActionTable
     {Operator::NOT,         &not},
     // Call
     {Operator::CALL,        &make_call},
+    {Operator::TAILCALL,    &make_tail_call},
     // Assignment
-    {Operator::SETGLOBAL,   &make_assignment},
     {Operator::SETLOCAL,    &make_local_assignment},
+    {Operator::SETGLOBAL,   &make_assignment},
+    {Operator::SETTABLE,    &empty},  // TODO
     // For loop
     {Operator::FORPREP,     &enter_block},
     {Operator::FORLOOP,     &make_for_loop},
@@ -429,6 +496,8 @@ auto TABLE = ActionTable
 
 void parse_function(Ast*& ast, const Function& function)
 {
+    // TODO: Add local variables for this scope
+
     for(const auto& i : function.instructions)
     {
         auto op = Operator(OP(i));

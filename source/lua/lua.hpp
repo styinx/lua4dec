@@ -119,28 +119,28 @@ Operator OP(Instruction instruction)
     return Operator(instruction & ((1 << bits) - 1));
 }
 
-template<byte bits = 15>
+template<byte shift = 15, byte bits = 17>
 unsigned int A(Instruction instruction)
 {
-    return (instruction >> bits) & ((1 << bits) - 1);
+    return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte bits = 6>
+template<byte shift = 6, byte bits = 9>
 unsigned int B(Instruction instruction)
 {
-    return (instruction >> bits) & ((1 << bits) - 1);
+    return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte bits = 6>
+template<byte shift = 6>
 unsigned int U(Instruction instruction)
 {
-    return (instruction >> bits);
+    return (instruction >> shift);
 }
 
-template<byte bits = 6>
+template<byte shift = 6>
 int S(Instruction instruction)
 {
-    return (instruction >> bits) - (std::numeric_limits<int>::max() >> bits);
+    return (instruction >> shift) - (std::numeric_limits<int>::max() >> shift);
 }
 
 /*

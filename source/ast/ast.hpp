@@ -16,11 +16,14 @@ struct Call;
 struct Condition;
 struct ForLoop;
 struct ForInLoop;
+struct LocalAssignment;
+struct TailCall;
 struct WhileLoop;
 
 using Expression =
     std::variant<Closure, Identifier, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString>;
-using Statement  = std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, WhileLoop>;
+using Statement =
+    std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, TailCall, WhileLoop>;
 using AstElement = std::variant<Statement, Expression>;
 
 struct Ast
@@ -35,10 +38,10 @@ struct Ast
 
 struct Closure
 {
-    Collection<Statement> statements;
-    Collection<String>    arguments;
+    Collection<Statement>       statements;
+    Collection<LocalAssignment> arguments;
 
-    Closure(const Collection<Statement>& s, const Collection<String> a)
+    Closure(const Collection<Statement>& s, const Collection<LocalAssignment> a)
         : statements(s)
         , arguments(a)
     {
@@ -178,6 +181,30 @@ struct ForInLoop
     Collection<Statement> statements;
 };
 
+struct LocalAssignment
+{
+    Identifier left;
+    Expression right;
+
+    LocalAssignment(const Identifier& i, const Expression& e)
+        : left(i)
+        , right(e)
+    {
+    }
+};
+
+struct TailCall
+{
+    Identifier             name;
+    Collection<Expression> arguments;
+
+    TailCall(const Identifier& i, const Collection<Expression>& a)
+        : name(i)
+        , arguments(a)
+    {
+    }
+};
+
 struct WhileLoop
 {
     AstOperation          condition;
@@ -193,6 +220,8 @@ struct WhileLoop
 /*
  * Stuff to print the AST
  */
+
+void print_stack(const Ast& ast);
 
 void print_ast(const Ast&);
 
@@ -214,4 +243,6 @@ void print(const Call&, const int indent = 0);
 void print(const Condition&, const int indent = 0);
 void print(const ForLoop&, const int indent = 0);
 void print(const ForInLoop&, const int indent = 0);
+void print(const LocalAssignment&, const int indent = 0);
+void print(const TailCall&, const int indent = 0);
 void print(const WhileLoop&, const int indent = 0);
