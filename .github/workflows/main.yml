@@ -22,14 +22,14 @@ jobs:
             c_compiler: cl
             cpp_compiler: cl
             lua_compiler: "lua4\\luac.exe"
-            lua_decompiler: "lua4dec.exe"
+            lua_decompiler: "luadec.exe"
             lua_scripts: "tests\\scripts\\"
             lua_test: test.exe
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
             lua_compiler: ./lua4/luac
-            lua_decompiler: ./lua4dec
+            lua_decompiler: ./luadec
             lua_scripts: ./tests/scripts/
             lua_test: ./test
         exclude:
@@ -70,4 +70,4 @@ jobs:
         name: binaries-${{ matrix.os }}-${{ github.sha }}
         path: |
           ${{ github.workspace }}/lua4/luac${{ matrix.bin }}
-          ${{ github.workspace }}/lua4dec${{ matrix.bin }}
+          ${{ github.workspace }}/luadec${{ matrix.bin }}

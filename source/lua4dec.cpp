@@ -1,4 +1,4 @@
-#include "parser/parser.hpp"
+#include "lua4dec.hpp"
 
 Collection<byte> read_file(const char* filename)
 {
@@ -23,43 +23,14 @@ Collection<byte> read_file(const char* filename)
         return {};
     }
 
-    printf("Read %ld bytes from file.\n", len);
-    fflush(stdout);
-
     return buffer;
 }
 
-int main(int argc, char** argv)
+void create_ast(Ast*& ast, const char* filename)
 {
-    Collection<byte> buffer;
+    auto  buffer = read_file(filename);
+    auto* iter   = buffer.data();
+    auto  chunk  = read_chunk(iter);
 
-    if(argc < 2)
-    {
-        printf("Please provide a compiled lua script as argument.\n");
-        return 1;
-    }
-    else if(argc == 2)
-    {
-        buffer = read_file(argv[1]);
-    }
-    else
-    {
-        // pipe it here
-        return 2;
-    }
-
-    auto* iter  = buffer.data();
-    auto  chunk = read_chunk(iter);
-
-#ifndef NDEBUG
-    debug_chunk(chunk);
-    debug_function(chunk.main);
-#endif
-
-    auto* ast = new Ast();
     parse_function(ast, chunk.main);
-
-    print_ast(*ast);
-
-    return 0;
 }

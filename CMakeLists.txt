@@ -96,6 +96,8 @@ link_directories(${LIBRARY_DIRECTORIES})
 # Sources
 
 set(SOURCES
+    source/lua4dec.cpp
+    source/lua4dec.hpp
     source/ast/ast.cpp
     source/ast/ast.hpp
     source/lua/lua.cpp
@@ -104,7 +106,7 @@ set(SOURCES
     source/parser/parser.hpp
 )
 
-source_group("source"         FILES source/lua4dec.cpp)
+source_group("source"         FILES source/lua4dec.cpp source/lua4dec.hpp)
 source_group("source/ast"     FILES source/ast/ast.cpp source/ast/ast.hpp)
 source_group("source/lua"     FILES source/lua/lua.cpp source/lua/lua.hpp)
 source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parser.hpp)
@@ -113,5 +115,7 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 
 # Binaries
 
-add_executable(lua4dec source/lua4dec.cpp ${SOURCES})
+add_library(lua4dec ${SOURCES})
+
+add_executable(luadec source/main.cpp ${SOURCES})
 add_executable(test tests/test.cpp)
