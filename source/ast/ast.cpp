@@ -1,218 +1,234 @@
 #include "ast/ast.hpp"
 
-void print_stack(const Ast& ast)
+void print_stack(const Ast& ast, FILE* stream)
 {
-    printf(" === STACK ===\n");
+    fprintf(stream, " === STACK ===\n");
     for(const auto& e : ast.stack)
     {
         // TODO
     }
-    printf(" =============\n");
+    fprintf(stream, " =============\n");
 }
 
-void print_ast(const Ast& ast)
+void print_ast(const Ast& ast, FILE* stream)
 {
-    print_statements(ast.statements, 0);
+    print_statements(ast.statements, 0, stream);
 }
 
-void print_indent(const int indent)
+void print_indent(const int indent, FILE* stream)
 {
-    printf("%*s", indent * 2, "");
+    fprintf(stream, "%*s", indent * 2, "");
 }
 
-void print_statements(const std::vector<Statement>& statements, const int indent)
+void print_statements(const std::vector<Statement>& statements, const int indent, FILE* stream)
 {
     for(const auto& statement : statements)
     {
-        print_indent(indent);
-        std::visit([indent](auto&& s) { print(s, indent); }, statement);
-        printf("\n");
+        print_indent(indent, stream);
+        std::visit([indent, stream](auto&& s) { print(s, indent, stream); }, statement);
+        fprintf(stream, "\n");
     }
 }
 
 // Expressions
 
-void print(const Closure& closure, const int indent)
+void print(const Closure& closure, const int indent, FILE* stream)
 {
-    printf("function()\n");
+    fprintf(stream, "function()\n");
 
     for(const auto& arg : closure.arguments)
     {
-        print(arg, indent + 1);
-        printf("\n");
+        print(arg, indent + 1, stream);
+        fprintf(stream, "\n");
     }
 
     print_statements(closure.statements, indent + 1);
 
-    print_indent(indent);
-    printf("end");
+    print_indent(indent, stream);
+    fprintf(stream, "end");
 }
 
-void print(const Identifier& identifier, const int /*indent*/)
+void print(const Identifier& identifier, const int /*indent*/, FILE* stream)
 {
-    printf("%s", identifier.name.c_str());
+    fprintf(stream, "%s", identifier.name.c_str());
 }
 
-void print(const AstInt& number, const int /*indent*/)
+void print(const AstInt& number, const int /*indent*/, FILE* stream)
 {
-    printf("%ld", number.value);
+    fprintf(stream, "%ld", number.value);
 }
 
-void print(const AstList& list, const int indent)
+void print(const AstList& list, const int indent, FILE* stream)
 {
-    printf("{");
+    fprintf(stream, "{");
     for(const auto& el : list.elements)
     {
-        std::visit([indent](auto&& e) { print(e, indent); }, el);
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, el);
 
         if(&el != &list.elements.back())
-            printf(", ");
+            fprintf(stream, ", ");
     }
-    printf("}");
+    fprintf(stream, "}");
 }
 
-void print(const AstMap& list, const int indent)
+void print(const AstMap& map, const int indent, FILE* stream)
 {
-    printf("{");
-    for(const auto& p : list.pairs)
+    fprintf(stream, "{");
+    for(const auto& p : map.pairs)
     {
-        std::visit([indent](auto&& e) { print(e, indent); }, p.first);
-        printf(" = ");
-        std::visit([indent](auto&& e) { print(e, indent); }, p.second);
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, p.first);
+        fprintf(stream, " = ");
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, p.second);
 
-        if(&p != &list.pairs.back())
-            printf(", ");
+        if(&p != &map.pairs.back())
+            fprintf(stream, ", ");
     }
-    printf("}");
+    fprintf(stream, "}");
 }
 
-void print(const AstNumber& number, const int /*indent*/)
+void print(const AstNumber& number, const int /*indent*/, FILE* stream)
 {
-    printf("%lf", number.value);
+    fprintf(stream, "%lf", number.value);
 }
 
-void print(const AstOperation& operation, const int indent)
+void print(const AstOperation& operation, const int indent, FILE* stream)
 {
     if(operation.ex.size() == 1)
-        printf("%s ", operation.op.c_str());
+        fprintf(stream, "%s ", operation.op.c_str());
 
     auto it = operation.ex.rbegin();
     while(it != operation.ex.rend())
     {
-        std::visit([indent](auto&& e) { print(e, indent); }, *it);
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, *it);
 
         it++;
 
         if(it != operation.ex.rend())
-            printf(" %s ", operation.op.c_str());
+            fprintf(stream, " %s ", operation.op.c_str());
     }
 }
 
-void print(const AstString& string, const int /*indent*/)
+void print(const AstString& string, const int /*indent*/, FILE* stream)
 {
-    printf("\"%s\"", string.value.c_str());
+    fprintf(stream, "\"%s\"", string.value.c_str());
+}
+
+void print(const AstTable& table, const int indent, FILE* stream)
+{
+    fprintf(stream, "%s {\n", table.name.name.c_str());
+    for(const auto& p : table.pairs)
+    {
+        std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.first);
+        fprintf(stream, " = ");
+        std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.second);
+
+        if(&p != &table.pairs.back())
+            fprintf(stream, ",\n");
+    }
+    fprintf(stream, "}");
 }
 
 // Statements
 
-void print(const Assignment& assignment, const int indent)
+void print(const Assignment& assignment, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("%s = ", assignment.left.name.c_str());
-    std::visit([indent](auto&& e) { print(e, indent); }, assignment.right);
+    print_indent(indent, stream);
+    fprintf(stream, "%s = ", assignment.left.name.c_str());
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, assignment.right);
 }
 
-void print(const Call& call, const int indent)
+void print(const Call& call, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("%s(", call.name.name.c_str());
+    print_indent(indent, stream);
+    fprintf(stream, "%s(", call.name.name.c_str());
 
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {
-        std::visit([indent](auto&& e) { print(e, indent); }, *it);
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, *it);
 
         if(it != call.arguments.end() - 1)
-            printf(", ");
+            fprintf(stream, ", ");
 
         it++;
     }
-    printf(")");
+    fprintf(stream, ")");
 }
 
-void print(const Condition& condition, const int indent)
+void print(const Condition& condition, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("if ");
-    print(condition.condition, indent);
-    printf(" then\n");
+    print_indent(indent, stream);
+    fprintf(stream, "if ");
+    print(condition.condition, indent, stream);
+    fprintf(stream, " then\n");
 
-    print_statements(condition.statements, indent + 1);
+    print_statements(condition.statements, indent + 1, stream);
 
-    print_indent(indent);
-    printf("end");
+    print_indent(indent, stream);
+    fprintf(stream, "end");
 }
 
-void print(const ForLoop& loop, const int indent)
+void print(const ForLoop& loop, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf(
+    print_indent(indent, stream);
+    fprintf(
+        stream,
         "for %ld , %ld , %ld do\n",
         (int)loop.begin.value,
         (int)loop.end.value,
         (int)loop.increment.value);
 
-    print_statements(loop.statements, indent + 1);
+    print_statements(loop.statements, indent + 1, stream);
 
-    print_indent(indent);
-    printf("end");
+    print_indent(indent, stream);
+    fprintf(stream, "end");
 }
 
-void print(const ForInLoop& loop, const int indent)
+void print(const ForInLoop& loop, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("for %s in %s do\n", loop.left.c_str(), loop.right.c_str());
+    print_indent(indent, stream);
+    fprintf(stream, "for %s in %s do\n", loop.left.c_str(), loop.right.c_str());
 
-    print_statements(loop.statements, indent + 1);
+    print_statements(loop.statements, indent + 1, stream);
 
-    print_indent(indent);
-    printf("end");
+    print_indent(indent, stream);
+    fprintf(stream, "end");
 }
 
-void print(const LocalAssignment& assignment, const int indent)
+void print(const LocalAssignment& assignment, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("local %s = ", assignment.left.name.c_str());
-    std::visit([indent](auto&& e) { print(e, indent); }, assignment.right);
+    print_indent(indent, stream);
+    fprintf(stream, "local %s = ", assignment.left.name.c_str());
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, assignment.right);
 }
 
-void print(const TailCall& call, const int indent)
+void print(const TailCall& call, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("return %s(", call.name.name.c_str());
+    print_indent(indent, stream);
+    fprintf(stream, "return %s(", call.name.name.c_str());
 
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {
-        std::visit([indent](auto&& e) { print(e, indent); }, *it);
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, *it);
 
         if(it != call.arguments.end() - 1)
-            printf(", ");
+            fprintf(stream, ", ");
 
         it++;
     }
-    printf(")");
+    fprintf(stream, ")");
 }
 
-void print(const WhileLoop& loop, const int indent)
+void print(const WhileLoop& loop, const int indent, FILE* stream)
 {
-    print_indent(indent);
-    printf("while ");
-    print(loop.condition, indent);
-    printf(" do\n");
+    print_indent(indent, stream);
+    fprintf(stream, "while ");
+    print(loop.condition, indent, stream);
+    fprintf(stream, " do\n");
 
-    print_statements(loop.statements, indent + 1);
+    print_statements(loop.statements, indent + 1, stream);
 
-    print_indent(indent);
-    printf("end");
+    print_indent(indent, stream);
+    fprintf(stream, "end");
 }

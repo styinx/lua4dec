@@ -208,6 +208,18 @@ void not(Ast * &ast, const Instruction& /*instruction*/, const Function& /*funct
     ast->stack.push_back(AstOperation("not", {right}));
 }
 
+// Table
+
+void make_table(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto size = B(instruction);
+    const auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+    AstTable table(size, name, Collection<std::pair<Expression, Expression>>{});
+
+    ast->stack.push_back(table);
+}
+
 // Assignment
 
 void make_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -245,12 +257,34 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
         ast->stack.pop_back();
     }
 
-    auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    auto caller = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    std::reverse(args.begin(), args.end());
+    // Caller is a regular function
+    if(std::holds_alternative<Identifier>(caller))
+    {
+        auto name = std::get<Identifier>(caller);
 
-    ast->statements.push_back(Call(name, args));
+        std::reverse(args.begin(), args.end());
+
+        if(B(instruction) == 0)
+            ast->statements.push_back(Call(name, args));
+        else
+            ast->stack.push_back(Expression(Call(name, args)));
+    }
+    // Caller is map
+    else if(std::holds_alternative<AstMap>(caller))
+    {
+        auto map   = std::get<AstMap>(caller);
+        auto table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
+        ast->stack.pop_back();
+        table.pairs = map.pairs;
+        ast->stack.push_back(table);
+    }
+    else
+    {
+        // TODO
+    }
 }
 
 void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -393,8 +427,9 @@ void make_unary_condition(Ast*& ast, const Instruction& instruction, const Funct
     const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    ast->statements.push_back(
-        Condition(AstOperation(comparison, {left, Identifier("nil")}), Collection<Statement>{}));
+    ast->statements.push_back(Condition(
+        AstOperation(comparison, {left, Identifier("nil")}),
+        Collection<Statement>{}));
 
     enter_block(ast);
 }

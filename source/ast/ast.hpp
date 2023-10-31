@@ -1,4 +1,5 @@
 #include "lua/lua.hpp"
+
 #include <variant>
 #include <vector>
 
@@ -10,6 +11,7 @@ struct AstMap;
 struct AstNumber;
 struct AstOperation;
 struct AstString;
+struct AstTable;
 
 struct Assignment;
 struct Call;
@@ -21,7 +23,7 @@ struct TailCall;
 struct WhileLoop;
 
 using Expression =
-    std::variant<Closure, Identifier, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString>;
+    std::variant<Call, Closure, Identifier, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString, AstTable>;
 using Statement =
     std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, TailCall, WhileLoop>;
 using AstElement = std::variant<Statement, Expression>;
@@ -120,16 +122,19 @@ struct AstString
     }
 };
 
-// Statements
-
-struct Assignment
+struct AstTable
 {
-    Identifier left;
-    Expression right;
+    Identifier                                    name;
+    unsigned                                      size;
+    Collection<std::pair<Expression, Expression>> pairs;
 
-    Assignment(const Identifier& i, const Expression& e)
-        : left(i)
-        , right(e)
+    AstTable(
+        const unsigned                                       s,
+        const Identifier&                                    n,
+        const Collection<std::pair<Expression, Expression>>& p)
+        : size(s)
+        , name(n)
+        , pairs(p)
     {
     }
 };
@@ -142,6 +147,20 @@ struct Call
     Call(const Identifier& i, const Collection<Expression>& a)
         : name(i)
         , arguments(a)
+    {
+    }
+};
+
+// Statements
+
+struct Assignment
+{
+    Identifier left;
+    Expression right;
+
+    Assignment(const Identifier& i, const Expression& e)
+        : left(i)
+        , right(e)
     {
     }
 };
@@ -221,28 +240,29 @@ struct WhileLoop
  * Stuff to print the AST
  */
 
-void print_stack(const Ast& ast);
+void print_stack(const Ast&, FILE* stream = stdout);
 
-void print_ast(const Ast&);
+void print_ast(const Ast&, FILE* stream = stdout);
 
-void print_indent(const int indent);
+void print_indent(const int, FILE* stream = stdout);
 
-void print_statements(const Collection<Statement>&, const int indent = 0);
+void print_statements(const Collection<Statement>&, const int indent = 0, FILE* stream = stdout);
 
-void print(const Closure&, const int indent = 0);
-void print(const Identifier&, const int indent = 0);
-void print(const AstInt&, const int indent = 0);
-void print(const AstList&, const int indent = 0);
-void print(const AstMap&, const int indent = 0);
-void print(const AstNumber&, const int indent = 0);
-void print(const AstOperation&, const int indent = 0);
-void print(const AstString&, const int indent = 0);
+void print(const Closure&, const int indent = 0, FILE* stream = stdout);
+void print(const Identifier&, const int indent = 0, FILE* stream = stdout);
+void print(const AstInt&, const int indent = 0, FILE* stream = stdout);
+void print(const AstList&, const int indent = 0, FILE* stream = stdout);
+void print(const AstMap&, const int indent = 0, FILE* stream = stdout);
+void print(const AstNumber&, const int indent = 0, FILE* stream = stdout);
+void print(const AstOperation&, const int indent = 0, FILE* stream = stdout);
+void print(const AstString&, const int indent = 0, FILE* stream = stdout);
+void print(const AstTable&, const int indent = 0, FILE* stream = stdout);
 
-void print(const Assignment&, const int indent = 0);
-void print(const Call&, const int indent = 0);
-void print(const Condition&, const int indent = 0);
-void print(const ForLoop&, const int indent = 0);
-void print(const ForInLoop&, const int indent = 0);
-void print(const LocalAssignment&, const int indent = 0);
-void print(const TailCall&, const int indent = 0);
-void print(const WhileLoop&, const int indent = 0);
+void print(const Assignment&, const int indent = 0, FILE* stream = stdout);
+void print(const Call&, const int indent = 0, FILE* stream = stdout);
+void print(const Condition&, const int indent = 0, FILE* stream = stdout);
+void print(const ForLoop&, const int indent = 0, FILE* stream = stdout);
+void print(const ForInLoop&, const int indent = 0, FILE* stream = stdout);
+void print(const LocalAssignment&, const int indent = 0, FILE* stream = stdout);
+void print(const TailCall&, const int indent = 0, FILE* stream = stdout);
+void print(const WhileLoop&, const int indent = 0, FILE* stream = stdout);
