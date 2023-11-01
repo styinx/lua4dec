@@ -96,6 +96,19 @@ void push_string(Ast*& ast, const Instruction& instruction, const Function& func
     ast->stack.push_back(AstString(value));
 }
 
+void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    // Its only a table if a name was pushed on the stack before. Otherwise its a map.
+    if(ast->stack.size())
+    {
+        const auto size = B(instruction);
+        const auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+        AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
+        ast->stack.pop_back();
+        ast->stack.push_back(table);
+    }
+}
+
 void push_list(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Collection<Expression> list;
@@ -208,18 +221,6 @@ void not(Ast * &ast, const Instruction& /*instruction*/, const Function& /*funct
     ast->stack.push_back(AstOperation("not", {right}));
 }
 
-// Table
-
-void make_table(Ast*& ast, const Instruction& instruction, const Function& function)
-{
-    const auto size = B(instruction);
-    const auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
-    AstTable table(size, name, Collection<std::pair<Expression, Expression>>{});
-
-    ast->stack.push_back(table);
-}
-
 // Assignment
 
 void make_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -272,18 +273,18 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
         else
             ast->stack.push_back(Expression(Call(name, args)));
     }
-    // Caller is map
-    else if(std::holds_alternative<AstMap>(caller))
+    // Caller is a table
+    else if(std::holds_alternative<AstTable>(caller))
     {
-        auto map   = std::get<AstMap>(caller);
-        auto table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        auto table  = std::get<AstTable>(caller);
+        auto map    = std::get<AstMap>(args[0]);
         table.pairs = map.pairs;
         ast->stack.push_back(table);
     }
     else
     {
         // TODO
+        ast->stack.push_back(caller);
     }
 }
 
@@ -484,7 +485,7 @@ auto TABLE = ActionTable
     {Operator::GETDOTTED,   &push_dotted},
     {Operator::GETINDEXED,  &push_indexed},
     {Operator::PUSHSELF,    &push_self},
-    {Operator::CREATETABLE, &empty}, // TODO
+    {Operator::CREATETABLE, &push_table},
     {Operator::SETLIST,     &push_list},
     {Operator::SETMAP,      &push_map},
     {Operator::PUSHNILJMP,  &empty}, // TODO

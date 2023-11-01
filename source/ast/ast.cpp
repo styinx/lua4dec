@@ -76,7 +76,8 @@ void print(const AstMap& map, const int indent, FILE* stream)
     fprintf(stream, "{");
     for(const auto& p : map.pairs)
     {
-        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, p.first);
+        print_indent(indent, stream);
+        fprintf(stream, "%s", std::get<AstString>(p.first).value.c_str());
         fprintf(stream, " = ");
         std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, p.second);
 
@@ -118,13 +119,19 @@ void print(const AstTable& table, const int indent, FILE* stream)
     fprintf(stream, "%s {\n", table.name.name.c_str());
     for(const auto& p : table.pairs)
     {
-        std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.first);
+        print_indent(indent + 1, stream);
+        if(std::holds_alternative<AstString>(p.first))
+            fprintf(stream, "%s", std::get<AstString>(p.first).value.c_str());
+        else if(std::holds_alternative<AstTable>(p.first))
+            std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.first);
         fprintf(stream, " = ");
         std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.second);
 
         if(&p != &table.pairs.back())
             fprintf(stream, ",\n");
     }
+    fprintf(stream, "\n");
+    print_indent(indent, stream);
     fprintf(stream, "}");
 }
 
