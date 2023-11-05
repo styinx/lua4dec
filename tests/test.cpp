@@ -33,7 +33,7 @@ int main(int argc, char ** argv)
             cmd.append(" -o ").append(name).append(".out ").append(name);
 
             int res = system(cmd.c_str());
-            printf("%s %s\n", res == -1 ? "ERR" : "OK ", name.c_str());
+            printf("%s %s\n", res == 1 ? "ERR" : "OK ", name.c_str());
         }
     }
 
@@ -50,7 +50,7 @@ int main(int argc, char ** argv)
             cmd.append(" ").append(name);
 
             int res = system(cmd.c_str());
-            printf("%s %s\n", res == -1 ? "ERR" : "OK ", name.c_str());
+            printf("%s %s\n", res == 1 ? "ERR" : "OK ", name.c_str());
         }
     }
 
