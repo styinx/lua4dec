@@ -99,10 +99,11 @@ void push_string(Ast*& ast, const Instruction& instruction, const Function& func
 void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // Its only a table if a name was pushed on the stack before. Otherwise its a map.
-    if(ast->stack.size())
+    const auto ex = std::get<Expression>(ast->stack.back());
+    if(std::holds_alternative<Identifier>(ex))
     {
         const auto size = B(instruction);
-        const auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+        const auto name = std::get<Identifier>(ex);
         AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
         ast->stack.pop_back();
         ast->stack.push_back(table);
@@ -239,6 +240,35 @@ void make_local_assignment(Ast*& ast, const Instruction& instruction, const Func
     const auto right = std::get<Expression>(ast->stack.back());
     Assignment ass(left, right);
     ast->stack.pop_back();
+
+    ast->statements.push_back(ass);
+}
+
+void make_table_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    Collection<Expression> args;
+    for(unsigned i = 0; i < B(instruction); ++i)
+    {
+        args.push_back(std::get<Expression>(ast->stack.back()));
+        ast->stack.pop_back();
+    }
+
+    std::reverse(args.begin(), args.end());
+
+    std::string left;
+    for(auto it = args.begin(); it != args.end() - 1; ++it)
+    {
+        if(std::holds_alternative<Identifier>(*it))
+            left.append(std::get<Identifier>(*it).name);
+        else if(std::holds_alternative<AstString>(*it))
+            left.append(std::get<AstString>(*it).value);
+
+        if(it != args.end() - 2)
+            left.append(".");
+    }
+
+    const auto right = args.back();
+    Assignment ass(Identifier(left), right);
 
     ast->statements.push_back(ass);
 }
@@ -447,12 +477,22 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 {
     enter_block(ast);
 
+    // TODO: pushes dummies on stack. local definitions can not be read anymore
+    const auto locals = function.functions[A(instruction)].locals;
+    for(const auto& local : locals)
+    {
+        ast->stack.push_back(Identifier("TODO"));
+    }
+
     parse_function(ast, function.functions[A(instruction)]);
 
     // Leftover elements on the stack make up the local variables.
-    const auto                  locals = function.functions[A(instruction)].locals;
-    Collection<LocalAssignment> args;
     unsigned                    i = 0;
+    Collection<LocalAssignment> args;
+    for(const auto& local : locals)
+    {
+        ast->stack.pop_back();
+    }
     for(const auto& e : ast->stack)
     {
         const auto ass = LocalAssignment(Identifier(locals[i++]), std::get<Expression>(e));
@@ -505,7 +545,7 @@ auto TABLE = ActionTable
     // Assignment
     {Operator::SETLOCAL,    &make_local_assignment},
     {Operator::SETGLOBAL,   &make_assignment},
-    {Operator::SETTABLE,    &empty},  // TODO
+    {Operator::SETTABLE,    &make_table_assignment},
     // For loop
     {Operator::FORPREP,     &enter_block},
     {Operator::FORLOOP,     &make_for_loop},

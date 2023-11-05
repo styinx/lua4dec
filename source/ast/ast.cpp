@@ -122,8 +122,9 @@ void print(const AstTable& table, const int indent, FILE* stream)
         print_indent(indent + 1, stream);
         if(std::holds_alternative<AstString>(p.first))
             fprintf(stream, "%s", std::get<AstString>(p.first).value.c_str());
-        else if(std::holds_alternative<AstTable>(p.first))
-            std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.first);
+        else if(std::holds_alternative<Identifier>(p.first))
+            fprintf(stream, "%s", std::get<Identifier>(p.first).name.c_str());
+
         fprintf(stream, " = ");
         std::visit([indent, stream](auto&& e) { print(e, indent + 1, stream); }, p.second);
 
