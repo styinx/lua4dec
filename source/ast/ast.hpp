@@ -1,3 +1,6 @@
+#ifndef LUA4DEC_AST_H
+#define LUA4DEC_AST_H
+
 #include "lua/lua.hpp"
 
 #include <variant>
@@ -266,3 +269,5 @@ void print(const ForInLoop&, const int indent = 0, FILE* stream = stdout);
 void print(const LocalAssignment&, const int indent = 0, FILE* stream = stdout);
 void print(const TailCall&, const int indent = 0, FILE* stream = stdout);
 void print(const WhileLoop&, const int indent = 0, FILE* stream = stdout);
+
+#endif  // LUA4DEC_AST_H

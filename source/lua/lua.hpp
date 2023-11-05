@@ -1,3 +1,6 @@
+#ifndef LUA4DEC_LUA_H
+#define LUA4DEC_LUA_H
+
 #include <assert.h>
 #include <limits>
 #include <set>
@@ -172,3 +175,5 @@ Chunk       read_chunk(ByteIterator&);
 void debug_instruction(Instruction);
 void debug_chunk(Chunk chunk);
 void debug_function(Function function);
+
+#endif  // LUA4DEC_LUA_H
