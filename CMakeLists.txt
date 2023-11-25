@@ -117,5 +117,8 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 
 add_library(lua4dec ${SOURCES})
 
-add_executable(luadec source/main.cpp ${SOURCES})
+add_executable(luadec source/main.cpp)
+target_link_libraries(luadec lua4dec)
+
 add_executable(test tests/test.cpp)
+target_link_libraries(test lua4dec)
