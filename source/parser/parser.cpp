@@ -99,6 +99,7 @@ void push_string(Ast*& ast, const Instruction& instruction, const Function& func
 void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // Its only a table if a name was pushed on the stack before. Otherwise its a map.
+    /* TODO
     const auto ex = std::get<Expression>(ast->stack.back());
     if(std::holds_alternative<Identifier>(ex))
     {
@@ -107,7 +108,7 @@ void push_table(Ast*& ast, const Instruction& instruction, const Function& funct
         AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
         ast->stack.pop_back();
         ast->stack.push_back(table);
-    }
+    } */
 }
 
 void push_list(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
@@ -458,9 +459,8 @@ void make_unary_condition(Ast*& ast, const Instruction& instruction, const Funct
     const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    ast->statements.push_back(Condition(
-        AstOperation(comparison, {left, Identifier("nil")}),
-        Collection<Statement>{}));
+    ast->statements.push_back(
+        Condition(AstOperation(comparison, {left, Identifier("nil")}), Collection<Statement>{}));
 
     enter_block(ast);
 }

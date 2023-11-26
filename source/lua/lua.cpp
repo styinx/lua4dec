@@ -160,11 +160,11 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
     {Operator::CLOSURE, "CLOSURE"},
 };
 
-void debug_instruction(Instruction instruction)
+void debug_instruction(Instruction instruction, Function& function)
 {
     printf(
         "I: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) "
-        "| A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)\n",
+        "| A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)",
         (int)instruction,
         (int)instruction,
         (int)OP(instruction),
@@ -178,6 +178,35 @@ void debug_instruction(Instruction instruction)
         U(instruction),
         S(instruction),
         S(instruction));
+
+    std::string name;
+    switch(OP(instruction))
+    {
+    case Operator::CALL:
+    case Operator::TAILCALL:
+    case Operator::GETGLOBAL:
+    case Operator::PUSHSTRING:
+    case Operator::SETGLOBAL:
+        name = function.globals[U(instruction)];
+        break;
+    case Operator::GETLOCAL:
+    case Operator::SETLOCAL:
+        name = function.locals[U(instruction)];
+        break;
+    case Operator::PUSHINT:
+        name = std::to_string(S(instruction));
+        break;
+    case Operator::PUSHNUM:
+    case Operator::PUSHNEGNUM:
+        name = std::to_string(function.numbers[U(instruction)]);
+        break;
+        // TODO: Add the rest of the operators
+    }
+
+    if(!name.empty())
+        printf(" => %s", name.c_str());
+
+    printf("\n");
 }
 
 void debug_chunk(Chunk /*chunk*/)
@@ -211,7 +240,7 @@ void debug_function(Function function)
     printf("Instructions: %zu\n", function.instructions.size());
     for(const auto& i : function.instructions)
     {
-        debug_instruction(i);
+        debug_instruction(i, function);
     }
     printf("\n");
 
