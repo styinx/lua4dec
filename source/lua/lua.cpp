@@ -182,8 +182,6 @@ void debug_instruction(Instruction instruction, Function& function)
     std::string name;
     switch(OP(instruction))
     {
-    case Operator::CALL:
-    case Operator::TAILCALL:
     case Operator::GETGLOBAL:
     case Operator::PUSHSTRING:
     case Operator::SETGLOBAL:

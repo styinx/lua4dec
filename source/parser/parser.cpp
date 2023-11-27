@@ -98,17 +98,22 @@ void push_string(Ast*& ast, const Instruction& instruction, const Function& func
 
 void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Its only a table if a name was pushed on the stack before. Otherwise its a map.
-    /* TODO
-    const auto ex = std::get<Expression>(ast->stack.back());
-    if(std::holds_alternative<Identifier>(ex))
+    // Its only a table if an identifier is on the stack before. Otherwise its a map or list.
+
+    std::string name;
+    if(ast->stack.size())
     {
-        const auto size = B(instruction);
-        const auto name = std::get<Identifier>(ex);
-        AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
-        ast->stack.pop_back();
-        ast->stack.push_back(table);
-    } */
+        const auto ex = std::get<Expression>(ast->stack.back());
+        if(std::holds_alternative<Identifier>(ex))
+        {
+            name = std::get<Identifier>(ex).name;
+            ast->stack.pop_back();
+        }
+    }
+
+    const auto size = B(instruction);
+    AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
+    ast->stack.push_back(table);
 }
 
 void push_list(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
@@ -122,12 +127,13 @@ void push_list(Ast*& ast, const Instruction& instruction, const Function& /*func
 
     std::reverse(list.begin(), list.end());
 
+    ast->stack.pop_back();  // empty AstTable
     ast->stack.push_back(AstList(list));
 }
 
 void push_map(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    Collection<std::pair<Expression, Expression>> list;
+    Collection<std::pair<Expression, Expression>> map;
     for(unsigned i = 0; i < U(instruction); ++i)
     {
         const auto value = std::get<Expression>(ast->stack.back());
@@ -136,12 +142,16 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
         const auto key = std::get<Expression>(ast->stack.back());
         ast->stack.pop_back();
 
-        list.push_back(std::make_pair(key, value));
+        map.push_back(std::make_pair(key, value));
     }
 
-    std::reverse(list.begin(), list.end());
+    std::reverse(map.begin(), map.end());
 
-    ast->stack.push_back(AstMap(list));
+    auto table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
+    if(table.name.name.empty())
+        ast->stack.pop_back();  // empty AstTable
+
+    ast->stack.push_back(AstMap(map));
 }
 
 // Operations
