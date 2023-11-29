@@ -202,7 +202,7 @@ void debug_instruction(Instruction instruction, Function& function)
     }
 
     if(!name.empty())
-        printf(" => %s", name.c_str());
+        printf(" | %s", name.c_str());
 
     printf("\n");
 }

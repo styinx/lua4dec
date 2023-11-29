@@ -31,12 +31,19 @@ using Statement =
     std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, TailCall, WhileLoop>;
 using AstElement = std::variant<Statement, Expression>;
 
+struct Context
+{
+    unsigned jump_offset = 0;
+    bool     condition   = false;
+};
+
 struct Ast
 {
+    Ast*                   child;
+    Ast*                   parent;
+    Context                context;
     Collection<AstElement> stack;
     Collection<Statement>  statements;
-    Ast*                   body;
-    Ast*                   parent;
 };
 
 // Expressions
@@ -131,10 +138,7 @@ struct AstTable
     unsigned                                      size;
     Collection<std::pair<Expression, Expression>> pairs;
 
-    AstTable(
-        const unsigned                                       s,
-        const Identifier&                                    n,
-        const Collection<std::pair<Expression, Expression>>& p)
+    AstTable(const unsigned s, const Identifier& n, const Collection<std::pair<Expression, Expression>>& p)
         : size(s)
         , name(n)
         , pairs(p)

@@ -1,23 +1,26 @@
 #include "parser/parser.hpp"
 
+unsigned PC           = 0;
+bool     is_condition = false;
+
 // Block management
 
 void enter_block(Ast*& ast)
 {
-    auto* body   = new Ast();
-    body->parent = ast;
+    auto* child   = new Ast();
+    child->parent = ast;
 
-    ast->body = body;
-    ast       = body;
+    ast->child = child;
+    ast        = child;
 }
 
 void enter_block(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    auto* body   = new Ast();
-    body->parent = ast;
+    auto* child   = new Ast();
+    child->parent = ast;
 
-    ast->body = body;
-    ast       = body;
+    ast->child = child;
+    ast        = child;
 }
 
 void exit_block(Ast*& ast)
@@ -365,7 +368,7 @@ void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function
     const auto begin = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
 
-    const ForLoop loop(begin, end, increment, ast->body->statements);
+    const ForLoop loop(begin, end, increment, ast->child->statements);
     ast->statements.push_back(loop);
 }
 
@@ -380,7 +383,7 @@ void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Funct
     // loop.right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
     ast->stack.pop_back();
 
-    loop.statements = ast->body->statements;
+    loop.statements = ast->child->statements;
 
     ast->statements.push_back(loop);
 }
@@ -403,10 +406,10 @@ void make_binary_condition(Ast*& ast, const Instruction& instruction, const Func
         printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
     }
 
-    auto right = std::get<Expression>(ast->stack.back());
+    auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    auto left = std::get<Expression>(ast->stack.back());
+    auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
     std::string comparison;
@@ -435,10 +438,16 @@ void make_binary_condition(Ast*& ast, const Instruction& instruction, const Func
         printf("OP %d not covered for conditions\n", (int)op);
     }
 
-    ast->statements.push_back(
-        Condition(AstOperation(comparison, {left, right}), Collection<Statement>{}));
+    const auto operation = AstOperation(comparison, {left, right});
+    const auto condition = Condition(operation, Collection<Statement>{});
+    ast->statements.push_back(condition);
 
     enter_block(ast);
+
+    is_condition             = true;
+    PC                       = S(instruction);
+    ast->context.condition   = true;
+    ast->context.jump_offset = S(instruction);
 }
 
 void make_unary_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
@@ -469,18 +478,30 @@ void make_unary_condition(Ast*& ast, const Instruction& instruction, const Funct
     const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    ast->statements.push_back(
-        Condition(AstOperation(comparison, {left, Identifier("nil")}), Collection<Statement>{}));
+    const auto operation = AstOperation(comparison, {left, Identifier("nil")});
+    const auto condition = Condition(operation, Collection<Statement>{});
+    ast->statements.push_back(condition);
 
     enter_block(ast);
+
+    is_condition             = true;
+    PC                       = S(instruction);
+    ast->context.condition   = true;
+    ast->context.jump_offset = S(instruction);
 }
 
-void end_condition(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    exit_block(ast);
+    const auto operation = AstOperation("else/elseif", {Identifier(""), Identifier("")});
+    const auto condition = Condition(operation, Collection<Statement>{});
+    ast->statements.push_back(condition);
 
-    Condition& condition = std::get<Condition>(ast->statements.back());
-    condition.statements = ast->body->statements;
+    enter_block(ast);
+
+    is_condition             = true;
+    PC                       = S(instruction);
+    ast->context.condition   = true;
+    ast->context.jump_offset = S(instruction);
 }
 
 void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -511,7 +532,7 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->body->statements, args));
+    ast->stack.push_back(Closure(ast->child->statements, args));
 }
 
 // Public functions
@@ -586,6 +607,14 @@ void parse_function(Ast*& ast, const Function& function)
 
     for(const auto& i : function.instructions)
     {
+        // We are currently inside a condition
+        // if(ast->context.condition)
+        if(is_condition)
+            // if(ast->context.jump_offset > 0)
+            if(PC > 0)
+                // ast->context.jump_offset--;
+                PC--;
+
         auto op = Operator(OP(i));
 
         if(TABLE.count(op) == 0)
@@ -595,5 +624,22 @@ void parse_function(Ast*& ast, const Function& function)
         }
 
         TABLE[op](ast, i, function);
+
+        // Last instruction inside the condition
+        // if(ast->context.condition)
+        if(is_condition)
+        {
+            // if(ast->context.jump_offset == 0)
+            if(PC == 0)
+            {
+                // ast->context.condition = false;
+                is_condition = false;
+
+                exit_block(ast);
+
+                Condition& condition = std::get<Condition>(ast->statements.back());
+                condition.statements = ast->child->statements;
+            }
+        }
     }
 }
