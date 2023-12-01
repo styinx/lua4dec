@@ -33,8 +33,9 @@ using AstElement = std::variant<Statement, Expression>;
 
 struct Context
 {
-    unsigned jump_offset = 0;
-    bool     condition   = false;
+    unsigned jump_offset  = 0;
+    unsigned PC           = 0;
+    bool     is_condition = false;
 };
 
 struct Ast
@@ -120,6 +121,11 @@ struct AstOperation
         , ex(e)
     {
     }
+
+    bool empty() const
+    {
+        return op.empty() && ex.empty();
+    }
 };
 
 struct AstString
@@ -138,7 +144,10 @@ struct AstTable
     unsigned                                      size;
     Collection<std::pair<Expression, Expression>> pairs;
 
-    AstTable(const unsigned s, const Identifier& n, const Collection<std::pair<Expression, Expression>>& p)
+    AstTable(
+        const unsigned                                       s,
+        const Identifier&                                    n,
+        const Collection<std::pair<Expression, Expression>>& p)
         : size(s)
         , name(n)
         , pairs(p)
@@ -172,14 +181,24 @@ struct Assignment
     }
 };
 
-struct Condition
+struct ConditionBlock
 {
-    AstOperation          condition;
+    AstOperation          comparison;
     Collection<Statement> statements;
 
-    Condition(const AstOperation& o, const Collection<Statement>& s)
-        : condition(o)
+    ConditionBlock(const AstOperation& o, const Collection<Statement>& s)
+        : comparison(o)
         , statements(s)
+    {
+    }
+};
+
+struct Condition
+{
+    Collection<ConditionBlock> blocks;
+
+    Condition(const Collection<ConditionBlock>& c)
+        : blocks(c)
     {
     }
 };

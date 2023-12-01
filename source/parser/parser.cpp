@@ -1,7 +1,107 @@
 #include "parser/parser.hpp"
 
-unsigned PC           = 0;
-bool     is_condition = false;
+void enter_block(Ast*&, const Instruction&, const Function&);
+void exit_block(Ast*&);
+void empty(Ast*&, const Instruction&, const Function&);
+void push_nil(Ast*&, const Instruction&, const Function&);
+void push_int(Ast*&, const Instruction&, const Function&);
+void push_string(Ast*&, const Instruction&, const Function&);
+void push_num(Ast*&, const Instruction&, const Function&);
+void push_local(Ast*&, const Instruction&, const Function&);
+void push_global(Ast*&, const Instruction&, const Function&);
+void push_dotted(Ast*&, const Instruction&, const Function&);
+void push_indexed(Ast*&, const Instruction&, const Function&);
+void push_self(Ast*&, const Instruction&, const Function&);
+void push_table(Ast*&, const Instruction&, const Function&);
+void push_list(Ast*&, const Instruction&, const Function&);
+void push_map(Ast*&, const Instruction&, const Function&);
+void push_map(Ast*&, const Instruction&, const Function&);
+void pop(Ast*&, const Instruction&, const Function&);
+void add(Ast*&, const Instruction&, const Function&);
+void addi(Ast*&, const Instruction&, const Function&);
+void sub(Ast*&, const Instruction&, const Function&);
+void mult(Ast*&, const Instruction&, const Function&);
+void div(Ast*&, const Instruction&, const Function&);
+void pow(Ast*&, const Instruction&, const Function&);
+void concat(Ast*&, const Instruction&, const Function&);
+void minus(Ast*&, const Instruction&, const Function&);
+void not(Ast*&, const Instruction&, const Function&);
+void make_call(Ast*&, const Instruction&, const Function&);
+void make_tail_call(Ast*&, const Instruction&, const Function&);
+void make_local_assignment(Ast*&, const Instruction&, const Function&);
+void make_assignment(Ast*&, const Instruction&, const Function&);
+void make_table_assignment(Ast*&, const Instruction&, const Function&);
+void make_for_loop(Ast*&, const Instruction&, const Function&);
+void make_for_in_loop(Ast*&, const Instruction&, const Function&);
+void make_condition(Ast*&, const Instruction&, const Function&);
+void end_condition(Ast*&, const Instruction&, const Function&);
+void make_closure(Ast*&, const Instruction&, const Function&);
+
+// clang-format off
+auto TABLE = ActionTable
+{
+    {Operator::END,         &empty},
+    {Operator::RETURN,      &empty}, // TODO
+    // Stack modification
+    {Operator::PUSHNIL,     &push_nil},
+    {Operator::POP,         &pop},
+    {Operator::PUSHINT,     &push_int},
+    {Operator::PUSHSTRING,  &push_string},
+    {Operator::PUSHNUM,     &push_num},
+    {Operator::PUSHNEGNUM,  &push_num},
+    {Operator::PUSHUPVALUE, &empty}, // TODO
+    {Operator::GETLOCAL,    &push_local},
+    {Operator::GETGLOBAL,   &push_global},
+    {Operator::GETTABLE,    &empty}, // TODO
+    {Operator::GETDOTTED,   &push_dotted},
+    {Operator::GETINDEXED,  &push_indexed},
+    {Operator::PUSHSELF,    &push_self},
+    {Operator::CREATETABLE, &push_table},
+    {Operator::SETLIST,     &push_list},
+    {Operator::SETMAP,      &push_map},
+    {Operator::PUSHNILJMP,  &empty}, // TODO
+    // Operations
+    {Operator::ADD,         &add},
+    {Operator::ADDI,        &addi},
+    {Operator::SUB,         &sub},
+    {Operator::MULT,        &mult},
+    {Operator::DIV,         &div},
+    {Operator::POW,         &pow},
+    {Operator::CONCAT,      &concat},
+    {Operator::MINUS,       &minus},
+    {Operator::NOT,         &not},
+    // Call
+    {Operator::CALL,        &make_call},
+    {Operator::TAILCALL,    &make_tail_call},
+    // Assignment
+    {Operator::SETLOCAL,    &make_local_assignment},
+    {Operator::SETGLOBAL,   &make_assignment},
+    {Operator::SETTABLE,    &make_table_assignment},
+    // For loop
+    {Operator::FORPREP,     &enter_block},
+    {Operator::FORLOOP,     &make_for_loop},
+    // For in loop
+    {Operator::LFORPREP,    &enter_block},
+    {Operator::LFORLOOP,    &make_for_in_loop},
+    // Conditions
+    {Operator::JMPNE,       &make_condition},
+    {Operator::JMPEQ,       &make_condition},
+    {Operator::JMPLT,       &make_condition},
+    {Operator::JMPLE,       &make_condition},
+    {Operator::JMPGT,       &make_condition},
+    {Operator::JMPGE,       &make_condition},
+    {Operator::JMPT,        &make_condition},
+    {Operator::JMPF,        &make_condition},
+    {Operator::JMPONT,      &make_condition},
+    {Operator::JMPONF,      &make_condition},
+    {Operator::JMP,         &end_condition},
+    // Closure
+    {Operator::CLOSURE,     &make_closure},
+};
+
+// clang-format on
+
+unsigned PC = 0;
 
 // Block management
 
@@ -101,7 +201,8 @@ void push_string(Ast*& ast, const Instruction& instruction, const Function& func
 
 void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Its only a table if an identifier is on the stack before. Otherwise its a map or list.
+    // Its only a table if an identifier is on the stack before. Otherwise its a map or
+    // list.
 
     std::string name;
     if(ast->stack.size())
@@ -397,20 +498,15 @@ void make_while_loop(Ast*& /*ast*/, const Instruction& /*instruction*/, const Fu
 
 // Condition
 
-void make_binary_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     const auto op = OP(instruction);
 
-    if(op < Operator::JMPNE || op > Operator::JMPGE)
+    if(op < Operator::JMPNE || op > Operator::JMPONF)
     {
         printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
+        exit(1);
     }
-
-    auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-
-    auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
 
     std::string comparison;
 
@@ -434,35 +530,6 @@ void make_binary_condition(Ast*& ast, const Instruction& instruction, const Func
     case Operator::JMPGE:
         comparison = "<";
         break;
-    default:
-        printf("OP %d not covered for conditions\n", (int)op);
-    }
-
-    const auto operation = AstOperation(comparison, {left, right});
-    const auto condition = Condition(operation, Collection<Statement>{});
-    ast->statements.push_back(condition);
-
-    enter_block(ast);
-
-    is_condition             = true;
-    PC                       = S(instruction);
-    ast->context.condition   = true;
-    ast->context.jump_offset = S(instruction);
-}
-
-void make_unary_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
-{
-    const auto op = OP(instruction);
-
-    if(op < Operator::JMPT || op > Operator::JMPONF)
-    {
-        printf("Invalid unary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
-    }
-
-    std::string comparison;
-
-    switch(op)
-    {
     case Operator::JMPT:
     case Operator::JMPONT:
         comparison = "~=";
@@ -473,35 +540,80 @@ void make_unary_condition(Ast*& ast, const Instruction& instruction, const Funct
         break;
     default:
         printf("OP %d not covered for conditions\n", (int)op);
+        exit(1);
     }
 
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    Collection<Expression> operands;
 
-    const auto operation = AstOperation(comparison, {left, Identifier("nil")});
-    const auto condition = Condition(operation, Collection<Statement>{});
-    ast->statements.push_back(condition);
+    if(op >= Operator::JMPNE && op <= Operator::JMPGE)
+    {
+        auto left = std::get<Expression>(ast->stack.back());
+        ast->stack.pop_back();
 
+        auto right = std::get<Expression>(ast->stack.back());
+        ast->stack.pop_back();
+
+        operands = {left, right};
+    }
+    else if(op >= Operator::JMPT && op <= Operator::JMPONF)
+    {
+        auto left = std::get<Expression>(ast->stack.back());
+        ast->stack.pop_back();
+
+        operands = {left, Identifier("nil")};
+    }
+
+    // if block
+    if(!ast->context.is_condition)
+    {
+        const auto operation = AstOperation(comparison, operands);
+        const auto block     = ConditionBlock(operation, Collection<Statement>{});
+        const auto condition = Condition(Collection<ConditionBlock>{block});
+        ast->statements.push_back(condition);
+    }
+    // elseif block
+    else
+    {
+        // Collect the statements of the previous block and add them
+        exit_block(ast);
+
+        auto& condition                    = std::get<Condition>(ast->statements.back());
+        condition.blocks.back().statements = ast->child->statements;
+
+        const auto operation = AstOperation(comparison, operands);
+        const auto block     = ConditionBlock(operation, Collection<Statement>{});
+        condition.blocks.push_back(block);
+    }
+
+    // The following instructions make up the statements of the condition block
     enter_block(ast);
 
-    is_condition             = true;
-    PC                       = S(instruction);
-    ast->context.condition   = true;
-    ast->context.jump_offset = S(instruction);
+    ast->context.is_condition = true;
+    ast->context.jump_offset  = PC + S(instruction);
 }
 
 void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto operation = AstOperation("else/elseif", {Identifier(""), Identifier("")});
-    const auto condition = Condition(operation, Collection<Statement>{});
-    ast->statements.push_back(condition);
+    // TODO: Find the condition to identify the else condition (info must be somewhere in
+    // the PC)
 
-    enter_block(ast);
+    if(ast->context.is_condition)
+    {
+        if(PC < ast->context.jump_offset)
+        {
+            exit_block(ast);
 
-    is_condition             = true;
-    PC                       = S(instruction);
-    ast->context.condition   = true;
-    ast->context.jump_offset = S(instruction);
+            auto&      condition = std::get<Condition>(ast->statements.back());
+            const auto operation = AstOperation("", Collection<Expression>{});
+            const auto block     = ConditionBlock(operation, Collection<Statement>{});
+            condition.blocks.push_back(block);
+
+            enter_block(ast);
+        }
+    }
+
+    ast->context.is_condition = true;
+    ast->context.jump_offset  = PC + S(instruction);
 }
 
 void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -512,7 +624,7 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     const auto locals = function.functions[A(instruction)].locals;
     for(const auto& local : locals)
     {
-        ast->stack.push_back(Identifier("TODO"));
+        ast->stack.push_back(Identifier(local));
     }
 
     parse_function(ast, function.functions[A(instruction)]);
@@ -537,84 +649,12 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
 // Public functions
 
-// clang-format off
-auto TABLE = ActionTable
-{
-    {Operator::END,         &empty},
-    {Operator::RETURN,      &empty}, // TODO
-    // Stack modification
-    {Operator::PUSHNIL,     &push_nil},
-    {Operator::POP,         &pop},
-    {Operator::PUSHINT,     &push_int},
-    {Operator::PUSHSTRING,  &push_string},
-    {Operator::PUSHNUM,     &push_num},
-    {Operator::PUSHNEGNUM,  &push_num},
-    {Operator::PUSHUPVALUE, &empty}, // TODO
-    {Operator::GETLOCAL,    &push_local},
-    {Operator::GETGLOBAL,   &push_global},
-    {Operator::GETTABLE,    &empty}, // TODO
-    {Operator::GETDOTTED,   &push_dotted},
-    {Operator::GETINDEXED,  &push_indexed},
-    {Operator::PUSHSELF,    &push_self},
-    {Operator::CREATETABLE, &push_table},
-    {Operator::SETLIST,     &push_list},
-    {Operator::SETMAP,      &push_map},
-    {Operator::PUSHNILJMP,  &empty}, // TODO
-    // Operations
-    {Operator::ADD,         &add},
-    {Operator::ADDI,        &addi},
-    {Operator::SUB,         &sub},
-    {Operator::MULT,        &mult},
-    {Operator::DIV,         &div},
-    {Operator::POW,         &pow},
-    {Operator::CONCAT,      &concat},
-    {Operator::MINUS,       &minus},
-    {Operator::NOT,         &not},
-    // Call
-    {Operator::CALL,        &make_call},
-    {Operator::TAILCALL,    &make_tail_call},
-    // Assignment
-    {Operator::SETLOCAL,    &make_local_assignment},
-    {Operator::SETGLOBAL,   &make_assignment},
-    {Operator::SETTABLE,    &make_table_assignment},
-    // For loop
-    {Operator::FORPREP,     &enter_block},
-    {Operator::FORLOOP,     &make_for_loop},
-    // For in loop
-    {Operator::LFORPREP,    &enter_block},
-    {Operator::LFORLOOP,    &make_for_in_loop},
-    // Conditions
-    {Operator::JMPNE,       &make_binary_condition},
-    {Operator::JMPEQ,       &make_binary_condition},
-    {Operator::JMPLT,       &make_binary_condition},
-    {Operator::JMPLE,       &make_binary_condition},
-    {Operator::JMPGT,       &make_binary_condition},
-    {Operator::JMPGE,       &make_binary_condition},
-    {Operator::JMPT,        &make_unary_condition},
-    {Operator::JMPF,        &make_unary_condition},
-    {Operator::JMPONT,      &make_unary_condition},
-    {Operator::JMPONF,      &make_unary_condition},
-    {Operator::JMP,         &end_condition},
-    // Closure
-    {Operator::CLOSURE,     &make_closure},
-};
-
-// clang-format on
-
 void parse_function(Ast*& ast, const Function& function)
 {
     // TODO: Add local variables for this scope
 
     for(const auto& i : function.instructions)
     {
-        // We are currently inside a condition
-        // if(ast->context.condition)
-        if(is_condition)
-            // if(ast->context.jump_offset > 0)
-            if(PC > 0)
-                // ast->context.jump_offset--;
-                PC--;
-
         auto op = Operator(OP(i));
 
         if(TABLE.count(op) == 0)
@@ -625,21 +665,20 @@ void parse_function(Ast*& ast, const Function& function)
 
         TABLE[op](ast, i, function);
 
-        // Last instruction inside the condition
-        // if(ast->context.condition)
-        if(is_condition)
+        // Handle conditions
+        if(ast->context.is_condition)
         {
-            // if(ast->context.jump_offset == 0)
-            if(PC == 0)
+            if(PC == ast->context.jump_offset)
             {
-                // ast->context.condition = false;
-                is_condition = false;
+                ast->context.is_condition = false;
 
                 exit_block(ast);
 
                 Condition& condition = std::get<Condition>(ast->statements.back());
-                condition.statements = ast->child->statements;
+                condition.blocks.back().statements = ast->child->statements;
             }
         }
+
+        PC++;
     }
 }

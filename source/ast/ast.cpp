@@ -165,12 +165,31 @@ void print(const Call& call, const int indent, FILE* stream)
 
 void print(const Condition& condition, const int indent, FILE* stream)
 {
-    print_indent(indent, stream);
-    fprintf(stream, "if ");
-    print(condition.condition, indent, stream);
-    fprintf(stream, " then\n");
 
-    print_statements(condition.statements, indent + 1, stream);
+    for(auto it = condition.blocks.begin(); it != condition.blocks.end(); ++it)
+    {
+        print_indent(indent, stream);
+
+        if(it == condition.blocks.begin())
+        {
+            fprintf(stream, "if ");
+            print(it->comparison, indent, stream);
+            fprintf(stream, " then\n");
+            print_statements(it->statements, indent + 1, stream);
+        }
+        else if(!it->comparison.empty())
+        {
+            fprintf(stream, "elseif ");
+            print(it->comparison, indent, stream);
+            fprintf(stream, " then\n");
+            print_statements(it->statements, indent + 1, stream);
+        }
+        else
+        {
+            fprintf(stream, "else\n");
+            print_statements(it->statements, indent + 1, stream);
+        }
+    }
 
     print_indent(indent, stream);
     fprintf(stream, "end");
