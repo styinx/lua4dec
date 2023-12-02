@@ -51,12 +51,12 @@ struct Ast
 
 struct Closure
 {
-    Collection<Statement>       statements;
-    Collection<LocalAssignment> arguments;
+    Collection<Statement>  statements;
+    Collection<Identifier> arguments;
 
-    Closure(const Collection<Statement>& s, const Collection<LocalAssignment> a)
+    Closure(const Collection<Statement>& s, const Collection<Identifier> i)
         : statements(s)
-        , arguments(a)
+        , arguments(i)
     {
     }
 };

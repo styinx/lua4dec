@@ -620,10 +620,11 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 {
     enter_block(ast);
 
-    // TODO: pushes dummies on stack. local definitions can not be read anymore
-    const auto locals = function.functions[A(instruction)].locals;
+    const auto             locals = function.functions[A(instruction)].locals;
+    Collection<Identifier> arguments;
     for(const auto& local : locals)
     {
+        arguments.push_back(Identifier(local));
         ast->stack.push_back(Identifier(local));
     }
 
@@ -644,7 +645,7 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->child->statements, args));
+    ast->stack.push_back(Closure(ast->child->statements, arguments));
 }
 
 // Public functions

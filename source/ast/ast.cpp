@@ -34,13 +34,17 @@ void print_statements(const std::vector<Statement>& statements, const int indent
 
 void print(const Closure& closure, const int indent, FILE* stream)
 {
-    fprintf(stream, "function()\n");
+    fprintf(stream, "function(");
 
     for(const auto& arg : closure.arguments)
     {
         print(arg, indent + 1, stream);
-        fprintf(stream, "\n");
+
+        if(&arg != &closure.arguments.back())
+            fprintf(stream, ", ");
     }
+
+    fprintf(stream, ")\n");
 
     print_statements(closure.statements, indent + 1);
 
