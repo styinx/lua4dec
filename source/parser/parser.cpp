@@ -620,32 +620,38 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 {
     enter_block(ast);
 
-    const auto             locals = function.functions[A(instruction)].locals;
-    Collection<Identifier> arguments;
-    for(const auto& local : locals)
-    {
-        arguments.push_back(Identifier(local));
-        ast->stack.push_back(Identifier(local));
-    }
-
+    // Parse the closure body
     parse_function(ast, function.functions[A(instruction)]);
 
-    // Leftover elements on the stack make up the local variables.
-    unsigned                    i = 0;
-    Collection<LocalAssignment> args;
-    for(const auto& local : locals)
+    // The locals are divided into arguments and local definitions:
+    // stack:             0 1  (2 local definitions)
+    // arguments:   0 1 2      (3 closure arguments)
+    // locals:      0 1 2 3 4
+
+    const auto locals          = function.functions[A(instruction)].locals;
+    const auto num_definitions = ast->stack.size();
+    const auto num_arguments   = locals.size() - num_definitions;
+    auto       local_index     = locals.size() - 1;
+
+    Collection<Identifier> arguments;
+    for(size_t i = 0; i < num_arguments; ++i)
     {
-        ast->stack.pop_back();
+        arguments.push_back(Identifier(locals[i]));
     }
-    for(const auto& e : ast->stack)
+
+    Collection<LocalAssignment> local_definitions;
+    for(size_t i = 0; i < num_definitions; ++i)
     {
-        const auto ass = LocalAssignment(Identifier(locals[i++]), std::get<Expression>(e));
-        args.push_back(ass);
+        const auto local_name  = Identifier(locals[i]);
+        const auto local_value = std::get<Expression>(ast->stack.back());
+        const auto ass         = LocalAssignment(local_name, local_value);
+        local_definitions.push_back(ass);
+        ast->stack.pop_back();
     }
 
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->child->statements, arguments));
+    ast->stack.push_back(Closure(ast->child->statements, arguments, local_definitions));
 }
 
 // Public functions

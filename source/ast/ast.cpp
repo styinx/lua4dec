@@ -46,7 +46,13 @@ void print(const Closure& closure, const int indent, FILE* stream)
 
     fprintf(stream, ")\n");
 
-    print_statements(closure.statements, indent + 1);
+    for(const auto& local : closure.locals)
+    {
+        print(local, indent + 1, stream);
+        fprintf(stream, "\n");
+    }
+
+    print_statements(closure.statements, indent + 1, stream);
 
     print_indent(indent, stream);
     fprintf(stream, "end");
