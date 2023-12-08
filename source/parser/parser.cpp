@@ -623,7 +623,8 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     // Parse the closure body
     parse_function(ast, function.functions[A(instruction)]);
 
-    // The locals are divided into arguments and local definitions:
+    // The locals are divided into arguments and local definitions.
+    // The number of arguments depends on the leftover elements on the stack.
     // stack:             0 1  (2 local definitions)
     // arguments:   0 1 2      (3 closure arguments)
     // locals:      0 1 2 3 4
@@ -631,7 +632,6 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     const auto locals          = function.functions[A(instruction)].locals;
     const auto num_definitions = ast->stack.size();
     const auto num_arguments   = locals.size() - num_definitions;
-    auto       local_index     = locals.size() - 1;
 
     Collection<Identifier> arguments;
     for(size_t i = 0; i < num_arguments; ++i)
@@ -642,12 +642,14 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     Collection<LocalAssignment> local_definitions;
     for(size_t i = 0; i < num_definitions; ++i)
     {
-        const auto local_name  = Identifier(locals[i]);
+        const auto local_index = num_arguments + num_definitions - i - 1;
+        const auto local_name  = Identifier(locals[local_index]);
         const auto local_value = std::get<Expression>(ast->stack.back());
         const auto ass         = LocalAssignment(local_name, local_value);
         local_definitions.push_back(ass);
         ast->stack.pop_back();
     }
+    std::reverse(local_definitions.begin(), local_definitions.end());
 
     exit_block(ast);
 
@@ -681,11 +683,35 @@ void parse_function(Ast*& ast, const Function& function)
 
                 exit_block(ast);
 
-                Condition& condition = std::get<Condition>(ast->statements.back());
+                Condition& condition               = std::get<Condition>(ast->statements.back());
                 condition.blocks.back().statements = ast->child->statements;
             }
         }
 
         PC++;
+    }
+
+    // Local definitions of the chunk
+    if(ast->parent == nullptr && ast->stack.size())
+    {
+        Collection<Statement> statements;
+        for(size_t i = 0; i < function.locals.size(); ++i)
+        {
+            const auto local_name = Identifier(function.locals[i]);
+            if(ast->stack.size() > i)
+            {
+                const auto local_value = std::get<Expression>(ast->stack[i]);
+                const auto ass         = LocalAssignment(local_name, local_value);
+                statements.push_back(ass);
+            }
+            else
+            {
+                const auto ass = LocalAssignment(local_name, Identifier("nil"));
+                statements.push_back(ass);
+            }
+        }
+        ast->stack.clear();
+        statements.insert(statements.end(), ast->statements.begin(), ast->statements.end());
+        ast->statements = statements;
     }
 }
