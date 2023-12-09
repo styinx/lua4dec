@@ -2,25 +2,25 @@
 
 Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
-[Lua 4.0 Code](https://www.lua.org/source/4.0)
-[Lua 4.0 Reference](https://www.lua.org/manual/4.0)
+- [Lua 4.0 Code](https://www.lua.org/source/4.0)
+- [Lua 4.0 Reference](https://www.lua.org/manual/4.0)
 
 
 ## TODOs
 
-- Conditions: create "else if" blocks
+- Conditions: create "else" blocks
 - For In
 - Table
 
 
 ## Build
 
-[![Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/main.yml)
+[![Windows MSVC Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml)
+[![Ubuntu Clang Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml)
 
 
 ### CMake
 
-```
 mkdir build
 cmake -B build
 cmake --build build --config Release
@@ -34,7 +34,7 @@ cmake --build build --config Release
 ```
 
 
-## Run test (compiles and decompiles scripts in the scripts folder)
+## Run test (compiles and decompiles scripts in the tests/scripts folder)
 
 ```
 ./test ./luac ./luadec ./tests/scripts/

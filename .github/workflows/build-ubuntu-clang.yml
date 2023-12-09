@@ -1,0 +1,40 @@
+name: Build-Ubuntu-Clang
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=clang++
+        -DCMAKE_C_COMPILER=clang
+        -DCMAKE_BUILD_TYPE=Release
+        -S ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+
+    - name: Test
+      run: ./test "./lua4/luac" "./luadec" "./tests/scripts"
+
+    - name: Upload Build Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: binaries-ubuntu-clang-${{ github.sha }}
+        path: |
+          ${{ github.workspace }}/lua4/luac/luac
+          ${{ github.workspace }}/luadec/luadec
+
