@@ -32,7 +32,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
 
     - name: Test
-      run: test.exe "lua4\\luac.exe" "luadec.exe" "tests\\scripts\\"
+      run: & "test.exe" "lua4\\luac.exe" "luadec.exe" "tests\\scripts\\"
 
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
