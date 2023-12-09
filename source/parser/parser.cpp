@@ -1,5 +1,7 @@
 #include "parser/parser.hpp"
 
+#include <algorithm>
+
 void enter_block(Ast*&, const Instruction&, const Function&);
 void exit_block(Ast*&);
 void empty(Ast*&, const Instruction&, const Function&);
@@ -15,17 +17,16 @@ void push_self(Ast*&, const Instruction&, const Function&);
 void push_table(Ast*&, const Instruction&, const Function&);
 void push_list(Ast*&, const Instruction&, const Function&);
 void push_map(Ast*&, const Instruction&, const Function&);
-void push_map(Ast*&, const Instruction&, const Function&);
 void pop(Ast*&, const Instruction&, const Function&);
-void add(Ast*&, const Instruction&, const Function&);
-void addi(Ast*&, const Instruction&, const Function&);
-void sub(Ast*&, const Instruction&, const Function&);
-void mult(Ast*&, const Instruction&, const Function&);
-void div(Ast*&, const Instruction&, const Function&);
-void pow(Ast*&, const Instruction&, const Function&);
-void concat(Ast*&, const Instruction&, const Function&);
-void minus(Ast*&, const Instruction&, const Function&);
-void not(Ast*&, const Instruction&, const Function&);
+void make_add(Ast*&, const Instruction&, const Function&);
+void make_addi(Ast*&, const Instruction&, const Function&);
+void make_sub(Ast*&, const Instruction&, const Function&);
+void make_mult(Ast*&, const Instruction&, const Function&);
+void make_div(Ast*&, const Instruction&, const Function&);
+void make_pow(Ast*&, const Instruction&, const Function&);
+void make_concat(Ast*&, const Instruction&, const Function&);
+void make_minus(Ast*&, const Instruction&, const Function&);
+void make_not(Ast*&, const Instruction&, const Function&);
 void make_call(Ast*&, const Instruction&, const Function&);
 void make_tail_call(Ast*&, const Instruction&, const Function&);
 void make_local_assignment(Ast*&, const Instruction&, const Function&);
@@ -61,15 +62,15 @@ auto TABLE = ActionTable
     {Operator::SETMAP,      &push_map},
     {Operator::PUSHNILJMP,  &empty}, // TODO
     // Operations
-    {Operator::ADD,         &add},
-    {Operator::ADDI,        &addi},
-    {Operator::SUB,         &sub},
-    {Operator::MULT,        &mult},
-    {Operator::DIV,         &div},
-    {Operator::POW,         &pow},
-    {Operator::CONCAT,      &concat},
-    {Operator::MINUS,       &minus},
-    {Operator::NOT,         &not},
+    {Operator::ADD,         &make_add},
+    {Operator::ADDI,        &make_addi},
+    {Operator::SUB,         &make_sub},
+    {Operator::MULT,        &make_mult},
+    {Operator::DIV,         &make_div},
+    {Operator::POW,         &make_pow},
+    {Operator::CONCAT,      &make_concat},
+    {Operator::MINUS,       &make_minus},
+    {Operator::NOT,         &make_not},
     // Call
     {Operator::CALL,        &make_call},
     {Operator::TAILCALL,    &make_tail_call},
@@ -259,7 +260,7 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 }
 
 // Operations
-void add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -268,7 +269,7 @@ void add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*functi
     ast->stack.push_back(AstOperation("+", {left, right}));
 }
 
-void addi(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_addi(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -276,7 +277,7 @@ void addi(Ast*& ast, const Instruction& instruction, const Function& /*function*
     ast->stack.push_back(AstOperation("+", {left, right}));
 }
 
-void sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -285,7 +286,7 @@ void sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*functi
     ast->stack.push_back(AstOperation("-", {left, right}));
 }
 
-void mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -294,7 +295,7 @@ void mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*funct
     ast->stack.push_back(AstOperation("*", {left, right}));
 }
 
-void div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -303,7 +304,7 @@ void div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*functi
     ast->stack.push_back(AstOperation("/", {left, right}));
 }
 
-void pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
@@ -312,7 +313,7 @@ void pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*functi
     ast->stack.push_back(AstOperation("^", {left, right}));
 }
 
-void concat(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_concat(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Collection<Expression> ex;
     for(unsigned i = 0; i < U(instruction); ++i)
@@ -323,14 +324,14 @@ void concat(Ast*& ast, const Instruction& instruction, const Function& /*functio
     ast->stack.push_back(AstOperation("..", ex));
 }
 
-void minus(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_minus(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("-", {right}));
 }
 
-void not(Ast * &ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();

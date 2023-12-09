@@ -16,6 +16,7 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 ## Build
 
 [![Windows MSVC Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml)
+
 [![Ubuntu Clang Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml)
 
 
