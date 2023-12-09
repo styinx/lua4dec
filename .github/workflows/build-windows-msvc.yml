@@ -1,5 +1,9 @@
 name: Build-Windows-MSVC
 
+on:
+  push:
+    branches: ["*"]
+
 jobs:
   main:
     runs-on: windows-latest

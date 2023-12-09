@@ -21,6 +21,7 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ### CMake
 
+```
 mkdir build
 cmake -B build
 cmake --build build --config Release

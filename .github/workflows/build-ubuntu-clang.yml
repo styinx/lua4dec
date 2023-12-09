@@ -1,5 +1,9 @@
 name: Build-Ubuntu-Clang
 
+on:
+  push:
+    branches: ["*"]
+
 jobs:
   main:
     runs-on: ubuntu-latest
