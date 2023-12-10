@@ -210,7 +210,8 @@ void print(const ForLoop& loop, const int indent, FILE* stream)
     print_indent(indent, stream);
     fprintf(
         stream,
-        "for %ld , %ld , %ld do\n",
+        "for %s = %ld , %ld , %ld do\n",
+        loop.counter.c_str(),
         (int)loop.begin.value,
         (int)loop.end.value,
         (int)loop.increment.value);
@@ -224,7 +225,7 @@ void print(const ForLoop& loop, const int indent, FILE* stream)
 void print(const ForInLoop& loop, const int indent, FILE* stream)
 {
     print_indent(indent, stream);
-    fprintf(stream, "for %s in %s do\n", loop.left.c_str(), loop.right.c_str());
+    fprintf(stream, "for %s , %s in %s do\n", loop.key.c_str(), loop.value.c_str(), loop.right.c_str());
 
     print_statements(loop.statements, indent + 1, stream);
 

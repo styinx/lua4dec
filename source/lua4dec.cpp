@@ -32,7 +32,13 @@ void create_ast(Ast*& ast, const char* filename)
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
-    parse_function(ast, chunk.main);
+    try
+    {
+        parse_function(ast, chunk.main);
+    }
+    catch(...)
+    {
+    }
 }
 
 void parse(const char* filename, FILE* stream)
@@ -42,6 +48,13 @@ void parse(const char* filename, FILE* stream)
     auto  chunk  = read_chunk(iter);
     auto* ast    = new Ast();
 
-    parse_function(ast, chunk.main);
-    print_ast(*ast, stream);
+    try
+    {
+        parse_function(ast, chunk.main);
+        print_ast(*ast, stream);
+    }
+    catch(...)
+    {
+        printf("Exception");
+    }
 }

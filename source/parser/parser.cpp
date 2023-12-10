@@ -32,6 +32,7 @@ void make_tail_call(Ast*&, const Instruction&, const Function&);
 void make_local_assignment(Ast*&, const Instruction&, const Function&);
 void make_assignment(Ast*&, const Instruction&, const Function&);
 void make_table_assignment(Ast*&, const Instruction&, const Function&);
+void enter_for_loop(Ast*&, const Instruction&, const Function&);
 void make_for_loop(Ast*&, const Instruction&, const Function&);
 void make_for_in_loop(Ast*&, const Instruction&, const Function&);
 void make_condition(Ast*&, const Instruction&, const Function&);
@@ -79,10 +80,10 @@ auto TABLE = ActionTable
     {Operator::SETGLOBAL,   &make_assignment},
     {Operator::SETTABLE,    &make_table_assignment},
     // For loop
-    {Operator::FORPREP,     &enter_block},
+    {Operator::FORPREP,     &enter_for_loop},
     {Operator::FORLOOP,     &make_for_loop},
     // For in loop
-    {Operator::LFORPREP,    &enter_block},
+    {Operator::LFORPREP,    &enter_for_loop},
     {Operator::LFORLOOP,    &make_for_in_loop},
     // Conditions
     {Operator::JMPNE,       &make_condition},
@@ -102,7 +103,8 @@ auto TABLE = ActionTable
 
 // clang-format on
 
-unsigned PC = 0;
+unsigned PC           = 0;
+unsigned local_offset = 0;
 
 // Block management
 
@@ -178,7 +180,8 @@ void push_self(Ast*& ast, const Instruction& instruction, const Function& functi
 
 void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = function.locals[U(instruction)];
+    const auto for_loop_offset = ast->context.is_for_loop ? local_offset : 0;
+    const auto name            = function.locals[U(instruction) + for_loop_offset];
     ast->stack.push_back(Identifier(name));
 }
 
@@ -262,53 +265,53 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 // Operations
 void make_add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
     const auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("+", {left, right}));
 }
 
 void make_addi(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
+    const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
-    const auto left = AstNumber(S(instruction));
-    ast->stack.push_back(AstOperation("+", {left, right}));
+    const auto right = AstNumber(S(instruction));
+    ast->stack.push_back(AstOperation("+=", {left, right}));
 }
 
 void make_sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
     const auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("-", {left, right}));
 }
 
 void make_mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
     const auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("*", {left, right}));
 }
 
 void make_div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
     const auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("/", {left, right}));
 }
 
 void make_pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
     const auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+    const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("^", {left, right}));
 }
@@ -455,11 +458,20 @@ void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& f
     ast->statements.push_back(TailCall(name, args));
 }
 
-// For loop
+// For loops
 
-void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void enter_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
+    enter_block(ast);
+    ast->context.is_for_loop = true;
+}
+
+void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& function)
+{
+    ast->context.is_for_loop = false;
     exit_block(ast);
+
+    const auto counter = function.locals[local_offset + 3];
 
     const auto increment = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
@@ -470,24 +482,30 @@ void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function
     const auto begin = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
 
-    const ForLoop loop(begin, end, increment, ast->child->statements);
+    const ForLoop loop(counter, begin, end, increment, ast->child->statements);
     ast->statements.push_back(loop);
+
+    local_offset += 3;
 }
 
-// For in loop
-
-void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& function)
 {
+    ast->context.is_for_loop = false;
     exit_block(ast);
 
     ForInLoop loop;
 
-    // loop.right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
+    // Active local variables offset. 1st local being the list argument of the loop ("(table)")
+    loop.key   = function.locals[local_offset + 1];
+    loop.value = function.locals[local_offset + 2];
+    loop.right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
     ast->stack.pop_back();
 
     loop.statements = ast->child->statements;
 
     ast->statements.push_back(loop);
+
+    local_offset += 3;
 }
 
 // While loop
@@ -696,20 +714,12 @@ void parse_function(Ast*& ast, const Function& function)
     if(ast->parent == nullptr && ast->stack.size())
     {
         Collection<Statement> statements;
-        for(size_t i = 0; i < function.locals.size(); ++i)
+        for(size_t i = 0; i < ast->stack.size(); ++i)
         {
-            const auto local_name = Identifier(function.locals[i]);
-            if(ast->stack.size() > i)
-            {
-                const auto local_value = std::get<Expression>(ast->stack[i]);
-                const auto ass         = LocalAssignment(local_name, local_value);
-                statements.push_back(ass);
-            }
-            else
-            {
-                const auto ass = LocalAssignment(local_name, Identifier("nil"));
-                statements.push_back(ass);
-            }
+            const auto local_name  = Identifier(function.locals[i]);
+            const auto local_value = std::get<Expression>(ast->stack[i]);
+            const auto ass         = LocalAssignment(local_name, local_value);
+            statements.push_back(ass);
         }
         ast->stack.clear();
         statements.insert(statements.end(), ast->statements.begin(), ast->statements.end());

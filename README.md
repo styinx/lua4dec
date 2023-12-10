@@ -9,8 +9,7 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 ## TODOs
 
 - Conditions: create "else" blocks
-- For In
-- Table
+- For In loop: identifier strings by local offset
 
 
 ## Build

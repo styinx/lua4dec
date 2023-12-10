@@ -35,7 +35,9 @@ struct Context
 {
     unsigned jump_offset  = 0;
     unsigned PC           = 0;
+    unsigned local_offset = 0;
     bool     is_condition = false;
+    bool     is_for_loop  = false;
 };
 
 struct Ast
@@ -149,10 +151,7 @@ struct AstTable
     unsigned                                      size;
     Collection<std::pair<Expression, Expression>> pairs;
 
-    AstTable(
-        const unsigned                                       s,
-        const Identifier&                                    n,
-        const Collection<std::pair<Expression, Expression>>& p)
+    AstTable(const unsigned s, const Identifier& n, const Collection<std::pair<Expression, Expression>>& p)
         : size(s)
         , name(n)
         , pairs(p)
@@ -210,13 +209,15 @@ struct Condition
 
 struct ForLoop
 {
+    String                counter;
     AstInt                begin;
     AstInt                end;
     AstInt                increment;
     Collection<Statement> statements;
 
-    ForLoop(const AstInt b, const AstInt e, const AstInt i, const Collection<Statement>& s)
-        : begin(b)
+    ForLoop(const String& c, const AstInt b, const AstInt e, const AstInt i, const Collection<Statement>& s)
+        : counter(c)
+        , begin(b)
         , end(e)
         , increment(i)
         , statements(s)
@@ -226,7 +227,8 @@ struct ForLoop
 
 struct ForInLoop
 {
-    String                left = "temp";
+    String                key;
+    String                value;
     String                right;
     Collection<Statement> statements;
 };
@@ -236,9 +238,9 @@ struct LocalAssignment
     Identifier left;
     Expression right;
 
-    LocalAssignment(const Identifier& i, const Expression& e)
-        : left(i)
-        , right(e)
+    LocalAssignment(const Identifier& l, const Expression& r)
+        : left(l)
+        , right(r)
     {
     }
 };

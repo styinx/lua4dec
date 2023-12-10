@@ -189,7 +189,8 @@ void debug_instruction(Instruction instruction, Function& function)
         break;
     case Operator::GETLOCAL:
     case Operator::SETLOCAL:
-        name = function.locals[U(instruction)];
+        // Local adjustment for "for loops" is missing
+        name = function.locals[U(instruction)] + " !!!";
         break;
     case Operator::PUSHINT:
         name = std::to_string(S(instruction));
