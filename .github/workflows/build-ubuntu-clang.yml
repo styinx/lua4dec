@@ -31,9 +31,6 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
 
-    - name: Test
-      run: ./test "./lua4/luac" "./luadec" "./tests/scripts"
-
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
       with:

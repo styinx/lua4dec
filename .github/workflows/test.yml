@@ -31,11 +31,6 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
 
-    - name: Upload Build Results
-      uses: actions/upload-artifact@v3
-      with:
-        name: binaries-windows-msvc-${{ github.sha }}
-        path: |
-          ${{ github.workspace }}/lua4/luac.exe
-          ${{ github.workspace }}/luadec.exe
-
+    - name: Test
+      run: |
+        '& test.exe lua4\\luac.exe luadec.exe tests\\scripts\\'
