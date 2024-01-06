@@ -60,9 +60,11 @@ Function read_function(ByteIterator& iter)
     auto num_locals = read<int>(iter);
     for(int i = 0; i < num_locals; i++)
     {
-        function.locals.emplace_back(read_string(iter));
-        /*auto start_pc =*/read<int>(iter);
-        /*auto end_pc   =*/read<int>(iter);
+        Local local;
+        local.name     = read_string(iter);
+        local.start_pc = read<int>(iter);
+        local.end_pc   = read<int>(iter);
+        function.locals.emplace_back(local);
     }
 
     auto num_lineinfo = read<int>(iter);
@@ -189,8 +191,7 @@ void debug_instruction(Instruction instruction, Function& function)
         break;
     case Operator::GETLOCAL:
     case Operator::SETLOCAL:
-        // Local adjustment for "for loops" is missing
-        name = function.locals[U(instruction)] + " !!!";
+        name = function.locals[U(instruction)].name;
         break;
     case Operator::PUSHINT:
         name = std::to_string(S(instruction));
@@ -232,7 +233,7 @@ void debug_function(Function function)
     i = 0;
     for(const auto& l : function.locals)
     {
-        printf("\t%d: \"%s\"\n", i++, l.c_str());
+        printf("\t%d: \"%s\" (%u - %u)\n", i++, l.name.c_str(), l.start_pc, l.end_pc);
     }
     printf("\n");
 

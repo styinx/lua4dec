@@ -94,6 +94,13 @@ struct ChunkHeader
     byte bits_for_register_b;
 };
 
+struct Local
+{
+    String   name;
+    unsigned start_pc;
+    unsigned end_pc;
+};
+
 struct Function
 {
     String                  name;
@@ -104,7 +111,7 @@ struct Function
     Collection<Instruction> instructions;
     Collection<Number>      numbers;
     Collection<String>      globals;
-    Collection<String>      locals;
+    Collection<Local>       locals;
     Collection<int>         lines;
 
     Collection<Function> functions;

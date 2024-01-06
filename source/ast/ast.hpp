@@ -34,10 +34,7 @@ using AstElement = std::variant<Statement, Expression>;
 struct Context
 {
     unsigned jump_offset  = 0;
-    unsigned PC           = 0;
-    unsigned local_offset = 0;
     bool     is_condition = false;
-    bool     is_for_loop  = false;
 };
 
 struct Ast
@@ -210,12 +207,17 @@ struct Condition
 struct ForLoop
 {
     String                counter;
-    AstInt                begin;
-    AstInt                end;
-    AstInt                increment;
+    Expression            begin;
+    Expression            end;
+    Expression            increment;
     Collection<Statement> statements;
 
-    ForLoop(const String& c, const AstInt b, const AstInt e, const AstInt i, const Collection<Statement>& s)
+    ForLoop(
+        const String&                c,
+        const Expression             b,
+        const Expression             e,
+        const Expression             i,
+        const Collection<Statement>& s)
         : counter(c)
         , begin(b)
         , end(e)
@@ -231,6 +233,14 @@ struct ForInLoop
     String                value;
     String                right;
     Collection<Statement> statements;
+
+    ForInLoop(const String& k, const String& v, const String& r, const Collection<Statement>& s)
+        : key(k)
+        , value(v)
+        , right(r)
+        , statements(s)
+    {
+    }
 };
 
 struct LocalAssignment

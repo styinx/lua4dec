@@ -208,13 +208,15 @@ void print(const Condition& condition, const int indent, FILE* stream)
 void print(const ForLoop& loop, const int indent, FILE* stream)
 {
     print_indent(indent, stream);
-    fprintf(
-        stream,
-        "for %s = %ld , %ld , %ld do\n",
-        loop.counter.c_str(),
-        (int)loop.begin.value,
-        (int)loop.end.value,
-        (int)loop.increment.value);
+    fprintf(stream, "for %s = ", loop.counter.c_str());
+
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, loop.begin);
+    fprintf(stream, " , ");
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, loop.end);
+    fprintf(stream, " , ");
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, loop.increment);
+
+    fprintf(stream, "do\n");
 
     print_statements(loop.statements, indent + 1, stream);
 

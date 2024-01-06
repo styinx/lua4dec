@@ -2,6 +2,21 @@
 
 #include <algorithm>
 
+unsigned PC = 0;
+
+// Get a local variable that is defined at the current PC offset.
+// Use the index to get the nth next variable.
+String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned index = 0)
+{
+    for(unsigned i = 0; i < function.locals.size(); ++i)
+    {
+        if(function.locals[i].start_pc >= pc_offset)
+            if(i + index < function.locals.size())
+                return function.locals[i + index].name;
+    }
+    return "";
+}
+
 void enter_block(Ast*&, const Instruction&, const Function&);
 void exit_block(Ast*&);
 void empty(Ast*&, const Instruction&, const Function&);
@@ -103,9 +118,6 @@ auto TABLE = ActionTable
 
 // clang-format on
 
-unsigned PC           = 0;
-unsigned local_offset = 0;
-
 // Block management
 
 void enter_block(Ast*& ast)
@@ -139,6 +151,7 @@ void empty(Ast*&, const Instruction&, const Function&)
 }
 
 // Stack modification
+
 void push_nil(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     ast->stack.push_back(Identifier("nil"));
@@ -165,7 +178,7 @@ void push_dotted(Ast*& ast, const Instruction& instruction, const Function& func
 
 void push_indexed(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name   = function.locals[U(instruction)];
+    const auto name   = function.locals[U(instruction)].name;
     const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
     ast->stack.pop_back();
     ast->stack.push_back(Identifier(parent.name + "[" + name + "]"));
@@ -180,8 +193,7 @@ void push_self(Ast*& ast, const Instruction& instruction, const Function& functi
 
 void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto for_loop_offset = ast->context.is_for_loop ? local_offset : 0;
-    const auto name            = function.locals[U(instruction) + for_loop_offset];
+    const auto name = function.locals[U(instruction)].name;
     ast->stack.push_back(Identifier(name));
 }
 
@@ -355,7 +367,7 @@ void make_assignment(Ast*& ast, const Instruction& instruction, const Function& 
 
 void make_local_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto left  = Identifier(function.locals[B(instruction)]);
+    const auto left  = Identifier(function.locals[B(instruction)].name);
     const auto right = std::get<Expression>(ast->stack.back());
     Assignment ass(left, right);
     ast->stack.pop_back();
@@ -463,49 +475,48 @@ void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& f
 void enter_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     enter_block(ast);
-    ast->context.is_for_loop = true;
 }
 
-void make_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& function)
+void make_for_loop(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    ast->context.is_for_loop = false;
     exit_block(ast);
 
-    const auto counter = function.locals[local_offset + 3];
+    // Locals are defined in a PC range. The first local defined from the current PC value is the
+    // counter variable. Since this function handles the end of the for loop we have to subtract the
+    // relative offset of the PC (S register of the instruction which is already negative).
 
-    const auto increment = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
+    const auto counter = get_local_from_pc(function, PC + S(instruction), 0);
+
+    const auto increment = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    const auto end = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
+    const auto end = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
-    const auto begin = std::get<AstInt>(std::get<Expression>(ast->stack.back()));
+    const auto begin = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
     const ForLoop loop(counter, begin, end, increment, ast->child->statements);
     ast->statements.push_back(loop);
-
-    local_offset += 3;
 }
 
-void make_for_in_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& function)
+void make_for_in_loop(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    ast->context.is_for_loop = false;
     exit_block(ast);
 
-    ForInLoop loop;
+    // Locals are defined in a PC range. The first local defined from the current PC value is the
+    // list variable. Since this function handles the end of the for loop we have to subtract the
+    // relative offset of the PC (S register of the instruction which is already negative). The
+    // key variable is the next local defined after the list variable. The value variable is the
+    // second next local defined after the list variable.
 
-    // Active local variables offset. 1st local being the list argument of the loop ("(table)")
-    loop.key   = function.locals[local_offset + 1];
-    loop.value = function.locals[local_offset + 2];
-    loop.right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
+    const auto key   = get_local_from_pc(function, PC + S(instruction), 1);
+    const auto value = get_local_from_pc(function, PC + S(instruction), 2);
+    const auto right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
     ast->stack.pop_back();
 
-    loop.statements = ast->child->statements;
-
+    const ForInLoop loop(key, value, right, ast->child->statements);
     ast->statements.push_back(loop);
-
-    local_offset += 3;
 }
 
 // While loop
@@ -639,6 +650,8 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 {
     enter_block(ast);
 
+    // TODO: Different handling of locals
+
     // Parse the closure body
     parse_function(ast, function.functions[A(instruction)]);
 
@@ -655,14 +668,14 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     Collection<Identifier> arguments;
     for(size_t i = 0; i < num_arguments; ++i)
     {
-        arguments.push_back(Identifier(locals[i]));
+        arguments.push_back(Identifier(locals[i].name));
     }
 
     Collection<LocalAssignment> local_definitions;
     for(size_t i = 0; i < num_definitions; ++i)
     {
         const auto local_index = num_arguments + num_definitions - i - 1;
-        const auto local_name  = Identifier(locals[local_index]);
+        const auto local_name  = Identifier(locals[local_index].name);
         const auto local_value = std::get<Expression>(ast->stack.back());
         const auto ass         = LocalAssignment(local_name, local_value);
         local_definitions.push_back(ass);
@@ -679,8 +692,6 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
 void parse_function(Ast*& ast, const Function& function)
 {
-    // TODO: Add local variables for this scope
-
     for(const auto& i : function.instructions)
     {
         auto op = Operator(OP(i));
@@ -710,13 +721,16 @@ void parse_function(Ast*& ast, const Function& function)
         PC++;
     }
 
+    // TODO: Locals may be defined inline and have to be checked against the PC for every
+    // instruction
+
     // Local definitions of the chunk
     if(ast->parent == nullptr && ast->stack.size())
     {
         Collection<Statement> statements;
         for(size_t i = 0; i < ast->stack.size(); ++i)
         {
-            const auto local_name  = Identifier(function.locals[i]);
+            const auto local_name  = Identifier(function.locals[i].name);
             const auto local_value = std::get<Expression>(ast->stack[i]);
             const auto ass         = LocalAssignment(local_name, local_value);
             statements.push_back(ass);
