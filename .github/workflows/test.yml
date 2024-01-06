@@ -1,4 +1,4 @@
-name: Build-Windows-MSVC
+name: Test
 
 on:
   push:
