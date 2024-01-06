@@ -9,14 +9,15 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 ## TODOs
 
 - Conditions: create "else" blocks
-- For In loop: identifier strings by local offset
 
 
 ## Build
 
-[![Windows MSVC Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml)
+[![Windows MSVC Build @ master](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml)
 
-[![Ubuntu Clang Build && Test @ master](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml)
+[![Ubuntu Clang Build @ master](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-ubuntu-clang.yml)
+
+[![Test @ master](https://github.com/styinx/lua4dec/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/test.yml)
 
 
 ### CMake
@@ -41,7 +42,7 @@ cmake --build build --config Release
 ./test ./luac ./luadec ./tests/scripts/
 ```
 
-## Inspect the byte code with a GUI
+## Inspect the byte code with a GUI (WIP)
 
 [lua4dec-browser](https://github.com/styinx/lua4dec-browser)
 
