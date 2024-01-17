@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv)
 {
-    Collection<byte> buffer;
+    Vector<byte> buffer;
 
     if(argc < 2)
     {

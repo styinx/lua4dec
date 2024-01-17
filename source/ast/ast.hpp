@@ -35,29 +35,27 @@ struct Context
 {
     unsigned jump_offset  = 0;
     bool     is_condition = false;
+    bool     is_jmp_block = false;
 };
 
 struct Ast
 {
-    Ast*                   child;
-    Ast*                   parent;
-    Context                context;
-    Collection<AstElement> stack;
-    Collection<Statement>  statements;
+    Ast*               child;
+    Ast*               parent;
+    Context            context;
+    Vector<AstElement> stack;
+    Vector<Statement>  statements;
 };
 
 // Expressions
 
 struct Closure
 {
-    Collection<Statement>       statements;
-    Collection<Identifier>      arguments;
-    Collection<LocalAssignment> locals;
+    Vector<Statement>       statements;
+    Vector<Identifier>      arguments;
+    Vector<LocalAssignment> locals;
 
-    Closure(
-        const Collection<Statement>&       s,
-        const Collection<Identifier>       a,
-        const Collection<LocalAssignment>& l)
+    Closure(const Vector<Statement>& s, const Vector<Identifier> a, const Vector<LocalAssignment>& l)
         : statements(s)
         , arguments(a)
         , locals(l)
@@ -87,9 +85,9 @@ struct AstInt
 
 struct AstList
 {
-    Collection<Expression> elements;
+    Vector<Expression> elements;
 
-    AstList(const Collection<Expression>& e)
+    AstList(const Vector<Expression>& e)
         : elements(e)
     {
     }
@@ -97,9 +95,9 @@ struct AstList
 
 struct AstMap
 {
-    Collection<std::pair<Expression, Expression>> pairs;
+    Vector<std::pair<Expression, Expression>> pairs;
 
-    AstMap(const Collection<std::pair<Expression, Expression>>& p)
+    AstMap(const Vector<std::pair<Expression, Expression>>& p)
         : pairs(p)
     {
     }
@@ -117,10 +115,10 @@ struct AstNumber
 
 struct AstOperation
 {
-    std::string            op;
-    Collection<Expression> ex;
+    std::string        op;
+    Vector<Expression> ex;
 
-    AstOperation(const std::string& o, const Collection<Expression>& e)
+    AstOperation(const std::string& o, const Vector<Expression>& e)
         : op(o)
         , ex(e)
     {
@@ -144,11 +142,11 @@ struct AstString
 
 struct AstTable
 {
-    Identifier                                    name;
-    unsigned                                      size;
-    Collection<std::pair<Expression, Expression>> pairs;
+    Identifier                                name;
+    unsigned                                  size;
+    Vector<std::pair<Expression, Expression>> pairs;
 
-    AstTable(const unsigned s, const Identifier& n, const Collection<std::pair<Expression, Expression>>& p)
+    AstTable(const unsigned s, const Identifier& n, const Vector<std::pair<Expression, Expression>>& p)
         : size(s)
         , name(n)
         , pairs(p)
@@ -158,10 +156,10 @@ struct AstTable
 
 struct Call
 {
-    Identifier             name;
-    Collection<Expression> arguments;
+    Identifier         name;
+    Vector<Expression> arguments;
 
-    Call(const Identifier& i, const Collection<Expression>& a)
+    Call(const Identifier& i, const Vector<Expression>& a)
         : name(i)
         , arguments(a)
     {
@@ -184,10 +182,10 @@ struct Assignment
 
 struct ConditionBlock
 {
-    AstOperation          comparison;
-    Collection<Statement> statements;
+    AstOperation      comparison;
+    Vector<Statement> statements;
 
-    ConditionBlock(const AstOperation& o, const Collection<Statement>& s)
+    ConditionBlock(const AstOperation& o, const Vector<Statement>& s)
         : comparison(o)
         , statements(s)
     {
@@ -196,9 +194,9 @@ struct ConditionBlock
 
 struct Condition
 {
-    Collection<ConditionBlock> blocks;
+    Vector<ConditionBlock> blocks;
 
-    Condition(const Collection<ConditionBlock>& c)
+    Condition(const Vector<ConditionBlock>& c)
         : blocks(c)
     {
     }
@@ -206,18 +204,18 @@ struct Condition
 
 struct ForLoop
 {
-    String                counter;
-    Expression            begin;
-    Expression            end;
-    Expression            increment;
-    Collection<Statement> statements;
+    String            counter;
+    Expression        begin;
+    Expression        end;
+    Expression        increment;
+    Vector<Statement> statements;
 
     ForLoop(
-        const String&                c,
-        const Expression             b,
-        const Expression             e,
-        const Expression             i,
-        const Collection<Statement>& s)
+        const String&            c,
+        const Expression         b,
+        const Expression         e,
+        const Expression         i,
+        const Vector<Statement>& s)
         : counter(c)
         , begin(b)
         , end(e)
@@ -229,12 +227,12 @@ struct ForLoop
 
 struct ForInLoop
 {
-    String                key;
-    String                value;
-    String                right;
-    Collection<Statement> statements;
+    String            key;
+    String            value;
+    String            right;
+    Vector<Statement> statements;
 
-    ForInLoop(const String& k, const String& v, const String& r, const Collection<Statement>& s)
+    ForInLoop(const String& k, const String& v, const String& r, const Vector<Statement>& s)
         : key(k)
         , value(v)
         , right(r)
@@ -257,10 +255,10 @@ struct LocalAssignment
 
 struct TailCall
 {
-    Identifier             name;
-    Collection<Expression> arguments;
+    Identifier         name;
+    Vector<Expression> arguments;
 
-    TailCall(const Identifier& i, const Collection<Expression>& a)
+    TailCall(const Identifier& i, const Vector<Expression>& a)
         : name(i)
         , arguments(a)
     {
@@ -269,10 +267,10 @@ struct TailCall
 
 struct WhileLoop
 {
-    AstOperation          condition;
-    Collection<Statement> statements;
+    AstOperation      condition;
+    Vector<Statement> statements;
 
-    WhileLoop(const AstOperation& o, const Collection<Statement>& s)
+    WhileLoop(const AstOperation& o, const Vector<Statement>& s)
         : condition(o)
         , statements(s)
     {
@@ -289,7 +287,7 @@ void print_ast(const Ast&, FILE* stream = stdout);
 
 void print_indent(const int, FILE* stream = stdout);
 
-void print_statements(const Collection<Statement>&, const int indent = 0, FILE* stream = stdout);
+void print_statements(const Vector<Statement>&, const int indent = 0, FILE* stream = stdout);
 
 void print(const Closure&, const int indent = 0, FILE* stream = stdout);
 void print(const Identifier&, const int indent = 0, FILE* stream = stdout);

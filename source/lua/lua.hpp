@@ -14,7 +14,7 @@ using byte         = unsigned char;
 using ByteIterator = byte*;
 using String       = std::string;
 template<typename T>
-using Collection = std::vector<T>;
+using Vector = std::vector<T>;
 
 #ifdef OS_32
 using Instruction = unsigned;
@@ -103,18 +103,18 @@ struct Local
 
 struct Function
 {
-    String                  name;
-    int                     line_defined;
-    int                     number_of_params;
-    bool                    is_variadic;
-    int                     max_stack_size;
-    Collection<Instruction> instructions;
-    Collection<Number>      numbers;
-    Collection<String>      globals;
-    Collection<Local>       locals;
-    Collection<int>         lines;
+    String              name;
+    int                 line_defined;
+    int                 number_of_params;
+    bool                is_variadic;
+    int                 max_stack_size;
+    Vector<Instruction> instructions;
+    Vector<Number>      numbers;
+    Vector<String>      globals;
+    Vector<Local>       locals;
+    Vector<int>         lines;
 
-    Collection<Function> functions;
+    Vector<Function> functions;
 };
 
 struct Chunk

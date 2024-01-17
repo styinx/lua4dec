@@ -232,13 +232,13 @@ void push_table(Ast*& ast, const Instruction& instruction, const Function& funct
     }
 
     const auto size = B(instruction);
-    AstTable   table(size, name, Collection<std::pair<Expression, Expression>>{});
+    AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
     ast->stack.push_back(table);
 }
 
 void push_list(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    Collection<Expression> list;
+    Vector<Expression> list;
     for(unsigned i = 0; i < B(instruction); ++i)
     {
         list.push_back(std::get<Expression>(ast->stack.back()));
@@ -253,7 +253,7 @@ void push_list(Ast*& ast, const Instruction& instruction, const Function& /*func
 
 void push_map(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    Collection<std::pair<Expression, Expression>> map;
+    Vector<std::pair<Expression, Expression>> map;
     for(unsigned i = 0; i < U(instruction); ++i)
     {
         const auto value = std::get<Expression>(ast->stack.back());
@@ -330,7 +330,7 @@ void make_pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
 
 void make_concat(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    Collection<Expression> ex;
+    Vector<Expression> ex;
     for(unsigned i = 0; i < U(instruction); ++i)
     {
         ex.push_back(std::get<Expression>(ast->stack.back()));
@@ -377,7 +377,7 @@ void make_local_assignment(Ast*& ast, const Instruction& instruction, const Func
 
 void make_table_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    Collection<Expression> args;
+    Vector<Expression> args;
     for(unsigned i = 0; i < B(instruction); ++i)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
@@ -411,8 +411,8 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
     // A represents the number of elements to keep on the stack. All popped elements
     // make up the name and the argument of the function.
 
-    Collection<Expression> args;
-    const auto             keep_stack_elements = A(instruction);
+    Vector<Expression> args;
+    const auto         keep_stack_elements = A(instruction);
     while(ast->stack.size() > keep_stack_elements + 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
@@ -454,8 +454,8 @@ void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& f
     // A represents the number of elements to keep on the stack. All popped elements
     // make up the name and the argument of the function.
 
-    Collection<Expression> args;
-    const auto             keep_stack_elements = A(instruction);
+    Vector<Expression> args;
+    const auto         keep_stack_elements = A(instruction);
     while(ast->stack.size() > keep_stack_elements + 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
@@ -573,7 +573,7 @@ void make_condition(Ast*& ast, const Instruction& instruction, const Function& /
         exit(1);
     }
 
-    Collection<Expression> operands;
+    Vector<Expression> operands;
 
     if(op >= Operator::JMPNE && op <= Operator::JMPGE)
     {
@@ -597,53 +597,38 @@ void make_condition(Ast*& ast, const Instruction& instruction, const Function& /
     if(!ast->context.is_condition)
     {
         const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Collection<Statement>{});
-        const auto condition = Condition(Collection<ConditionBlock>{block});
+        const auto block     = ConditionBlock(operation, Vector<Statement>{});
+        const auto condition = Condition(Vector<ConditionBlock>{block});
         ast->statements.push_back(condition);
+
+        enter_block(ast);
+        ast->context.is_condition = true;
+        ast->context.jump_offset  = PC + S(instruction);
     }
     // elseif block
     else
     {
-        // Collect the statements of the previous block and add them
-        exit_block(ast);
-
-        auto& condition                    = std::get<Condition>(ast->statements.back());
-        condition.blocks.back().statements = ast->child->statements;
-
+        auto&      condition = std::get<Condition>(ast->parent->statements.back());
         const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Collection<Statement>{});
+        const auto block     = ConditionBlock(operation, Vector<Statement>{});
         condition.blocks.push_back(block);
+
+        ast->context.jump_offset = PC + S(instruction);
     }
-
-    // The following instructions make up the statements of the condition block
-    enter_block(ast);
-
-    ast->context.is_condition = true;
-    ast->context.jump_offset  = PC + S(instruction);
+    ast->context.is_jmp_block = false;
 }
 
 void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    // TODO: Find the condition to identify the else condition (info must be somewhere in
-    // the PC)
-
     if(ast->context.is_condition)
     {
-        if(PC < ast->context.jump_offset)
-        {
-            exit_block(ast);
+        auto& condition                    = std::get<Condition>(ast->parent->statements.back());
+        condition.blocks.back().statements = ast->statements;
+        ast->statements.clear();
 
-            auto&      condition = std::get<Condition>(ast->statements.back());
-            const auto operation = AstOperation("", Collection<Expression>{});
-            const auto block     = ConditionBlock(operation, Collection<Statement>{});
-            condition.blocks.push_back(block);
-
-            enter_block(ast);
-        }
+        ast->context.jump_offset  = PC + S(instruction);
+        ast->context.is_jmp_block = true;
     }
-
-    ast->context.is_condition = true;
-    ast->context.jump_offset  = PC + S(instruction);
 }
 
 void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -665,13 +650,13 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
     const auto num_definitions = ast->stack.size();
     const auto num_arguments   = locals.size() - num_definitions;
 
-    Collection<Identifier> arguments;
+    Vector<Identifier> arguments;
     for(size_t i = 0; i < num_arguments; ++i)
     {
         arguments.push_back(Identifier(locals[i].name));
     }
 
-    Collection<LocalAssignment> local_definitions;
+    Vector<LocalAssignment> local_definitions;
     for(size_t i = 0; i < num_definitions; ++i)
     {
         const auto local_index = num_arguments + num_definitions - i - 1;
@@ -704,18 +689,24 @@ void parse_function(Ast*& ast, const Function& function)
 
         TABLE[op](ast, i, function);
 
-        // Handle conditions
-        if(ast->context.is_condition)
+        // Handle the end of a condition block if the PC is right.
+        if(ast->context.is_condition && PC == ast->context.jump_offset)
         {
-            if(PC == ast->context.jump_offset)
+            auto& condition = std::get<Condition>(ast->parent->statements.back());
+
+            // Create an else block if the last jump operator was a JMP
+            if(ast->context.is_jmp_block)
             {
-                ast->context.is_condition = false;
-
-                exit_block(ast);
-
-                Condition& condition               = std::get<Condition>(ast->statements.back());
-                condition.blocks.back().statements = ast->child->statements;
+                const auto operation = AstOperation("", Vector<Expression>{});
+                const auto block     = ConditionBlock(operation, Vector<Statement>{});
+                condition.blocks.push_back(block);
             }
+
+            condition.blocks.back().statements = ast->statements;
+            ast->statements.clear();
+
+            ast->context.is_condition = false;
+            exit_block(ast);
         }
 
         PC++;
@@ -727,7 +718,7 @@ void parse_function(Ast*& ast, const Function& function)
     // Local definitions of the chunk
     if(ast->parent == nullptr && ast->stack.size())
     {
-        Collection<Statement> statements;
+        Vector<Statement> statements;
         for(size_t i = 0; i < ast->stack.size(); ++i)
         {
             const auto local_name  = Identifier(function.locals[i].name);

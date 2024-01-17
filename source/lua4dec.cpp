@@ -1,6 +1,6 @@
 #include "lua4dec.hpp"
 
-Collection<byte> read_file(const char* filename)
+Vector<byte> read_file(const char* filename)
 {
     auto* stream = fopen(filename, "rb");
 
@@ -13,7 +13,7 @@ Collection<byte> read_file(const char* filename)
     auto len = ftell(stream);
     fseek(stream, 0, SEEK_SET);
 
-    auto buffer     = Collection<byte>(len);
+    auto buffer     = Vector<byte>(len);
     auto bytes_read = (long)fread(buffer.data(), 1, len, stream);
     fclose(stream);
 
@@ -32,13 +32,7 @@ void create_ast(Ast*& ast, const char* filename)
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
-    try
-    {
-        parse_function(ast, chunk.main);
-    }
-    catch(...)
-    {
-    }
+    parse_function(ast, chunk.main);
 }
 
 void parse(const char* filename, FILE* stream)
@@ -48,13 +42,6 @@ void parse(const char* filename, FILE* stream)
     auto  chunk  = read_chunk(iter);
     auto* ast    = new Ast();
 
-    try
-    {
-        parse_function(ast, chunk.main);
-        print_ast(*ast, stream);
-    }
-    catch(...)
-    {
-        printf("Exception");
-    }
+    parse_function(ast, chunk.main);
+    print_ast(*ast, stream);
 }
