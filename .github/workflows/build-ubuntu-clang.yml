@@ -37,5 +37,5 @@ jobs:
         name: binaries-ubuntu-clang-${{ github.sha }}
         path: |
           ${{ github.workspace }}/lua4/luac/luac
-          ${{ github.workspace }}/luadec/luadec
+          ${{ github.workspace }}/luadec
 
