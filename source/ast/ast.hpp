@@ -36,6 +36,7 @@ struct Context
     unsigned jump_offset  = 0;
     bool     is_condition = false;
     bool     is_jmp_block = false;
+    bool     is_or_block  = false;
 };
 
 struct Ast

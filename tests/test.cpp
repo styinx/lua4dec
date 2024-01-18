@@ -82,13 +82,7 @@ int main(int argc, char** argv)
             cmd.append(" ").append(name);
 
             auto* ast = new Ast();
-            try
-            {
-                create_ast(ast, name.c_str());
-            }
-            catch(...)
-            {
-            }
+            create_ast(ast, name.c_str());
             // TODO
             // results[name][1] = read_file(name.c_str());
 

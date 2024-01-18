@@ -50,6 +50,7 @@ void make_table_assignment(Ast*&, const Instruction&, const Function&);
 void enter_for_loop(Ast*&, const Instruction&, const Function&);
 void make_for_loop(Ast*&, const Instruction&, const Function&);
 void make_for_in_loop(Ast*&, const Instruction&, const Function&);
+void make_or(Ast*&, const Instruction&, const Function&);
 void make_condition(Ast*&, const Instruction&, const Function&);
 void end_condition(Ast*&, const Instruction&, const Function&);
 void make_closure(Ast*&, const Instruction&, const Function&);
@@ -109,7 +110,7 @@ auto TABLE = ActionTable
     {Operator::JMPGE,       &make_condition},
     {Operator::JMPT,        &make_condition},
     {Operator::JMPF,        &make_condition},
-    {Operator::JMPONT,      &make_condition},
+    {Operator::JMPONT,      &make_or},
     {Operator::JMPONF,      &make_condition},
     {Operator::JMP,         &end_condition},
     // Closure
@@ -289,7 +290,7 @@ void make_addi(Ast*& ast, const Instruction& instruction, const Function& /*func
     const auto left = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     const auto right = AstNumber(S(instruction));
-    ast->stack.push_back(AstOperation("+=", {left, right}));
+    ast->stack.push_back(AstOperation("+", {right, left}));
 }
 
 void make_sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
@@ -528,6 +529,18 @@ void make_while_loop(Ast*& /*ast*/, const Instruction& /*instruction*/, const Fu
 
 // Condition
 
+void make_or(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+{
+    auto left = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+
+    AstOperation operation("or", {left});
+    ast->stack.push_back(operation);
+
+    ast->context.is_or_block = true;
+    ast->context.jump_offset = PC + S(instruction);
+}
+
 void make_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     const auto op = OP(instruction);
@@ -561,7 +574,6 @@ void make_condition(Ast*& ast, const Instruction& instruction, const Function& /
         comparison = "<";
         break;
     case Operator::JMPT:
-    case Operator::JMPONT:
         comparison = "~=";
         break;
     case Operator::JMPF:
@@ -689,8 +701,19 @@ void parse_function(Ast*& ast, const Function& function)
 
         TABLE[op](ast, i, function);
 
+        // Inline or comparison for an assignment (x = x or y)
+        if(ast->context.is_or_block && PC == ast->context.jump_offset)
+        {
+            auto right = std::get<Expression>(ast->stack.back());
+            ast->stack.pop_back();
+
+            auto& operation = std::get<AstOperation>(std::get<Expression>(ast->stack.back()));
+            operation.ex.insert(operation.ex.begin(), right);
+
+            ast->context.is_or_block = false;
+        }
         // Handle the end of a condition block if the PC is right.
-        if(ast->context.is_condition && PC == ast->context.jump_offset)
+        else if(ast->context.is_condition && PC == ast->context.jump_offset)
         {
             auto& condition = std::get<Condition>(ast->parent->statements.back());
 
