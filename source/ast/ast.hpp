@@ -22,13 +22,14 @@ struct Condition;
 struct ForLoop;
 struct ForInLoop;
 struct LocalAssignment;
+struct Return;
 struct TailCall;
 struct WhileLoop;
 
 using Expression =
     std::variant<Call, Closure, Identifier, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString, AstTable>;
 using Statement =
-    std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, TailCall, WhileLoop>;
+    std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, Return, TailCall, WhileLoop>;
 using AstElement = std::variant<Statement, Expression>;
 
 struct Context
@@ -254,6 +255,16 @@ struct LocalAssignment
     }
 };
 
+struct Return
+{
+    Expression ex;
+
+    Return(const Expression& e)
+        : ex(e)
+    {
+    }
+};
+
 struct TailCall
 {
     Identifier         name;
@@ -306,6 +317,7 @@ void print(const Condition&, const int indent = 0, FILE* stream = stdout);
 void print(const ForLoop&, const int indent = 0, FILE* stream = stdout);
 void print(const ForInLoop&, const int indent = 0, FILE* stream = stdout);
 void print(const LocalAssignment&, const int indent = 0, FILE* stream = stdout);
+void print(const Return&, const int indent = 0, FILE* stream = stdout);
 void print(const TailCall&, const int indent = 0, FILE* stream = stdout);
 void print(const WhileLoop&, const int indent = 0, FILE* stream = stdout);
 

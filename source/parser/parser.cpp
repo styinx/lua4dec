@@ -26,6 +26,7 @@ void push_string(Ast*&, const Instruction&, const Function&);
 void push_num(Ast*&, const Instruction&, const Function&);
 void push_local(Ast*&, const Instruction&, const Function&);
 void push_global(Ast*&, const Instruction&, const Function&);
+void push_table_element(Ast*&, const Instruction&, const Function&);
 void push_dotted(Ast*&, const Instruction&, const Function&);
 void push_indexed(Ast*&, const Instruction&, const Function&);
 void push_self(Ast*&, const Instruction&, const Function&);
@@ -45,6 +46,7 @@ void make_not(Ast*&, const Instruction&, const Function&);
 void make_call(Ast*&, const Instruction&, const Function&);
 void make_tail_call(Ast*&, const Instruction&, const Function&);
 void make_local_assignment(Ast*&, const Instruction&, const Function&);
+void make_return(Ast*&, const Instruction&, const Function&);
 void make_assignment(Ast*&, const Instruction&, const Function&);
 void make_table_assignment(Ast*&, const Instruction&, const Function&);
 void enter_for_loop(Ast*&, const Instruction&, const Function&);
@@ -59,7 +61,7 @@ void make_closure(Ast*&, const Instruction&, const Function&);
 auto TABLE = ActionTable
 {
     {Operator::END,         &empty},
-    {Operator::RETURN,      &empty}, // TODO
+    {Operator::RETURN,      &make_return},
     // Stack modification
     {Operator::PUSHNIL,     &push_nil},
     {Operator::POP,         &pop},
@@ -70,7 +72,7 @@ auto TABLE = ActionTable
     {Operator::PUSHUPVALUE, &empty}, // TODO
     {Operator::GETLOCAL,    &push_local},
     {Operator::GETGLOBAL,   &push_global},
-    {Operator::GETTABLE,    &empty}, // TODO
+    {Operator::GETTABLE,    &push_table_element},
     {Operator::GETDOTTED,   &push_dotted},
     {Operator::GETINDEXED,  &push_indexed},
     {Operator::PUSHSELF,    &push_self},
@@ -167,6 +169,17 @@ void push_global(Ast*& ast, const Instruction& instruction, const Function& func
 {
     const auto name = function.globals[U(instruction)];
     ast->stack.push_back(Identifier(name));
+}
+
+void push_table_element(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+{
+    const auto index = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+
+    const auto table = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
+    ast->stack.pop_back();
+
+    ast->stack.push_back(Identifier(table.name + "[" + index.name + "]"));
 }
 
 void push_dotted(Ast*& ast, const Instruction& instruction, const Function& function)
@@ -352,6 +365,17 @@ void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
     ast->stack.push_back(AstOperation("not", {right}));
+}
+
+// Return
+
+void make_return(Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto right = std::get<Expression>(ast->stack.back());
+    ast->stack.pop_back();
+
+    Return ret(right);
+    ast->statements.push_back(ret);
 }
 
 // Assignment

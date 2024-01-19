@@ -242,6 +242,13 @@ void print(const LocalAssignment& assignment, const int indent, FILE* stream)
     std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, assignment.right);
 }
 
+void print(const Return& ret, const int indent, FILE* stream)
+{
+    print_indent(indent, stream);
+    fprintf(stream, "return ");
+    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, ret.ex);
+}
+
 void print(const TailCall& call, const int indent, FILE* stream)
 {
     print_indent(indent, stream);
