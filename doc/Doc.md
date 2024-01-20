@@ -95,7 +95,102 @@ Therefore, the string `a` is pushed onto the stack.
 
 ### Statements
 
+#### Assignment
+
+
+**Lua Code**
+```
+x = 1
+```
+
+
+<details>
+<summary>Luac Output</summary>
+```
+main <0:@.\tests\scripts\setglobal.lua> (3 instructions/12 bytes at 000001D20DCA8330)
+0 params, 1 stack, 0 locals, 1 string, 0 numbers, 0 functions, 2 lines
+     1  [1]     PUSHINT         1
+     2  [1]     SETGLOBAL       0       ; x
+     3  [1]     END
+```
+</details>
+
+
+<details>
+<summary>Luadec Output</summary>
+```
+Name: @./tests/scripts/setglobal.lua
+Line: 0
+Params: 0
+Variadic: false
+Stack: 1
+Globals: 1
+        0: "x"
+Locals: 0
+
+Instructions: 3
+I: -2147483642 (0x80000006) | OP:  6 (0x06) (    PUSHINT) | A: 65536 (0x0010000) | B:   0 (0x000) | U:   33554432 (0x02000000) | S:         1 (0x00000001) | 1
+I:          19 (0x00000013) | OP: 19 (0x13) (  SETGLOBAL) | A:     0 (0x0000000) | B:   0 (0x000) | U:          0 (0x00000000) | S: -33554431 (0xfe000001) | x
+I:           0 (0x00000000) | OP:  0 (0x00) (        END) | A:     0 (0x0000000) | B:   0 (0x000) | U:          0 (0x00000000) | S: -33554431 (0xfe000001)
+
+
+x = 1
+```
+</details>
+
+
+**Visual Representation:**
+![SETGLOBAL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/setglobal.svg)
+
+
+---
+
+
 #### Call
 
+
+**Lua Code**
 ```
+f()
 ```
+
+
+<details>
+<summary>Luac Output</summary>
+```
+main <0:@.\tests\scripts\call.lua> (3 instructions/12 bytes at 000001E33F026770)
+0 params, 1 stack, 0 locals, 1 string, 0 numbers, 0 functions, 2 lines
+     1  [1]     GETGLOBAL       0       ; f
+     2  [1]     CALL            0 0
+     3  [1]     END
+```
+</details>
+
+
+<details>
+<summary>Luadec Output</summary>
+```
+Name: @./tests/scripts/call.lua
+Line: 0
+Params: 0
+Variadic: false
+Stack: 1
+Globals: 1
+        0: "f"
+Locals: 0
+
+Instructions: 3
+I:          12 (0x0000000c) | OP: 12 (0x0c) (  GETGLOBAL) | A:     0 (0x0000000) | B:   0 (0x000) | U:          0 (0x00000000) | S: -33554431 (0xfe000001) | f
+I:           2 (0x00000002) | OP:  2 (0x02) (       CALL) | A:     0 (0x0000000) | B:   0 (0x000) | U:          0 (0x00000000) | S: -33554431 (0xfe000001)
+I:           0 (0x00000000) | OP:  0 (0x00) (        END) | A:     0 (0x0000000) | B:   0 (0x000) | U:          0 (0x00000000) | S: -33554431 (0xfe000001)
+
+
+f()
+```
+</details>
+
+
+**Visual Representation:**
+![SETGLOBAL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/setglobal.svg)
+
+
