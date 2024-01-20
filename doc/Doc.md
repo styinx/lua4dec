@@ -1,15 +1,16 @@
 # Lua 4 Bytecode
 
 ##### Table of Contents  
-[Intro](#intro)
-[AST](#ast)
-- [Expressions](#expressions)
-- [Statements](#statements)
-    - [Assignment](#assignment)
-    - [Call](#call)
+- [Intro](#intro)
+- [AST](#ast)
+    - [Expressions](#expressions)
+    - [Statements](#statements)
+        - [Assignment](#assignment)
+        - [Call](#call)
 
 
-<a name="intro"/>
+<a id="intro"></a>
+
 ## Intro
 
 ### Bytecode Explanation
@@ -82,12 +83,15 @@ nested = {a = {b = 1}}
 It shows the reconstructed Lua 4 source code from the Lua 4 bytecode.
 
 
-<a name="ast"/>
+<a id="ast"></a>
+
 ## AST
 
 The Abstract Syntax Tree (AST) describes the syntax of a program to it's lowest level.
 
-<a name="expressions"/>
+
+<a name="id"></a>
+
 ### Expressions
 
 Expressions make up the "data" of statements.
@@ -111,12 +115,16 @@ Therefore, the string `a` is pushed onto the stack.
 
 ---
 
-<a name="statements"/>
+
+<a id="statements"></a>
+
 ### Statements
 
 Statements make up the "logic" of a program and the order of how it is executed.
 
-<a name="assignment"/>
+
+<a id="assignment"></a>
+
 #### Assignment - SETGLOBAL
 
 
@@ -170,7 +178,8 @@ x = 1
 ---
 
 
-<a name="call"/>
+<a id="call"></a>
+
 #### Call - CALL
 
 
