@@ -85,9 +85,12 @@ It shows the reconstructed Lua 4 source code from the Lua 4 bytecode.
 <a name="ast"/>
 ## AST
 
+The Abstract Syntax Tree (AST) describes the syntax of a program to it's lowest level.
 
 <a name="expressions"/>
 ### Expressions
+
+Expressions make up the "data" of statements.
 
 #### Simple Primitives
 
@@ -111,9 +114,10 @@ Therefore, the string `a` is pushed onto the stack.
 <a name="statements"/>
 ### Statements
 
+Statements make up the "logic" of a program and the order of how it is executed.
 
 <a name="assignment"/>
-#### Assignment (SETGLOBAL)
+#### Assignment - SETGLOBAL
 
 
 **Lua Code**
@@ -167,7 +171,7 @@ x = 1
 
 
 <a name="call"/>
-#### Call (CALL)
+#### Call - CALL
 
 
 **Lua Code**
@@ -214,6 +218,7 @@ f()
 
 
 **Visual Representation:**
+
 ![SETGLOBAL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/setglobal.svg)
 
 
