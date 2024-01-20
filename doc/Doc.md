@@ -1,5 +1,15 @@
 # Lua 4 Bytecode
 
+##### Table of Contents  
+[Intro](#intro)
+[AST](#ast)
+- [Expressions](#expressions)
+- [Statements](#statements)
+    - [Assignment](#assignment)
+    - [Call](#call)
+
+
+<a name="intro"/>
 ## Intro
 
 ### Bytecode Explanation
@@ -72,6 +82,11 @@ nested = {a = {b = 1}}
 It shows the reconstructed Lua 4 source code from the Lua 4 bytecode.
 
 
+<a name="ast"/>
+## AST
+
+
+<a name="expressions"/>
 ### Expressions
 
 #### Simple Primitives
@@ -91,11 +106,14 @@ Therefore, the string `a` is pushed onto the stack.
 #### Operators
 
 
+---
 
-
+<a name="statements"/>
 ### Statements
 
-#### Assignment
+
+<a name="assignment"/>
+#### Assignment (SETGLOBAL)
 
 
 **Lua Code**
@@ -106,6 +124,7 @@ x = 1
 
 <details>
 <summary>Luac Output</summary>
+
 ```
 main <0:@.\tests\scripts\setglobal.lua> (3 instructions/12 bytes at 000001D20DCA8330)
 0 params, 1 stack, 0 locals, 1 string, 0 numbers, 0 functions, 2 lines
@@ -118,6 +137,7 @@ main <0:@.\tests\scripts\setglobal.lua> (3 instructions/12 bytes at 000001D20DCA
 
 <details>
 <summary>Luadec Output</summary>
+
 ```
 Name: @./tests/scripts/setglobal.lua
 Line: 0
@@ -146,7 +166,8 @@ x = 1
 ---
 
 
-#### Call
+<a name="call"/>
+#### Call (CALL)
 
 
 **Lua Code**
@@ -157,6 +178,7 @@ f()
 
 <details>
 <summary>Luac Output</summary>
+
 ```
 main <0:@.\tests\scripts\call.lua> (3 instructions/12 bytes at 000001E33F026770)
 0 params, 1 stack, 0 locals, 1 string, 0 numbers, 0 functions, 2 lines
@@ -169,6 +191,7 @@ main <0:@.\tests\scripts\call.lua> (3 instructions/12 bytes at 000001E33F026770)
 
 <details>
 <summary>Luadec Output</summary>
+
 ```
 Name: @./tests/scripts/call.lua
 Line: 0

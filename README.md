@@ -8,7 +8,12 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ## TODOs
 
-- Conditions: create "else" blocks
+- Different handling of locals
+
+
+## Documentation
+
+Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/doc/Doc.md)
 
 
 ## Build
