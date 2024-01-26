@@ -160,8 +160,10 @@ void push_nil(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
     ast->stack.push_back(Identifier("nil"));
 }
 
-void pop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void pop(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
+    // TODO
+    const auto arg = U(instruction);
     ast->stack.pop_back();
 }
 
@@ -371,6 +373,8 @@ void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
 
 void make_return(Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    // TODO
+    const auto arg   = U(instruction);
     const auto right = std::get<Expression>(ast->stack.back());
     ast->stack.pop_back();
 
@@ -433,12 +437,10 @@ void make_table_assignment(Ast*& ast, const Instruction& instruction, const Func
 
 void make_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // A represents the number of elements to keep on the stack. All popped elements
-    // make up the name and the argument of the function.
+    // Stack contains the arguments of a call and the name of the called function (>1).
 
     Vector<Expression> args;
-    const auto         keep_stack_elements = A(instruction);
-    while(ast->stack.size() > keep_stack_elements + 1)
+    while(ast->stack.size() > 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -476,12 +478,10 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
 
 void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // A represents the number of elements to keep on the stack. All popped elements
-    // make up the name and the argument of the function.
+    // Stack contains the arguments of a call and the name of the called function (>1).
 
     Vector<Expression> args;
-    const auto         keep_stack_elements = A(instruction);
-    while(ast->stack.size() > keep_stack_elements + 1)
+    while(ast->stack.size() > 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -671,38 +671,22 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 {
     enter_block(ast);
 
-    // TODO: Different handling of locals
-
     // Parse the closure body
     parse_function(ast, function.functions[A(instruction)]);
 
-    // The locals are divided into arguments and local definitions.
-    // The number of arguments depends on the leftover elements on the stack.
-    // stack:             0 1  (2 local definitions)
-    // arguments:   0 1 2      (3 closure arguments)
-    // locals:      0 1 2 3 4
-
-    const auto locals          = function.functions[A(instruction)].locals;
-    const auto num_definitions = ast->stack.size();
-    const auto num_arguments   = locals.size() - num_definitions;
+    const auto locals = function.functions[A(instruction)].locals;
 
     Vector<Identifier> arguments;
-    for(size_t i = 0; i < num_arguments; ++i)
+    for(const auto& local : locals)
     {
-        arguments.push_back(Identifier(locals[i].name));
+        if(local.start_pc == 0)
+        {
+            arguments.push_back(Identifier(local.name));
+        }
     }
 
+    // TODO
     Vector<LocalAssignment> local_definitions;
-    for(size_t i = 0; i < num_definitions; ++i)
-    {
-        const auto local_index = num_arguments + num_definitions - i - 1;
-        const auto local_name  = Identifier(locals[local_index].name);
-        const auto local_value = std::get<Expression>(ast->stack.back());
-        const auto ass         = LocalAssignment(local_name, local_value);
-        local_definitions.push_back(ass);
-        ast->stack.pop_back();
-    }
-    std::reverse(local_definitions.begin(), local_definitions.end());
 
     exit_block(ast);
 
@@ -713,6 +697,8 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
 void parse_function(Ast*& ast, const Function& function)
 {
+    PC = 0;
+
     for(const auto& i : function.instructions)
     {
         auto op = Operator(OP(i));
@@ -721,6 +707,21 @@ void parse_function(Ast*& ast, const Function& function)
         {
             printf("DEBUG: No action for %d (%s) in table\n", (int)op, OP_TO_STR[op].c_str());
             return;
+        }
+
+        if(PC > 0 && ast->stack.size())
+        {
+            // TODO: Room for optimization
+            for(const auto& local : function.locals)
+            {
+                if(local.start_pc == PC)
+                {
+                    const auto name  = Identifier(local.name);
+                    const auto value = std::get<Expression>(ast->stack.back());
+                    ast->stack.pop_back();
+                    ast->statements.push_back(LocalAssignment(name, value));
+                }
+            }
         }
 
         TABLE[op](ast, i, function);
@@ -757,24 +758,5 @@ void parse_function(Ast*& ast, const Function& function)
         }
 
         PC++;
-    }
-
-    // TODO: Locals may be defined inline and have to be checked against the PC for every
-    // instruction
-
-    // Local definitions of the chunk
-    if(ast->parent == nullptr && ast->stack.size())
-    {
-        Vector<Statement> statements;
-        for(size_t i = 0; i < ast->stack.size(); ++i)
-        {
-            const auto local_name  = Identifier(function.locals[i].name);
-            const auto local_value = std::get<Expression>(ast->stack[i]);
-            const auto ass         = LocalAssignment(local_name, local_value);
-            statements.push_back(ass);
-        }
-        ast->stack.clear();
-        statements.insert(statements.end(), ast->statements.begin(), ast->statements.end());
-        ast->statements = statements;
     }
 }
