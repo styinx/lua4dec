@@ -257,9 +257,9 @@ struct LocalAssignment
 
 struct Return
 {
-    Expression ex;
+    Vector<Expression> ex;
 
-    Return(const Expression& e)
+    Return(const Vector<Expression>& e)
         : ex(e)
     {
     }

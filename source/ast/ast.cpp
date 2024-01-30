@@ -246,7 +246,17 @@ void print(const Return& ret, const int indent, FILE* stream)
 {
     print_indent(indent, stream);
     fprintf(stream, "return ");
-    std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, ret.ex);
+
+    auto it = ret.ex.begin();
+    while(it != ret.ex.end())
+    {
+        std::visit([indent, stream](auto&& e) { print(e, indent, stream); }, *it);
+
+        if(it != ret.ex.end() - 1)
+            fprintf(stream, ", ");
+
+        it++;
+    }
 }
 
 void print(const TailCall& call, const int indent, FILE* stream)

@@ -247,7 +247,7 @@ void push_table(Ast*& ast, const Instruction& instruction, const Function& funct
         }
     }
 
-    const auto size = B(instruction);
+    const auto size = U(instruction);
     AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
     ast->stack.push_back(table);
 }
@@ -283,11 +283,16 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 
     std::reverse(map.begin(), map.end());
 
-    auto table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
+    auto & table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
     if(table.name.name.empty())
+    {
         ast->stack.pop_back();  // empty AstTable
-
-    ast->stack.push_back(AstMap(map));
+        ast->stack.push_back(AstMap(map));
+    }
+    else
+    {
+        table.pairs = map;
+    }
 }
 
 // Operations
@@ -374,11 +379,18 @@ void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
 void make_return(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // TODO
-    const auto arg   = U(instruction);
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    auto num_args = U(instruction);
 
-    Return ret(right);
+    Vector<Expression> args;
+    while(ast->stack.size() > num_args)
+    {
+        args.push_back(std::get<Expression>(ast->stack.back()));
+        ast->stack.pop_back();
+    }
+
+    std::reverse(args.begin(), args.end());
+
+    Return ret(args);
     ast->statements.push_back(ret);
 }
 
@@ -438,9 +450,11 @@ void make_table_assignment(Ast*& ast, const Instruction& instruction, const Func
 void make_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // Stack contains the arguments of a call and the name of the called function (>1).
+    const auto a = A(instruction);  // Leave a elements on stack
+    const auto b = B(instruction);  // Is expression (!=0) or statement (0)
 
     Vector<Expression> args;
-    while(ast->stack.size() > 1)
+    while(ast->stack.size() > a + 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -465,8 +479,6 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
     else if(std::holds_alternative<AstTable>(caller))
     {
         auto table  = std::get<AstTable>(caller);
-        auto map    = std::get<AstMap>(args[0]);
-        table.pairs = map.pairs;
         ast->stack.push_back(table);
     }
     else
