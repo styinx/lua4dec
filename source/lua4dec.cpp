@@ -35,13 +35,12 @@ void create_ast(Ast*& ast, const char* filename)
     parse_function(ast, chunk.main);
 }
 
-void parse(const char* filename, FILE* stream)
+void parse(Ast*& ast, const char* filename, FILE* stream)
 {
     auto  buffer = read_file(filename);
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
-    auto* ast    = new Ast();
 
     parse_function(ast, chunk.main);
-    print_ast(*ast, stream);
+    print_ast(ast, stream);
 }

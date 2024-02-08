@@ -1,18 +1,18 @@
 #include "ast/ast.hpp"
 
-void print_stack(const Ast& ast, FILE* stream)
+void print_stack(const Ast* ast, FILE* stream)
 {
     fprintf(stream, " === STACK ===\n");
-    for(const auto& e : ast.stack)
+    for(const auto& e : ast->stack)
     {
         // TODO
     }
     fprintf(stream, " =============\n");
 }
 
-void print_ast(const Ast& ast, FILE* stream)
+void print_ast(const Ast* ast, FILE* stream)
 {
-    print_statements(ast.statements, 0, stream);
+    print_statements(ast->statements, 0, stream);
 }
 
 void print_indent(const int indent, FILE* stream)
@@ -227,7 +227,12 @@ void print(const ForLoop& loop, const int indent, FILE* stream)
 void print(const ForInLoop& loop, const int indent, FILE* stream)
 {
     print_indent(indent, stream);
-    fprintf(stream, "for %s , %s in %s do\n", loop.key.c_str(), loop.value.c_str(), loop.right.c_str());
+    fprintf(
+        stream,
+        "for %s , %s in %s do\n",
+        loop.key.c_str(),
+        loop.value.c_str(),
+        loop.right.c_str());
 
     print_statements(loop.statements, indent + 1, stream);
 

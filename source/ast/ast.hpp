@@ -148,7 +148,10 @@ struct AstTable
     unsigned                                  size;
     Vector<std::pair<Expression, Expression>> pairs;
 
-    AstTable(const unsigned s, const Identifier& n, const Vector<std::pair<Expression, Expression>>& p)
+    AstTable(
+        const unsigned                                   s,
+        const Identifier&                                n,
+        const Vector<std::pair<Expression, Expression>>& p)
         : size(s)
         , name(n)
         , pairs(p)
@@ -293,9 +296,9 @@ struct WhileLoop
  * Stuff to print the AST
  */
 
-void print_stack(const Ast&, FILE* stream = stdout);
+void print_stack(const Ast*, FILE* stream = stdout);
 
-void print_ast(const Ast&, FILE* stream = stdout);
+void print_ast(const Ast*, FILE* stream = stdout);
 
 void print_indent(const int, FILE* stream = stdout);
 
