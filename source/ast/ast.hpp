@@ -3,8 +3,11 @@
 
 #include "lua/lua.hpp"
 
+#include <sstream>
 #include <variant>
 #include <vector>
+
+using StringBuffer = std::stringstream;
 
 struct Closure;
 struct Identifier;
@@ -296,32 +299,51 @@ struct WhileLoop
  * Stuff to print the AST
  */
 
-void print_stack(const Ast*, FILE* stream = stdout);
-
 void print_ast(const Ast*, FILE* stream = stdout);
+void print_ast(const Ast*, StringBuffer& buffer);
 
 void print_indent(const int, FILE* stream = stdout);
+void print_indent(const int, StringBuffer& buffer);
 
-void print_statements(const Vector<Statement>&, const int indent = 0, FILE* stream = stdout);
+void print_statements(const Vector<Statement>&, FILE* stream = stdout, const int indent = 0);
+void print_statements(const Vector<Statement>&, StringBuffer& buffer, const int indent = 0);
 
-void print(const Closure&, const int indent = 0, FILE* stream = stdout);
-void print(const Identifier&, const int indent = 0, FILE* stream = stdout);
-void print(const AstInt&, const int indent = 0, FILE* stream = stdout);
-void print(const AstList&, const int indent = 0, FILE* stream = stdout);
-void print(const AstMap&, const int indent = 0, FILE* stream = stdout);
-void print(const AstNumber&, const int indent = 0, FILE* stream = stdout);
-void print(const AstOperation&, const int indent = 0, FILE* stream = stdout);
-void print(const AstString&, const int indent = 0, FILE* stream = stdout);
-void print(const AstTable&, const int indent = 0, FILE* stream = stdout);
+void print(const Closure&, FILE* stream = stdout, const int indent = 0);
+void print(const Closure&, StringBuffer& buffer, const int indent = 0);
+void print(const Identifier&, FILE* stream = stdout, const int indent = 0);
+void print(const Identifier&, StringBuffer& buffer, const int indent = 0);
+void print(const AstInt&, FILE* stream = stdout, const int indent = 0);
+void print(const AstInt&, StringBuffer& buffer, const int indent = 0);
+void print(const AstList&, FILE* stream = stdout, const int indent = 0);
+void print(const AstList&, StringBuffer& buffer, const int indent = 0);
+void print(const AstMap&, FILE* stream = stdout, const int indent = 0);
+void print(const AstMap&, StringBuffer& buffer, const int indent = 0);
+void print(const AstNumber&, FILE* stream = stdout, const int indent = 0);
+void print(const AstNumber&, StringBuffer& buffer, const int indent = 0);
+void print(const AstOperation&, FILE* stream = stdout, const int indent = 0);
+void print(const AstOperation&, StringBuffer& buffer, const int indent = 0);
+void print(const AstString&, FILE* stream = stdout, const int indent = 0);
+void print(const AstString&, StringBuffer& buffer, const int indent = 0);
+void print(const AstTable&, FILE* stream = stdout, const int indent = 0);
+void print(const AstTable&, StringBuffer& buffer, const int indent = 0);
 
-void print(const Assignment&, const int indent = 0, FILE* stream = stdout);
-void print(const Call&, const int indent = 0, FILE* stream = stdout);
-void print(const Condition&, const int indent = 0, FILE* stream = stdout);
-void print(const ForLoop&, const int indent = 0, FILE* stream = stdout);
-void print(const ForInLoop&, const int indent = 0, FILE* stream = stdout);
-void print(const LocalAssignment&, const int indent = 0, FILE* stream = stdout);
-void print(const Return&, const int indent = 0, FILE* stream = stdout);
-void print(const TailCall&, const int indent = 0, FILE* stream = stdout);
-void print(const WhileLoop&, const int indent = 0, FILE* stream = stdout);
+void print(const Assignment&, FILE* stream = stdout, const int indent = 0);
+void print(const Assignment&, StringBuffer& buffer, const int indent = 0);
+void print(const Call&, FILE* stream = stdout, const int indent = 0);
+void print(const Call&, StringBuffer& buffer, const int indent = 0);
+void print(const Condition&, FILE* stream = stdout, const int indent = 0);
+void print(const Condition&, StringBuffer& buffer, const int indent = 0);
+void print(const ForLoop&, FILE* stream = stdout, const int indent = 0);
+void print(const ForLoop&, StringBuffer& buffer, const int indent = 0);
+void print(const ForInLoop&, FILE* stream = stdout, const int indent = 0);
+void print(const ForInLoop&, StringBuffer& buffer, const int indent = 0);
+void print(const LocalAssignment&, FILE* stream = stdout, const int indent = 0);
+void print(const LocalAssignment&, StringBuffer& buffer, const int indent = 0);
+void print(const Return&, FILE* stream = stdout, const int indent = 0);
+void print(const Return&, StringBuffer& buffer, const int indent = 0);
+void print(const TailCall&, FILE* stream = stdout, const int indent = 0);
+void print(const TailCall&, StringBuffer& buffer, const int indent = 0);
+void print(const WhileLoop&, FILE* stream = stdout, const int indent = 0);
+void print(const WhileLoop&, StringBuffer& buffer, const int indent = 0);
 
 #endif  // LUA4DEC_AST_H
