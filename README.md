@@ -8,7 +8,10 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ## TODOs
 
-- Different handling of locals
+- Implement the rest of the operators
+- Arguments of the Return instruction is still not right
+- JMPONF might be used different
+- Complete documentation
 
 
 ## Documentation
