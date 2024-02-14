@@ -209,7 +209,11 @@ void push_self(Ast*& ast, const Instruction& instruction, const Function& functi
 
 void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = function.locals[U(instruction)].name;
+    // TODO: This is a special hack for SWBF
+    const auto pos  = U(instruction);
+    auto       name = String("local" + std::to_string(pos));
+    if(function.locals.size() > pos)
+        name = function.locals[pos].name;
     ast->stack.push_back(Identifier(name));
 }
 
@@ -283,7 +287,7 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 
     std::reverse(map.begin(), map.end());
 
-    auto & table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
+    auto& table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
     if(table.name.name.empty())
     {
         ast->stack.pop_back();  // empty AstTable
@@ -478,7 +482,7 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
     // Caller is a table
     else if(std::holds_alternative<AstTable>(caller))
     {
-        auto table  = std::get<AstTable>(caller);
+        auto table = std::get<AstTable>(caller);
         ast->stack.push_back(table);
     }
     else

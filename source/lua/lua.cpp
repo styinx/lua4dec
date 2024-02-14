@@ -38,11 +38,20 @@ ChunkHeader read_header(ByteIterator& iter)
     header.bits_for_operator     = read<byte>(iter);
     header.bits_for_register_b   = read<byte>(iter);
 
-    /*auto bytes_for_testnum =*/read<byte>(iter);
+    assert(header.bytes_for_int == sizeof(Int) && "Byte size for int mismatch");
+    assert(header.bytes_for_size_t == sizeof(SizeT) && "Byte size for size_t mismatch");
+    assert(header.bytes_for_instruction == BITS_I / 8 && "Byte size for instruction mismatch");
+    assert(header.bits_for_instruction == BITS_I && "Bit size for instruction mismatch");
+    assert(header.bits_for_operator == BITS_OP && "Bit size for operator mismatch");
+    assert(header.bits_for_register_b == BITS_B && "Bit size for B mismatch");
 
-    assert(sizeof(SizeT) == header.bytes_for_size_t && "size_t mismatch");
+    auto bytes_for_testnum = read<byte>(iter);
+    assert(bytes_for_testnum == sizeof(Number) && "Bytes for test number mismatch");
 
-    assert(3.14159265358979323846e8 - read<Number>(iter) < 0.0000001 && "magic mismatch");
+    constexpr Number lua_number   = 3.14159265358979323846e8;
+    const Number     magic_number = read<Number>(iter);
+    const auto       diff         = lua_number - magic_number;
+    assert(diff < 0.0000001 && "magic number mismatch");
 
     return header;
 }
@@ -191,8 +200,15 @@ void debug_instruction(Instruction instruction, Function& function)
         break;
     case Operator::GETLOCAL:
     case Operator::SETLOCAL:
-        name = function.locals[U(instruction)].name;
+    {
+        // TODO: This is a special hack for SWBF
+        const auto pos = U(instruction);
+        if(function.locals.size() > pos)
+            name = function.locals[pos].name;
+        else
+            name = String("local" + std::to_string(pos));
         break;
+    }
     case Operator::PUSHINT:
         name = std::to_string(S(instruction));
         break;

@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <limits>
 #include <set>
+#include <stdint.h>
 #include <stdio.h>
 #include <string>
 #include <unordered_map>
@@ -16,13 +17,19 @@ using String       = std::string;
 template<typename T>
 using Vector = std::vector<T>;
 
-#ifdef OS_32
-using Instruction = unsigned;
-using SizeT       = unsigned;
+#ifndef TARGET_ARCH
+#error "You must define a target architecture (32/64)"
+#endif
+
+#if TARGET_ARCH == 32
+using Int         = int32_t;
+using Instruction = uint32_t;
+using SizeT       = uint32_t;
 using Number      = float;
 #else
-using Instruction = unsigned;  // TODO: it depends ...
-using SizeT       = size_t;
+using Int         = int32_t;
+using Instruction = uint32_t;
+using SizeT       = uint64_t;
 using Number      = double;
 #endif
 
@@ -123,31 +130,42 @@ struct Chunk
     Function    main;
 };
 
-template<byte bits = 6>
+constexpr byte BITS_I      = sizeof(Instruction) * 8;
+constexpr byte BITS_OP     = 6;
+constexpr byte BITS_A      = 17;
+constexpr byte BITS_B      = 9;  // TODO: must be defined at runtime
+constexpr byte BITS_U      = 6;
+constexpr byte BITS_S      = 6;
+constexpr byte BIT_SHIFT_A = BITS_OP + BITS_B;
+constexpr byte BIT_SHIFT_B = BITS_OP;
+constexpr byte BIT_SHIFT_U = BITS_OP;
+constexpr byte BIT_SHIFT_S = BITS_OP;
+
+template<byte bits = BITS_OP>
 Operator OP(Instruction instruction)
 {
     return Operator(instruction & ((1 << bits) - 1));
 }
 
-template<byte shift = 15, byte bits = 17>
+template<byte shift = BIT_SHIFT_A, byte bits = BITS_A>
 unsigned int A(Instruction instruction)
 {
     return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte shift = 6, byte bits = 9>
+template<byte shift = BIT_SHIFT_B, byte bits = BITS_B>
 unsigned int B(Instruction instruction)
 {
     return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte shift = 6>
+template<byte shift = BIT_SHIFT_U>
 unsigned int U(Instruction instruction)
 {
     return (instruction >> shift);
 }
 
-template<byte shift = 6>
+template<byte shift = BIT_SHIFT_S>
 int S(Instruction instruction)
 {
     return (instruction >> shift) - (std::numeric_limits<int>::max() >> shift);
