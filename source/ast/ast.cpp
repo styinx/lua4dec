@@ -189,7 +189,7 @@ void print(const Condition& condition, StringBuffer& buffer, const int indent)
         {
             buffer << "elseif ";
             print(it->comparison, buffer, indent);
-            buffer << "then\n";
+            buffer << " then\n";
             print_statements(it->statements, buffer, indent + 1);
         }
         else
@@ -214,7 +214,7 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
     buffer << " , ";
     std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, loop.increment);
 
-    buffer << "do\n";
+    buffer << " do\n";
 
     print_statements(loop.statements, buffer, indent + 1);
 
@@ -225,7 +225,7 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
 void print(const ForInLoop& loop, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
-    buffer << "for " << loop.key << " , " << loop.value << " in " << loop.right << "do\n";
+    buffer << "for " << loop.key << " , " << loop.value << " in " << loop.right << " do\n";
 
     print_statements(loop.statements, buffer, indent + 1);
 
