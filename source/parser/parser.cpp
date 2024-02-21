@@ -382,11 +382,8 @@ void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
 
 void make_return(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // TODO
-    auto num_args = U(instruction);
-
     Vector<Expression> args;
-    while(ast->stack.size() > num_args)
+    while(ast->stack.size() > 0)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -522,9 +519,10 @@ void make_for_loop(Ast*& ast, const Instruction& instruction, const Function& fu
 {
     exit_block(ast);
 
-    // Locals are defined in a PC range. The first local defined from the current PC value is the
-    // counter variable. Since this function handles the end of the for loop we have to subtract the
-    // relative offset of the PC (S register of the instruction which is already negative).
+    // Locals are defined in a PC range. The first local defined from the current PC value
+    // is the counter variable. Since this function handles the end of the for loop we
+    // have to subtract the relative offset of the PC (S register of the instruction which
+    // is already negative).
 
     const auto counter = get_local_from_pc(function, PC + S(instruction), 0);
 
@@ -545,11 +543,12 @@ void make_for_in_loop(Ast*& ast, const Instruction& instruction, const Function&
 {
     exit_block(ast);
 
-    // Locals are defined in a PC range. The first local defined from the current PC value is the
-    // list variable. Since this function handles the end of the for loop we have to subtract the
-    // relative offset of the PC (S register of the instruction which is already negative). The
-    // key variable is the next local defined after the list variable. The value variable is the
-    // second next local defined after the list variable.
+    // Locals are defined in a PC range. The first local defined from the current PC value
+    // is the list variable. Since this function handles the end of the for loop we have
+    // to subtract the relative offset of the PC (S register of the instruction which is
+    // already negative). The key variable is the next local defined after the list
+    // variable. The value variable is the second next local defined after the list
+    // variable.
 
     const auto key   = get_local_from_pc(function, PC + S(instruction), 1);
     const auto value = get_local_from_pc(function, PC + S(instruction), 2);
@@ -674,7 +673,7 @@ void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*
 {
     if(ast->context.is_condition)
     {
-        auto& condition                    = std::get<Condition>(ast->parent->statements.back());
+        auto& condition = std::get<Condition>(ast->parent->statements.back());
         condition.blocks.back().statements = ast->statements;
         ast->statements.clear();
 
@@ -748,7 +747,8 @@ void parse_function(Ast*& ast, const Function& function)
             auto right = std::get<Expression>(ast->stack.back());
             ast->stack.pop_back();
 
-            auto& operation = std::get<AstOperation>(std::get<Expression>(ast->stack.back()));
+            auto& operation =
+                std::get<AstOperation>(std::get<Expression>(ast->stack.back()));
             operation.ex.insert(operation.ex.begin(), right);
 
             ast->context.is_or_block = false;
