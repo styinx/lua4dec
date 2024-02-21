@@ -33,4 +33,4 @@ jobs:
 
     - name: Test
       run: |
-        '& test.exe lua4\\luac.exe luadec.exe tests\\scripts\\'
+        '& test.exe lua4\\luac.exe luadec.exe differ.exe tests\\scripts\\'

@@ -1,32 +1,12 @@
+#include "lua4dec.hpp"
+
 #include <filesystem>
 #include <iostream>
 #include <unordered_map>
 
-#include "lua4dec.hpp"
-
 namespace fs = std::filesystem;
 using Buffer = std::vector<byte>;
 using Map    = std::unordered_map<std::string, std::pair<Buffer, Buffer>>;
-
-bool diff(char* first, char* second)
-{
-    while(first != nullptr || second != nullptr)
-    {
-        while(*first == ' ' || *first == '\t' || *first == '\n' || *first == '\r')
-            first++;
-
-        while(*second == ' ' || *second == '\t' || *second == '\n' || *second == '\r')
-            second++;
-
-        if(*first != *second)
-            return false;
-
-        first++;
-        second++;
-    }
-
-    return true;
-}
 
 int main(int argc, char** argv)
 {
@@ -34,15 +14,16 @@ int main(int argc, char** argv)
     constexpr char* OK  = "OK ";
     Map             results;
 
-    if(argc < 4)
+    if(argc < 5)
     {
-        printf("Please provide path to compiler, decompiler, lua scripts.\n");
+        printf("Provide path to compiler, decompiler, differ, and lua scripts.\n");
         return 1;
     }
 
     fs::path compiler(argv[1]);
     fs::path decompiler(argv[2]);
-    fs::path scripts(argv[3]);
+    fs::path differ(argv[3]);
+    fs::path scripts(argv[4]);
 
     std::string luac(compiler.u8string());
     std::string luadec(decompiler.u8string());
@@ -100,7 +81,8 @@ int main(int argc, char** argv)
 
         if(ext.compare(".out") == 0)
         {
-            std::string cmd = luac;
+            // TODO
+            std::string cmd = differ;
             cmd.append(" ").append(name);
 
             int res = system(cmd.c_str());

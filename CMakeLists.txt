@@ -134,3 +134,6 @@ target_link_libraries(${EXE} ${LIB})
 
 add_executable(test tests/test.cpp)
 target_link_libraries(test ${LIB})
+
+add_executable(differ tests/differ.cpp)
+target_link_libraries(differ ${LIB})
