@@ -450,8 +450,7 @@ void make_table_assignment(Ast*& ast, const Instruction& instruction, const Func
 
 void make_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Stack contains the arguments of a call and the name of the called function (>1).
-    const auto a = A(instruction);  // Leave a elements on stack
+    const auto a = A(instruction);  // The caller is at position a
     const auto b = B(instruction);  // Is expression (!=0) or statement (0)
 
     Vector<Expression> args;
@@ -491,10 +490,10 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
 
 void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Stack contains the arguments of a call and the name of the called function (>1).
+    const auto a = A(instruction);  // The caller is at position a
 
     Vector<Expression> args;
-    while(ast->stack.size() > 1)
+    while(ast->stack.size() > a + 1)
     {
         args.push_back(std::get<Expression>(ast->stack.back()));
         ast->stack.pop_back();
@@ -733,7 +732,8 @@ void parse_function(Ast*& ast, const Function& function)
                 {
                     const auto name  = Identifier(local.name);
                     const auto value = std::get<Expression>(ast->stack.back());
-                    ast->stack.pop_back();
+                    // For some reason the local needs to stay on the stack ???
+                    // ast->stack.pop_back();
                     ast->statements.push_back(LocalAssignment(name, value));
                 }
             }
