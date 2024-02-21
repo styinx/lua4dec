@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 
     std::string luac(compiler.u8string());
     std::string luadec(decompiler.u8string());
+    std::string diff(differ.u8string());
 
     const auto cwd = fs::current_path();
 
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
         if(ext.compare(".out") == 0)
         {
             // TODO
-            std::string cmd = differ;
+            std::string cmd = diff;
             cmd.append(" ").append(name);
 
             int res = system(cmd.c_str());
