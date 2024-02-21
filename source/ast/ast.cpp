@@ -23,7 +23,6 @@ void print_statements(const std::vector<Statement>& statements, StringBuffer& bu
 {
     for(const auto& statement : statements)
     {
-        print_indent(buffer, indent);
         std::visit([&buffer, indent](auto&& s) { print(s, buffer, indent); }, statement);
         buffer << "\n";
     }

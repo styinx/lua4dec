@@ -162,9 +162,14 @@ void push_nil(Ast*& ast, const Instruction& /*instruction*/, const Function& /*f
 
 void pop(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    // TODO
-    const auto arg = U(instruction);
-    ast->stack.pop_back();
+    auto elements = U(instruction);
+    while(elements > 0)
+    {
+        // TODO: Shouldn't have to be checked
+        if(ast->stack.size())
+            ast->stack.pop_back();
+        elements--;
+    }
 }
 
 void push_global(Ast*& ast, const Instruction& instruction, const Function& function)

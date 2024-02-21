@@ -171,11 +171,12 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
     {Operator::CLOSURE, "CLOSURE"},
 };
 
-void debug_instruction(Instruction instruction, Function& function)
+void debug_instruction(unsigned idx, Instruction instruction, Function& function)
 {
     printf(
-        "I: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) "
+        "I %3d: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) "
         "| A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)",
+        idx,
         (int)instruction,
         (int)instruction,
         (int)OP(instruction),
@@ -239,24 +240,26 @@ void debug_function(Function function)
     printf("Stack: %d\n", function.max_stack_size);
 
     printf("Globals: %zu\n", function.globals.size());
-    unsigned i = 0;
+    unsigned n = 0;
     for(const auto& g : function.globals)
     {
-        printf("\t%d: \"%s\"\n", i++, g.c_str());
+        printf("\t%d: \"%s\"\n", n++, g.c_str());
     }
 
     printf("Locals: %zu\n", function.locals.size());
-    i = 0;
+    n = 0;
     for(const auto& l : function.locals)
     {
-        printf("\t%d: \"%s\" (%u - %u)\n", i++, l.name.c_str(), l.start_pc, l.end_pc);
+        printf("\t%d: \"%s\" (%u - %u)\n", n++, l.name.c_str(), l.start_pc, l.end_pc);
     }
     printf("\n");
 
     printf("Instructions: %zu\n", function.instructions.size());
+    n = 0;
     for(const auto& i : function.instructions)
     {
-        debug_instruction(i, function);
+        debug_instruction(n, i, function);
+        n++;
     }
     printf("\n");
 
