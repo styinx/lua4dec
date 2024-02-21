@@ -124,8 +124,8 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 # Binaries
 #
 
-set(EXE luadec_${TARGET_ARCH}_${MODE})
-set(LIB lua4dec_${TARGET_ARCH}_${MODE})
+set(EXE luadec_${TARGET_ARCH}_${CONFIG})
+set(LIB lua4dec_${TARGET_ARCH}_${CONFIG})
 
 add_library(${LIB} ${SOURCES_LIB})
 
