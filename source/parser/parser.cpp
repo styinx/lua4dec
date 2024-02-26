@@ -79,7 +79,7 @@ auto TABLE = ActionTable
     {Operator::CREATETABLE, &push_table},
     {Operator::SETLIST,     &push_list},
     {Operator::SETMAP,      &push_map},
-    {Operator::PUSHNILJMP,  &empty}, // TODO
+    {Operator::PUSHNILJMP,  &empty},
     // Operations
     {Operator::ADD,         &make_add},
     {Operator::ADDI,        &make_addi},
@@ -704,12 +704,9 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
         }
     }
 
-    // TODO
-    Vector<LocalAssignment> local_definitions;
-
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->child->statements, arguments, local_definitions));
+    ast->stack.push_back(Closure(ast->child->statements, arguments));
 }
 
 // Public functions

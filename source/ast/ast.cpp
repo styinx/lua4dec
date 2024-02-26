@@ -44,12 +44,6 @@ void print(const Closure& closure, StringBuffer& buffer, const int indent)
 
     buffer << ")\n";
 
-    for(const auto& local : closure.locals)
-    {
-        print(local, buffer, indent + 1);
-        buffer << "\n";
-    }
-
     print_statements(closure.statements, buffer, indent + 1);
 
     print_indent(buffer, indent);
@@ -124,7 +118,7 @@ void print(const AstString& string, StringBuffer& buffer, const int indent)
 
 void print(const AstTable& table, StringBuffer& buffer, const int indent)
 {
-    buffer << table.name.name.c_str() << "{";
+    buffer << table.name.name.c_str() << "{\n";
     for(const auto& p : table.pairs)
     {
         print_indent(buffer, indent + 1);

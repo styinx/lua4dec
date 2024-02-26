@@ -56,14 +56,12 @@ struct Ast
 
 struct Closure
 {
-    Vector<Statement>       statements;
-    Vector<Identifier>      arguments;
-    Vector<LocalAssignment> locals;
+    Vector<Statement>  statements;
+    Vector<Identifier> arguments;
 
-    Closure(const Vector<Statement>& s, const Vector<Identifier> a, const Vector<LocalAssignment>& l)
+    Closure(const Vector<Statement>& s, const Vector<Identifier> a)
         : statements(s)
         , arguments(a)
-        , locals(l)
     {
     }
 };
