@@ -14,29 +14,41 @@ jobs:
       with:
         submodules: 'true'
 
-    - name: Set reusable strings
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+    env:
+      BUILD64: ${{ github.workspace }}/build64
+      BUILD32: ${{ github.workspace }}/build32
 
-    - name: Configure CMake
+    - name: Configure CMake 64
       run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        cmake -B ${{ env.BUILD64 }}
         -DCMAKE_CXX_COMPILER=clang++
         -DCMAKE_C_COMPILER=clang
         -DCMAKE_BUILD_TYPE=Release
         -S ${{ github.workspace }}
         -DTARGET_ARCH=64
 
-    - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+    - name: Build 64
+      run: cmake --build ${{ env.BUILD64 }} --config Release
+
+    - name: Configure CMake 32
+      run: >
+        cmake -B ${{ env.BUILD32 }}
+        -DCMAKE_CXX_COMPILER=clang++
+        -DCMAKE_C_COMPILER=clang
+        -DCMAKE_BUILD_TYPE=Release
+        -S ${{ github.workspace }}
+        -DTARGET_ARCH=32
+
+    - name: Build 32
+      run: cmake --build ${{ env.BUILD32 }} --config Release
 
     - name: Upload Build Results
       uses: actions/upload-artifact@v3
       with:
         name: binaries-ubuntu-clang-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/lua4/luac
-          ${{ github.workspace }}/luadec_x64
+          ${{ github.workspace }}/lua4/luac_64
+          ${{ github.workspace }}/lua4/luac_32
+          ${{ github.workspace }}/luadec_64
+          ${{ github.workspace }}/luadec_32
 
