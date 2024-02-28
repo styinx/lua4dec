@@ -2,6 +2,10 @@
 build/
 
 *.exe
+*.pdb
 *.swp
 *.o
 *.out
+*.vcxproj
+*.vcxproj.filters
+*.sln
