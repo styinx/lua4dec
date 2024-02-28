@@ -35,6 +35,20 @@ void create_ast(Ast*& ast, const char* filename)
     parse_function(ast, chunk.main);
 }
 
+void delete_ast(Ast*& ast)
+{
+    while(ast->child)
+    {
+        ast = ast->child;
+    }
+
+    while(ast->parent)
+    {
+        ast = ast->parent;
+        delete ast->child;
+    }
+}
+
 void parse(Ast*& ast, const char* filename, FILE* stream)
 {
     auto  buffer = read_file(filename);
