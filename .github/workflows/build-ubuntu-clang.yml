@@ -8,15 +8,15 @@ jobs:
   main:
     runs-on: ubuntu-latest
 
+    env:
+      BUILD64: ${{ github.workspace }}/build64
+      BUILD32: ${{ github.workspace }}/build32
+
     steps:
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: 'true'
-
-    env:
-      BUILD64: ${{ github.workspace }}/build64
-      BUILD32: ${{ github.workspace }}/build32
 
     - name: Configure CMake 64
       run: >
