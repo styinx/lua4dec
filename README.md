@@ -31,23 +31,28 @@ Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/
 ### CMake
 
 ```
-mkdir build
-cmake -B build
+cmake -S . -B build -DTARGET_ARCH=64  # 32 for 32bit lua bytecode
 cmake --build build --config Release
 ```
+
+### Pre-built binaries
+
+- Pre-build binaries of the pipeline: [https://github.com/styinx/lua4dec/actions](https://github.com/styinx/lua4dec/actions)
+- Binaries of Releases: [https://github.com/styinx/lua4dec/releases](https://github.com/styinx/lua4dec/releases)
 
 
 ## Run
 
 ```
-./luadec luac.out
+./luadec_64 luac.out
+.\luadec_64.exe luac.out
 ```
 
 
 ## Run test (compiles and decompiles scripts in the tests/scripts folder)
 
 ```
-./test ./luac ./luadec ./tests/scripts/
+test.exe lua4\luac_64.exe luadec_64.exe differ.exe tests\scripts\
 ```
 
 ## Inspect the byte code with a GUI (WIP)
