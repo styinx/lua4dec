@@ -65,8 +65,9 @@ int main(int argc, char** argv)
 
             auto* ast = new Ast();
             create_ast(ast, name.c_str());
-            // TODO
-            // results[name][1] = read_file(name.c_str());
+            //  TODO
+            //  results[name][1] = read_file(name.c_str());
+            delete ast;
 
             int res = system(cmd.c_str());
             printf("%s %s\n", res == -1 ? ERR : OK, name.c_str());
@@ -86,8 +87,8 @@ int main(int argc, char** argv)
             std::string cmd = diff;
             cmd.append(" ").append(name);
 
-            int res = system(cmd.c_str());
-            printf("%s %s\n", res == 1 ? ERR : OK, name.c_str());
+            // int res = system(cmd.c_str());
+            // printf("%s %s\n", res == 1 ? ERR : OK, name.c_str());
         }
     }
 

@@ -27,6 +27,7 @@ jobs:
         -DCMAKE_C_COMPILER=clang
         -DCMAKE_BUILD_TYPE=Release
         -S ${{ github.workspace }}
+        -DTARGET_ARCH=64
 
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
@@ -37,5 +38,5 @@ jobs:
         name: binaries-ubuntu-clang-${{ github.sha }}
         path: |
           ${{ github.workspace }}/lua4/luac
-          ${{ github.workspace }}/luadec
+          ${{ github.workspace }}/luadec_x64
 

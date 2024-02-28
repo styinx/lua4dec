@@ -17,6 +17,7 @@ if(NOT TARGET_ARCH)
     set(TARGET_ARCH ${ARCH})
 endif()
 
+set(CMAKE_DEBUG_POSTFIX _deb)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CONFIG "deb")
 else()
@@ -124,13 +125,15 @@ source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parse
 # Binaries
 #
 
-set(EXE luadec_${TARGET_ARCH}_${CONFIG})
-set(LIB lua4dec_${TARGET_ARCH}_${CONFIG})
+set(EXE luadec_${TARGET_ARCH})
+set(LIB lua4dec_${TARGET_ARCH})
 
 add_library(${LIB} ${SOURCES_LIB})
+set_target_properties(${LIB} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 
 add_executable(${EXE} ${SOURCES_EXE})
 target_link_libraries(${EXE} ${LIB})
+set_target_properties(${EXE} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 
 add_executable(test tests/test.cpp)
 target_link_libraries(test ${LIB})

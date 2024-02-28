@@ -14,23 +14,21 @@ jobs:
       with:
         submodules: 'true'
 
-    - name: Set reusable strings
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+    env:
+      BUILD: ${{ github.workspace }}/build
 
     - name: Configure CMake
       run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        cmake -B ${{ env.BUILD }}
         -DCMAKE_CXX_COMPILER=cl
         -DCMAKE_C_COMPILER=cl
         -DCMAKE_BUILD_TYPE=Release
         -S ${{ github.workspace }}
+        -DTARGET_ARCH=64
 
     - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+      run: cmake --build ${{ env.BUILD }} --config Release
 
     - name: Test
       run: |
-        '& test.exe lua4\\luac.exe luadec.exe differ.exe tests\\scripts\\'
+        '& test.exe lua4\\luac_64.exe luadec_64.exe differ.exe tests\\scripts\\'
