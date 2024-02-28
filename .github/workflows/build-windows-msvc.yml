@@ -18,7 +18,7 @@ jobs:
       with:
         submodules: 'true'
 
-    - name: Configure CMake x64
+    - name: Configure CMake 64
       run: >
         cmake -B ${{ env.BUILD64 }}
         -DCMAKE_CXX_COMPILER=cl
@@ -27,10 +27,10 @@ jobs:
         -S ${{ github.workspace }}
         -DTARGET_ARCH=64
 
-    - name: Build x64
+    - name: Build 64
       run: cmake --build ${{ env.BUILD64 }} --config Release
 
-    - name: Configure CMake x32
+    - name: Configure CMake 32
       run: >
         cmake -B ${{ env.BUILD32 }}
         -DCMAKE_CXX_COMPILER=cl
@@ -39,7 +39,7 @@ jobs:
         -S ${{ github.workspace }}
         -DTARGET_ARCH=32
 
-    - name: Build x32
+    - name: Build 32
       run: cmake --build ${{ env.BUILD32 }} --config Release
 
     - name: Upload Build Results
@@ -47,7 +47,8 @@ jobs:
       with:
         name: binaries-windows-msvc-${{ github.sha }}
         path: |
-          ${{ github.workspace }}/lua4/luac_x64.exe
-          ${{ github.workspace }}/luadec_x64.exe
-          ${{ github.workspace }}/luadec_x32.exe
+          ${{ github.workspace }}/lua4/luac_32.exe
+          ${{ github.workspace }}/lua4/luac_64.exe
+          ${{ github.workspace }}/luadec_64.exe
+          ${{ github.workspace }}/luadec_32.exe
 
