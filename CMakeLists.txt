@@ -130,13 +130,17 @@ set(LIB lua4dec_${TARGET_ARCH})
 
 add_library(${LIB} ${SOURCES_LIB})
 set_target_properties(${LIB} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+set_property(TARGET ${LIB} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_executable(${EXE} ${SOURCES_EXE})
 target_link_libraries(${EXE} ${LIB})
 set_target_properties(${EXE} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
+set_property(TARGET ${EXE} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_executable(test tests/test.cpp)
 target_link_libraries(test ${LIB})
+set_property(TARGET test PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 add_executable(differ tests/differ.cpp)
 target_link_libraries(differ ${LIB})
+set_property(TARGET differ PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
