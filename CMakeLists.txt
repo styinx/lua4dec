@@ -8,13 +8,15 @@ project(lua4dec)
 #
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(ARCH "x64")
+    set(ARCH "64")
 elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set(ARCH "x32")
+    set(ARCH "32")
 endif()
 
 if(NOT TARGET_ARCH)
     set(TARGET_ARCH ${ARCH})
+elseif(NOT (TARGET_ARCH MATCHES "^(32|64)$"))
+    message(FATAL_ERROR "TARGET_ARCH must be either 32 or 64")
 endif()
 
 set(CMAKE_DEBUG_POSTFIX _deb)
@@ -101,13 +103,9 @@ add_subdirectory(lua4)
 
 set(SOURCES_LIB
     source/lua4dec.cpp
-    source/lua4dec.hpp
     source/ast/ast.cpp
-    source/ast/ast.hpp
     source/lua/lua.cpp
-    source/lua/lua.hpp
     source/parser/parser.cpp
-    source/parser/parser.hpp
 )
 
 set(SOURCES_EXE
