@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 namespace fs = std::filesystem;
-using Buffer = std::vector<byte>;
+using Buffer = std::vector<Byte>;
 using Map    = std::unordered_map<std::string, std::pair<Buffer, Buffer>>;
 
 int main(int argc, char** argv)

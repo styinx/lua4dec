@@ -1,6 +1,6 @@
 #include "lua4dec.hpp"
 
-Vector<byte> read_file(const char* filename)
+Vector<Byte> read_file(const char* filename)
 {
     auto* stream = fopen(filename, "rb");
 
@@ -13,7 +13,7 @@ Vector<byte> read_file(const char* filename)
     auto len = ftell(stream);
     fseek(stream, 0, SEEK_SET);
 
-    auto buffer     = Vector<byte>(len);
+    auto buffer     = Vector<Byte>(len);
     auto bytes_read = (long)fread(buffer.data(), 1, len, stream);
     fclose(stream);
 

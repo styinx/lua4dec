@@ -2,7 +2,7 @@
 
 int main(int argc, char** argv)
 {
-    Vector<byte> buffer;
+    Vector<Byte> buffer;
 
     if(argc < 2)
     {
@@ -11,6 +11,9 @@ int main(int argc, char** argv)
     }
     else if(argc == 2)
     {
+#ifndef NDEBUG
+        printf("Reading file: %s\n", argv[1]);
+#endif
         buffer = read_file(argv[1]);
     }
     else
@@ -24,7 +27,6 @@ int main(int argc, char** argv)
 
 #ifndef NDEBUG
     debug_chunk(chunk);
-    debug_function(chunk.main);
 #endif
 
     auto* ast = new Ast();

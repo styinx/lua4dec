@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-bool diff(byte* first, byte* second)
+bool diff(Byte* first, Byte* second)
 {
     while(first != nullptr || second != nullptr)
     {

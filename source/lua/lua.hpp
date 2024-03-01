@@ -11,8 +11,8 @@
 #include <variant>
 #include <vector>
 
-using byte         = unsigned char;
-using ByteIterator = byte*;
+using Byte         = unsigned char;
+using ByteIterator = Byte*;
 using String       = std::string;
 template<typename T>
 using Vector = std::vector<T>;
@@ -33,9 +33,10 @@ using SizeT       = uint64_t;
 using Number      = double;
 #endif
 
-static constexpr unsigned MAX_INT = 2147483647 - 2;
+static constexpr unsigned MAX_INT    = 2147483647 - 2;
+static constexpr Number   LUA_NUMBER = 3.14159265358979323846e8;
 
-enum class Operator : byte
+enum class Operator : Byte
 {
     END = 0x00,
     RETURN,
@@ -92,13 +93,15 @@ extern std::unordered_map<Operator, std::string> OP_TO_STR;
 
 struct ChunkHeader
 {
-    bool is_little_endian;
-    byte bytes_for_int;
-    byte bytes_for_size_t;
-    byte bytes_for_instruction;
-    byte bits_for_instruction;
-    byte bits_for_operator;
-    byte bits_for_register_b;
+    bool   is_little_endian;
+    Byte   bytes_for_int;
+    Byte   bytes_for_size_t;
+    Byte   bytes_for_instruction;
+    Byte   bits_for_instruction;
+    Byte   bits_for_operator;
+    Byte   bits_for_register_b;
+    Byte   bytes_for_test_number;
+    Number test_number;
 };
 
 struct Local
@@ -130,42 +133,42 @@ struct Chunk
     Function    main;
 };
 
-constexpr byte BITS_I      = sizeof(Instruction) * 8;
-constexpr byte BITS_OP     = 6;
-constexpr byte BITS_A      = 17;
-constexpr byte BITS_B      = 9;  // TODO: must be defined at runtime
-constexpr byte BITS_U      = 6;
-constexpr byte BITS_S      = 6;
-constexpr byte BIT_SHIFT_A = BITS_OP + BITS_B;
-constexpr byte BIT_SHIFT_B = BITS_OP;
-constexpr byte BIT_SHIFT_U = BITS_OP;
-constexpr byte BIT_SHIFT_S = BITS_OP;
+constexpr Byte BITS_I      = sizeof(Instruction) * 8;
+constexpr Byte BITS_OP     = 6;
+constexpr Byte BITS_A      = 17;
+constexpr Byte BITS_B      = 9;  // TODO: must be defined at runtime
+constexpr Byte BITS_U      = 6;
+constexpr Byte BITS_S      = 6;
+constexpr Byte BIT_SHIFT_A = BITS_OP + BITS_B;
+constexpr Byte BIT_SHIFT_B = BITS_OP;
+constexpr Byte BIT_SHIFT_U = BITS_OP;
+constexpr Byte BIT_SHIFT_S = BITS_OP;
 
-template<byte bits = BITS_OP>
+template<Byte bits = BITS_OP>
 Operator OP(Instruction instruction)
 {
     return Operator(instruction & ((1 << bits) - 1));
 }
 
-template<byte shift = BIT_SHIFT_A, byte bits = BITS_A>
+template<Byte shift = BIT_SHIFT_A, Byte bits = BITS_A>
 unsigned int A(Instruction instruction)
 {
     return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte shift = BIT_SHIFT_B, byte bits = BITS_B>
+template<Byte shift = BIT_SHIFT_B, Byte bits = BITS_B>
 unsigned int B(Instruction instruction)
 {
     return (instruction >> shift) & ((1 << bits) - 1);
 }
 
-template<byte shift = BIT_SHIFT_U>
+template<Byte shift = BIT_SHIFT_U>
 unsigned int U(Instruction instruction)
 {
     return (instruction >> shift);
 }
 
-template<byte shift = BIT_SHIFT_S>
+template<Byte shift = BIT_SHIFT_S>
 int S(Instruction instruction)
 {
     return (instruction >> shift) - (std::numeric_limits<int>::max() >> shift);
@@ -199,6 +202,20 @@ Chunk       read_chunk(ByteIterator&);
 
 void debug_instruction(unsigned idx, Instruction, Function&);
 void debug_chunk(Chunk chunk);
+void debug_header(ChunkHeader chunk);
 void debug_function(Function function);
+
+/*
+ * Error handling
+ */
+
+enum class Error : int
+{
+    NONE = 0x00,
+    SIGNATURE_MISMATCH,
+    ARCHITECTURE_MISMATCH,
+};
+
+void quit_on(const bool condition, const Error error, const char* message);
 
 #endif  // LUA4DEC_LUA_H

@@ -13,7 +13,7 @@ String normalize(String&& str)
     auto pos = str.find('\n');
     if(pos != std::string::npos)
     {
-        str[pos] = '_';
+        str[pos] = ' ';
     }
     return str;
 }
@@ -23,35 +23,40 @@ ChunkHeader read_header(ByteIterator& iter)
     ChunkHeader header;
 
     // Read signature
-    assert(read<byte>(iter) == 0x1B && "Header mismatch");  // .
-    assert(read<byte>(iter) == 0x4C && "Header mismatch");  // L
-    assert(read<byte>(iter) == 0x75 && "Header mismatch");  // u
-    assert(read<byte>(iter) == 0x61 && "Header mismatch");  // a
-    assert(read<byte>(iter) == 0x40 && "Header mismatch");  // @ (4.0)
+    bool signature_ok = true;
+    signature_ok &= read<Byte>(iter) == 0x1B;  // . (ESC)
+    signature_ok &= read<Byte>(iter) == 0x4C;  // L
+    signature_ok &= read<Byte>(iter) == 0x75;  // u
+    signature_ok &= read<Byte>(iter) == 0x61;  // a
+    signature_ok &= read<Byte>(iter) == 0x40;  // @ (4.0)
 
-    // Read size of types and registers
-    header.is_little_endian      = read<byte>(iter) == 0x01;
-    header.bytes_for_int         = read<byte>(iter);
-    header.bytes_for_size_t      = read<byte>(iter);
-    header.bytes_for_instruction = read<byte>(iter);
-    header.bits_for_instruction  = read<byte>(iter);
-    header.bits_for_operator     = read<byte>(iter);
-    header.bits_for_register_b   = read<byte>(iter);
+    quit_on(!signature_ok, Error::SIGNATURE_MISMATCH, "Header mismatch! '.Lua@' not found");
 
-    assert(header.bytes_for_int == sizeof(Int) && "Byte size for int mismatch");
-    assert(header.bytes_for_size_t == sizeof(SizeT) && "Byte size for size_t mismatch");
-    assert(header.bytes_for_instruction == BITS_I / 8 && "Byte size for instruction mismatch");
-    assert(header.bits_for_instruction == BITS_I && "Bit size for instruction mismatch");
-    assert(header.bits_for_operator == BITS_OP && "Bit size for operator mismatch");
-    assert(header.bits_for_register_b == BITS_B && "Bit size for B mismatch");
+    // Read size of types, registers, and the test number
+    header.is_little_endian      = read<Byte>(iter) == 0x01;
+    header.bytes_for_int         = read<Byte>(iter);
+    header.bytes_for_size_t      = read<Byte>(iter);
+    header.bytes_for_instruction = read<Byte>(iter);
+    header.bits_for_instruction  = read<Byte>(iter);
+    header.bits_for_operator     = read<Byte>(iter);
+    header.bits_for_register_b   = read<Byte>(iter);
+    header.bytes_for_test_number = read<Byte>(iter);
+    header.test_number           = read<Number>(iter);
 
-    auto bytes_for_testnum = read<byte>(iter);
-    assert(bytes_for_testnum == sizeof(Number) && "Bytes for test number mismatch");
+    bool architecture_ok = true;
+    architecture_ok &= header.bytes_for_int == sizeof(Int);
+    architecture_ok &= header.bytes_for_size_t == sizeof(SizeT);
+    architecture_ok &= header.bytes_for_instruction == BITS_I / 8;
+    architecture_ok &= header.bits_for_instruction == BITS_I;
+    architecture_ok &= header.bits_for_operator == BITS_OP;
+    architecture_ok &= header.bits_for_register_b == BITS_B;
+    architecture_ok &= header.bytes_for_test_number == sizeof(Number);
+    architecture_ok &= (LUA_NUMBER - header.test_number) < 0.0000001;
 
-    constexpr Number lua_number   = 3.14159265358979323846e8;
-    const Number     magic_number = read<Number>(iter);
-    const auto       diff         = lua_number - magic_number;
-    assert(diff < 0.0000001 && "magic number mismatch");
+    quit_on(
+        !architecture_ok,
+        Error::ARCHITECTURE_MISMATCH,
+        "Architecture mismatch! (32 bit <-> 64 bit)");
 
     return header;
 }
@@ -63,7 +68,7 @@ Function read_function(ByteIterator& iter)
     function.name             = read_string(iter);
     function.line_defined     = read<int>(iter);
     function.number_of_params = read<int>(iter);
-    function.is_variadic      = read<byte>(iter) == 0x01;
+    function.is_variadic      = read<Byte>(iter) == 0x01;
     function.max_stack_size   = read<int>(iter);
 
     auto num_locals = read<int>(iter);
@@ -174,8 +179,8 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
 void debug_instruction(unsigned idx, Instruction instruction, Function& function)
 {
     printf(
-        "I %3d: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) "
-        "| A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)",
+        " %3d: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) | "
+        "A: %5d (0x%07x) | B: %3d (0x%03x) | U: %10d (0x%08x) | S: %9d (0x%08x)",
         idx,
         (int)instruction,
         (int)instruction,
@@ -226,33 +231,48 @@ void debug_instruction(unsigned idx, Instruction instruction, Function& function
     printf("\n");
 }
 
-void debug_chunk(Chunk /*chunk*/)
+void debug_chunk(Chunk chunk)
 {
-    // printf("%s\n", chunk.name);
+    debug_header(chunk.header);
+    debug_function(chunk.main);
+}
+
+void debug_header(ChunkHeader header)
+{
+    printf("=== Chunk Header ===\n");
+    printf("Endianness:            %s\n", header.is_little_endian ? "little" : "big");
+    printf("Bytes for int:         %2u B\n", header.bytes_for_int);
+    printf("Bytes for size_t:      %2u B\n", header.bytes_for_size_t);
+    printf("Bytes for instruction: %2u B\n", header.bytes_for_instruction);
+    printf("Bits for instruction:  %2u bits\n", header.bits_for_instruction);
+    printf("Bits for operator:     %2u bits\n", header.bits_for_operator);
+    printf("Bits for register B:   %2u bits\n", header.bits_for_register_b);
+    printf("Bytes for test number: %2u B\n", header.bytes_for_test_number);
+    printf("Test number:           %1.16e\n\n", header.test_number);
 }
 
 void debug_function(Function function)
 {
-    printf("Name: %s\n", function.name.c_str());
-    printf("Line: %d\n", function.line_defined);
-    printf("Params: %d\n", function.number_of_params);
-    printf("Variadic: %s\n", function.is_variadic ? "true" : "false");
-    printf("Stack: %d\n", function.max_stack_size);
+    printf("=== Function ===\n");
+    printf("Name:         \"%s\"\n", function.name.c_str());
+    printf("Line:         %d\n", function.line_defined);
+    printf("Params:       %d\n", function.number_of_params);
+    printf("Variadic:     %s\n", function.is_variadic ? "true" : "false");
+    printf("Stack:        %d\n", function.max_stack_size);
 
-    printf("Globals: %zu\n", function.globals.size());
+    printf("Locals:       %zu\n", function.locals.size());
     unsigned n = 0;
-    for(const auto& g : function.globals)
-    {
-        printf("\t%d: \"%s\"\n", n++, g.c_str());
-    }
-
-    printf("Locals: %zu\n", function.locals.size());
-    n = 0;
     for(const auto& l : function.locals)
     {
-        printf("\t%d: \"%s\" (%u - %u)\n", n++, l.name.c_str(), l.start_pc, l.end_pc);
+        printf(" %3d: \"%s\" (%u - %u)\n", n++, l.name.c_str(), l.start_pc, l.end_pc);
     }
-    printf("\n");
+
+    printf("Globals:      %zu\n", function.globals.size());
+    n = 0;
+    for(const auto& g : function.globals)
+    {
+        printf(" %3d: \"%s\"\n", n++, g.c_str());
+    }
 
     printf("Instructions: %zu\n", function.instructions.size());
     n = 0;
@@ -267,5 +287,13 @@ void debug_function(Function function)
     {
         debug_function(fun);
     }
-    printf("\n");
+}
+
+void quit_on(const bool condition, const Error error, const char* message)
+{
+    if(condition)
+    {
+        printf("%s\n", message);
+        exit(static_cast<int>(error));
+    }
 }
