@@ -34,5 +34,7 @@ int main(int argc, char** argv)
 
     print_ast(ast);
 
+    write_file(argv[1], ast);
+
     return 0;
 }
