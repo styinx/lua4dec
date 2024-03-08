@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 #endif
         buffer = read_file(argv[1]);
     }
-    else
+    else if(argc > 3)
     {
         // pipe it here
         return 2;
@@ -34,7 +34,8 @@ int main(int argc, char** argv)
 
     print_ast(ast);
 
-    write_file(argv[1], ast);
+    if(argc == 3)
+        write_file(argv[2], ast);
 
     return 0;
 }

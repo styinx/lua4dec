@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-unsigned PC = 0;
-
 // Get a local variable that is defined at the current PC offset.
 // Use the index to get the nth next variable.
 String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned index = 0)
@@ -532,7 +530,7 @@ void make_for_loop(State& state, Ast*& ast, const Instruction& instruction, cons
     // have to subtract the relative offset of the PC (S register of the instruction which
     // is already negative).
 
-    const auto counter = get_local_from_pc(function, PC + S(instruction), 0);
+    const auto counter = get_local_from_pc(function, state.PC + S(instruction), 0);
 
     const auto increment = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -558,8 +556,8 @@ void make_for_in_loop(State& state, Ast*& ast, const Instruction& instruction, c
     // variable. The value variable is the second next local defined after the list
     // variable.
 
-    const auto key   = get_local_from_pc(function, PC + S(instruction), 1);
-    const auto value = get_local_from_pc(function, PC + S(instruction), 2);
+    const auto key   = get_local_from_pc(function, state.PC + S(instruction), 1);
+    const auto value = get_local_from_pc(function, state.PC + S(instruction), 2);
     const auto right = std::get<Identifier>(std::get<Expression>(state.stack.back())).name;
     state.stack.pop_back();
 
@@ -585,7 +583,7 @@ void make_or(State& state, Ast*& ast, const Instruction& instruction, const Func
     state.stack.push_back(operation);
 
     ast->context.is_or_block = true;
-    ast->context.jump_offset = PC + S(instruction);
+    ast->context.jump_offset = state.PC + S(instruction);
 }
 
 void make_condition(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
@@ -662,7 +660,7 @@ void make_condition(State& state, Ast*& ast, const Instruction& instruction, con
 
         enter_block(ast);
         ast->context.is_condition = true;
-        ast->context.jump_offset  = PC + S(instruction);
+        ast->context.jump_offset  = state.PC + S(instruction);
     }
     // elseif block
     else
@@ -672,7 +670,7 @@ void make_condition(State& state, Ast*& ast, const Instruction& instruction, con
         const auto block     = ConditionBlock(operation, Vector<Statement>{});
         condition.blocks.push_back(block);
 
-        ast->context.jump_offset = PC + S(instruction);
+        ast->context.jump_offset = state.PC + S(instruction);
     }
     ast->context.is_jmp_block = false;
 }
@@ -685,7 +683,7 @@ void end_condition(State& state, Ast*& ast, const Instruction& instruction, cons
         condition.blocks.back().statements = ast->statements;
         ast->statements.clear();
 
-        ast->context.jump_offset  = PC + S(instruction);
+        ast->context.jump_offset  = state.PC + S(instruction);
         ast->context.is_jmp_block = true;
     }
 }
@@ -694,8 +692,8 @@ void make_closure(State& state, Ast*& ast, const Instruction& instruction, const
 {
     enter_block(ast);
 
-    // Parse the closure body
-    parse_function(state, ast, function.functions[A(instruction)]);
+    // Parse the closure body which requires a new state
+    parse_function(State(), ast, function.functions[A(instruction)]);
 
     const auto locals = function.functions[A(instruction)].locals;
 
@@ -717,8 +715,6 @@ void make_closure(State& state, Ast*& ast, const Instruction& instruction, const
 
 void parse_function(State& state, Ast*& ast, const Function& function)
 {
-    PC = 0;
-
     for(const auto& i : function.instructions)
     {
         auto op = Operator(OP(i));
@@ -729,12 +725,12 @@ void parse_function(State& state, Ast*& ast, const Function& function)
             return;
         }
 
-        if(PC > 0 && state.stack.size())
+        if(state.PC > 0 && state.stack.size())
         {
             // TODO: Room for optimization
             for(const auto& local : function.locals)
             {
-                if(local.start_pc == PC)
+                if(local.start_pc == state.PC)
                 {
                     const auto name  = Identifier(local.name);
                     const auto value = std::get<Expression>(state.stack.back());
@@ -748,7 +744,7 @@ void parse_function(State& state, Ast*& ast, const Function& function)
         TABLE[op](state, ast, i, function);
 
         // Inline or comparison for an assignment (x = x or y)
-        if(ast->context.is_or_block && PC == ast->context.jump_offset)
+        if(ast->context.is_or_block && state.PC == ast->context.jump_offset)
         {
             auto right = std::get<Expression>(state.stack.back());
             state.stack.pop_back();
@@ -760,7 +756,7 @@ void parse_function(State& state, Ast*& ast, const Function& function)
             ast->context.is_or_block = false;
         }
         // Handle the end of a condition block if the PC is right.
-        else if(ast->context.is_condition && PC == ast->context.jump_offset)
+        else if(ast->context.is_condition && state.PC == ast->context.jump_offset)
         {
             auto& condition = std::get<Condition>(ast->parent->statements.back());
 
@@ -779,6 +775,6 @@ void parse_function(State& state, Ast*& ast, const Function& function)
             exit_block(ast);
         }
 
-        PC++;
+        state.PC++;
     }
 }

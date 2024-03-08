@@ -3,12 +3,13 @@
 
 #include "ast/ast.hpp"
 
-using Stack = Vector<AstElement>;
-
+/*
+ * Remembering the state of a closure. Every closure needs their own state.
+ */
 struct State
 {
-    Stack    stack;
-    unsigned PC = 0;
+    unsigned           PC = 0;
+    Vector<AstElement> stack;
 };
 
 using Action      = void (*)(State& state, Ast*&, const Instruction&, const Function&);
