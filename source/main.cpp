@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 #endif
 
     auto* ast = new Ast();
-    parse_function(ast, chunk.main);
+    parse_function(State(), ast, chunk.main);
 
     print_ast(ast);
 

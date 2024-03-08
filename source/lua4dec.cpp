@@ -39,7 +39,7 @@ void create_ast(Ast*& ast, const char* filename)
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
-    parse_function(ast, chunk.main);
+    parse_function(State(), ast, chunk.main);
 }
 
 void delete_ast(Ast*& ast)
@@ -62,6 +62,6 @@ void parse(Ast*& ast, const char* filename, FILE* stream)
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
-    parse_function(ast, chunk.main);
+    parse_function(State(), ast, chunk.main);
     print_ast(ast, stream);
 }

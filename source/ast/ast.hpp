@@ -45,11 +45,10 @@ struct Context
 
 struct Ast
 {
-    Ast*               child;
-    Ast*               parent;
-    Context            context;
-    Vector<AstElement> stack;
-    Vector<Statement>  statements;
+    Ast*              child;
+    Ast*              parent;
+    Context           context;
+    Vector<Statement> statements;
 };
 
 // Expressions

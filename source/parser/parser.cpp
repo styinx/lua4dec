@@ -17,45 +17,45 @@ String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned 
     return "";
 }
 
-void enter_block(Ast*&, const Instruction&, const Function&);
-void exit_block(Ast*&);
-void empty(Ast*&, const Instruction&, const Function&);
-void push_nil(Ast*&, const Instruction&, const Function&);
-void push_int(Ast*&, const Instruction&, const Function&);
-void push_string(Ast*&, const Instruction&, const Function&);
-void push_num(Ast*&, const Instruction&, const Function&);
-void push_local(Ast*&, const Instruction&, const Function&);
-void push_global(Ast*&, const Instruction&, const Function&);
-void push_table_element(Ast*&, const Instruction&, const Function&);
-void push_dotted(Ast*&, const Instruction&, const Function&);
-void push_indexed(Ast*&, const Instruction&, const Function&);
-void push_self(Ast*&, const Instruction&, const Function&);
-void push_table(Ast*&, const Instruction&, const Function&);
-void push_list(Ast*&, const Instruction&, const Function&);
-void push_map(Ast*&, const Instruction&, const Function&);
-void pop(Ast*&, const Instruction&, const Function&);
-void make_add(Ast*&, const Instruction&, const Function&);
-void make_addi(Ast*&, const Instruction&, const Function&);
-void make_sub(Ast*&, const Instruction&, const Function&);
-void make_mult(Ast*&, const Instruction&, const Function&);
-void make_div(Ast*&, const Instruction&, const Function&);
-void make_pow(Ast*&, const Instruction&, const Function&);
-void make_concat(Ast*&, const Instruction&, const Function&);
-void make_minus(Ast*&, const Instruction&, const Function&);
-void make_not(Ast*&, const Instruction&, const Function&);
-void make_call(Ast*&, const Instruction&, const Function&);
-void make_tail_call(Ast*&, const Instruction&, const Function&);
-void make_local_assignment(Ast*&, const Instruction&, const Function&);
-void make_return(Ast*&, const Instruction&, const Function&);
-void make_assignment(Ast*&, const Instruction&, const Function&);
-void make_table_assignment(Ast*&, const Instruction&, const Function&);
-void enter_for_loop(Ast*&, const Instruction&, const Function&);
-void make_for_loop(Ast*&, const Instruction&, const Function&);
-void make_for_in_loop(Ast*&, const Instruction&, const Function&);
-void make_or(Ast*&, const Instruction&, const Function&);
-void make_condition(Ast*&, const Instruction&, const Function&);
-void end_condition(Ast*&, const Instruction&, const Function&);
-void make_closure(Ast*&, const Instruction&, const Function&);
+void enter_block(State&, Ast*&, const Instruction&, const Function&);
+void exit_block(State&, Ast*&);
+void empty(State&, Ast*&, const Instruction&, const Function&);
+void push_nil(State&, Ast*&, const Instruction&, const Function&);
+void push_int(State&, Ast*&, const Instruction&, const Function&);
+void push_string(State&, Ast*&, const Instruction&, const Function&);
+void push_num(State&, Ast*&, const Instruction&, const Function&);
+void push_local(State&, Ast*&, const Instruction&, const Function&);
+void push_global(State&, Ast*&, const Instruction&, const Function&);
+void push_table_element(State&, Ast*&, const Instruction&, const Function&);
+void push_dotted(State&, Ast*&, const Instruction&, const Function&);
+void push_indexed(State&, Ast*&, const Instruction&, const Function&);
+void push_self(State&, Ast*&, const Instruction&, const Function&);
+void push_table(State&, Ast*&, const Instruction&, const Function&);
+void push_list(State&, Ast*&, const Instruction&, const Function&);
+void push_map(State&, Ast*&, const Instruction&, const Function&);
+void pop(State&, Ast*&, const Instruction&, const Function&);
+void make_add(State&, Ast*&, const Instruction&, const Function&);
+void make_addi(State&, Ast*&, const Instruction&, const Function&);
+void make_sub(State&, Ast*&, const Instruction&, const Function&);
+void make_mult(State&, Ast*&, const Instruction&, const Function&);
+void make_div(State&, Ast*&, const Instruction&, const Function&);
+void make_pow(State&, Ast*&, const Instruction&, const Function&);
+void make_concat(State&, Ast*&, const Instruction&, const Function&);
+void make_minus(State&, Ast*&, const Instruction&, const Function&);
+void make_not(State&, Ast*&, const Instruction&, const Function&);
+void make_call(State&, Ast*&, const Instruction&, const Function&);
+void make_tail_call(State&, Ast*&, const Instruction&, const Function&);
+void make_local_assignment(State&, Ast*&, const Instruction&, const Function&);
+void make_return(State&, Ast*&, const Instruction&, const Function&);
+void make_assignment(State&, Ast*&, const Instruction&, const Function&);
+void make_table_assignment(State&, Ast*&, const Instruction&, const Function&);
+void enter_for_loop(State&, Ast*&, const Instruction&, const Function&);
+void make_for_loop(State&, Ast*&, const Instruction&, const Function&);
+void make_for_in_loop(State&, Ast*&, const Instruction&, const Function&);
+void make_or(State&, Ast*&, const Instruction&, const Function&);
+void make_condition(State&, Ast*&, const Instruction&, const Function&);
+void end_condition(State&, Ast*&, const Instruction&, const Function&);
+void make_closure(State&, Ast*&, const Instruction&, const Function&);
 
 // clang-format off
 auto TABLE = ActionTable
@@ -132,7 +132,7 @@ void enter_block(Ast*& ast)
     ast        = child;
 }
 
-void enter_block(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void enter_block(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     auto* child   = new Ast();
     child->parent = ast;
@@ -149,154 +149,158 @@ void exit_block(Ast*& ast)
 
 // Helpers
 
-void empty(Ast*&, const Instruction&, const Function&)
+void empty(State&, Ast*&, const Instruction&, const Function&)
 {
 }
 
 // Stack modification
 
-void push_nil(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void push_nil(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    ast->stack.push_back(Identifier("nil"));
+    state.stack.push_back(Identifier("nil"));
 }
 
-void pop(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void pop(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     auto elements = U(instruction);
     while(elements > 0)
     {
         // TODO: Shouldn't have to be checked
-        if(ast->stack.size())
-            ast->stack.pop_back();
+        if(state.stack.size())
+            state.stack.pop_back();
         elements--;
     }
 }
 
-void push_global(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name = function.globals[U(instruction)];
-    ast->stack.push_back(Identifier(name));
+    state.stack.push_back(Identifier(name));
 }
 
-void push_table_element(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void push_table_element(
+    State& state,
+    Ast*&  ast,
+    const Instruction& /*instruction*/,
+    const Function& /*function*/)
 {
-    const auto index = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
+    const auto index = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.pop_back();
 
-    const auto table = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
+    const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.pop_back();
 
-    ast->stack.push_back(Identifier(table.name + "[" + index.name + "]"));
+    state.stack.push_back(Identifier(table.name + "[" + index.name + "]"));
 }
 
-void push_dotted(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_dotted(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name   = function.globals[U(instruction)];
-    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
-    ast->stack.push_back(Identifier(parent.name + "." + name));
+    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.pop_back();
+    state.stack.push_back(Identifier(parent.name + "." + name));
 }
 
-void push_indexed(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_indexed(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name   = function.locals[U(instruction)].name;
-    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
-    ast->stack.push_back(Identifier(parent.name + "[" + name + "]"));
+    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.pop_back();
+    state.stack.push_back(Identifier(parent.name + "[" + name + "]"));
 }
 
-void push_self(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_self(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto name   = function.globals[U(instruction)];
-    const auto parent = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.push_back(Identifier(parent.name + "." + name));
+    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.push_back(Identifier(parent.name + "." + name));
 }
 
-void push_local(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // TODO: This is a special hack for SWBF
     const auto pos  = U(instruction);
     auto       name = String("local" + std::to_string(pos));
     if(function.locals.size() > pos)
         name = function.locals[pos].name;
-    ast->stack.push_back(Identifier(name));
+    state.stack.push_back(Identifier(name));
 }
 
-void push_int(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void push_int(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     const auto value = S(instruction);
-    ast->stack.push_back(AstInt(value));
+    state.stack.push_back(AstInt(value));
 }
 
-void push_num(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto value = function.numbers[U(instruction)];
-    ast->stack.push_back(AstNumber(value));
+    state.stack.push_back(AstNumber(value));
 }
 
-void push_string(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_string(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto value = function.globals[U(instruction)];
-    ast->stack.push_back(AstString(value));
+    state.stack.push_back(AstString(value));
 }
 
-void push_table(Ast*& ast, const Instruction& instruction, const Function& function)
+void push_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // Its only a table if an identifier is on the stack before. Otherwise its a map or
     // list.
 
     std::string name;
-    if(ast->stack.size())
+    if(state.stack.size())
     {
-        const auto ex = std::get<Expression>(ast->stack.back());
+        const auto ex = std::get<Expression>(state.stack.back());
         if(std::holds_alternative<Identifier>(ex))
         {
             name = std::get<Identifier>(ex).name;
-            ast->stack.pop_back();
+            state.stack.pop_back();
         }
     }
 
     const auto size = U(instruction);
     AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
-    ast->stack.push_back(table);
+    state.stack.push_back(table);
 }
 
-void push_list(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void push_list(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Vector<Expression> list;
     for(unsigned i = 0; i < B(instruction); ++i)
     {
-        list.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        list.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
     std::reverse(list.begin(), list.end());
 
-    ast->stack.pop_back();  // empty AstTable
-    ast->stack.push_back(AstList(list));
+    state.stack.pop_back();  // empty AstTable
+    state.stack.push_back(AstList(list));
 }
 
-void push_map(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void push_map(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Vector<std::pair<Expression, Expression>> map;
     for(unsigned i = 0; i < U(instruction); ++i)
     {
-        const auto value = std::get<Expression>(ast->stack.back());
-        ast->stack.pop_back();
+        const auto value = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
 
-        const auto key = std::get<Expression>(ast->stack.back());
-        ast->stack.pop_back();
+        const auto key = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
 
         map.push_back(std::make_pair(key, value));
     }
 
     std::reverse(map.begin(), map.end());
 
-    auto& table = std::get<AstTable>(std::get<Expression>(ast->stack.back()));
+    auto& table = std::get<AstTable>(std::get<Expression>(state.stack.back()));
     if(table.name.name.empty())
     {
-        ast->stack.pop_back();  // empty AstTable
-        ast->stack.push_back(AstMap(map));
+        state.stack.pop_back();  // empty AstTable
+        state.stack.push_back(AstMap(map));
     }
     else
     {
@@ -305,93 +309,93 @@ void push_map(Ast*& ast, const Instruction& instruction, const Function& /*funct
 }
 
 // Operations
-void make_add(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_add(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("+", {left, right}));
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("+", {left, right}));
 }
 
-void make_addi(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_addi(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
     const auto right = AstNumber(S(instruction));
-    ast->stack.push_back(AstOperation("+", {right, left}));
+    state.stack.push_back(AstOperation("+", {right, left}));
 }
 
-void make_sub(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_sub(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("-", {left, right}));
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("-", {left, right}));
 }
 
-void make_mult(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_mult(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("*", {left, right}));
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("*", {left, right}));
 }
 
-void make_div(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_div(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("/", {left, right}));
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("/", {left, right}));
 }
 
-void make_pow(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_pow(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("^", {left, right}));
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("^", {left, right}));
 }
 
-void make_concat(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_concat(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     Vector<Expression> ex;
     for(unsigned i = 0; i < U(instruction); ++i)
     {
-        ex.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        ex.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
-    ast->stack.push_back(AstOperation("..", ex));
+    state.stack.push_back(AstOperation("..", ex));
 }
 
-void make_minus(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_minus(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("-", {right}));
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("-", {right}));
 }
 
-void make_not(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void make_not(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
-    const auto right = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
-    ast->stack.push_back(AstOperation("not", {right}));
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+    state.stack.push_back(AstOperation("not", {right}));
 }
 
 // Return
 
-void make_return(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_return(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     Vector<Expression> args;
-    while(ast->stack.size() > 0)
+    while(state.stack.size() > 0)
     {
-        args.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        args.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
     std::reverse(args.begin(), args.end());
@@ -402,33 +406,33 @@ void make_return(Ast*& ast, const Instruction& instruction, const Function& func
 
 // Assignment
 
-void make_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_assignment(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto left  = Identifier(function.globals[B(instruction)]);
-    const auto right = std::get<Expression>(ast->stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     Assignment ass(left, right);
-    ast->stack.pop_back();
+    state.stack.pop_back();
 
     ast->statements.push_back(ass);
 }
 
-void make_local_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_local_assignment(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto left  = Identifier(function.locals[B(instruction)].name);
-    const auto right = std::get<Expression>(ast->stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     Assignment ass(left, right);
-    ast->stack.pop_back();
+    state.stack.pop_back();
 
     ast->statements.push_back(ass);
 }
 
-void make_table_assignment(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_table_assignment(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     Vector<Expression> args;
     for(unsigned i = 0; i < B(instruction); ++i)
     {
-        args.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        args.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
     std::reverse(args.begin(), args.end());
@@ -453,20 +457,20 @@ void make_table_assignment(Ast*& ast, const Instruction& instruction, const Func
 
 // Call
 
-void make_call(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);  // The caller is at position a
     const auto b = B(instruction);  // Is expression (!=0) or statement (0)
 
     Vector<Expression> args;
-    while(ast->stack.size() > a + 1)
+    while(state.stack.size() > a + 1)
     {
-        args.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        args.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
-    auto caller = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    auto caller = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
 
     // Caller is a regular function
     if(std::holds_alternative<Identifier>(caller))
@@ -478,34 +482,34 @@ void make_call(Ast*& ast, const Instruction& instruction, const Function& functi
         if(B(instruction) == 0)
             ast->statements.push_back(Call(name, args));
         else
-            ast->stack.push_back(Expression(Call(name, args)));
+            state.stack.push_back(Expression(Call(name, args)));
     }
     // Caller is a table
     else if(std::holds_alternative<AstTable>(caller))
     {
         auto table = std::get<AstTable>(caller);
-        ast->stack.push_back(table);
+        state.stack.push_back(table);
     }
     else
     {
         // TODO
-        ast->stack.push_back(caller);
+        state.stack.push_back(caller);
     }
 }
 
-void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);  // The caller is at position a
 
     Vector<Expression> args;
-    while(ast->stack.size() > a + 1)
+    while(state.stack.size() > a + 1)
     {
-        args.push_back(std::get<Expression>(ast->stack.back()));
-        ast->stack.pop_back();
+        args.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
-    auto name = std::get<Identifier>(std::get<Expression>(ast->stack.back()));
-    ast->stack.pop_back();
+    auto name = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.pop_back();
 
     std::reverse(args.begin(), args.end());
 
@@ -514,12 +518,12 @@ void make_tail_call(Ast*& ast, const Instruction& instruction, const Function& f
 
 // For loops
 
-void enter_for_loop(Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void enter_for_loop(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
 {
     enter_block(ast);
 }
 
-void make_for_loop(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_for_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     exit_block(ast);
 
@@ -530,20 +534,20 @@ void make_for_loop(Ast*& ast, const Instruction& instruction, const Function& fu
 
     const auto counter = get_local_from_pc(function, PC + S(instruction), 0);
 
-    const auto increment = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    const auto increment = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
 
-    const auto end = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    const auto end = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
 
-    const auto begin = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    const auto begin = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
 
     const ForLoop loop(counter, begin, end, increment, ast->child->statements);
     ast->statements.push_back(loop);
 }
 
-void make_for_in_loop(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_for_in_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     exit_block(ast);
 
@@ -556,8 +560,8 @@ void make_for_in_loop(Ast*& ast, const Instruction& instruction, const Function&
 
     const auto key   = get_local_from_pc(function, PC + S(instruction), 1);
     const auto value = get_local_from_pc(function, PC + S(instruction), 2);
-    const auto right = std::get<Identifier>(std::get<Expression>(ast->stack.back())).name;
-    ast->stack.pop_back();
+    const auto right = std::get<Identifier>(std::get<Expression>(state.stack.back())).name;
+    state.stack.pop_back();
 
     const ForInLoop loop(key, value, right, ast->child->statements);
     ast->statements.push_back(loop);
@@ -572,19 +576,19 @@ void make_while_loop(Ast*& /*ast*/, const Instruction& /*instruction*/, const Fu
 
 // Condition
 
-void make_or(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_or(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
-    auto left = std::get<Expression>(ast->stack.back());
-    ast->stack.pop_back();
+    auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
 
     AstOperation operation("or", {left});
-    ast->stack.push_back(operation);
+    state.stack.push_back(operation);
 
     ast->context.is_or_block = true;
     ast->context.jump_offset = PC + S(instruction);
 }
 
-void make_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void make_condition(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     const auto op = OP(instruction);
 
@@ -632,18 +636,18 @@ void make_condition(Ast*& ast, const Instruction& instruction, const Function& /
 
     if(op >= Operator::JMPNE && op <= Operator::JMPGE)
     {
-        auto left = std::get<Expression>(ast->stack.back());
-        ast->stack.pop_back();
+        auto left = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
 
-        auto right = std::get<Expression>(ast->stack.back());
-        ast->stack.pop_back();
+        auto right = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
 
         operands = {left, right};
     }
     else if(op >= Operator::JMPT && op <= Operator::JMPONF)
     {
-        auto left = std::get<Expression>(ast->stack.back());
-        ast->stack.pop_back();
+        auto left = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
 
         operands = {left, Identifier("nil")};
     }
@@ -673,7 +677,7 @@ void make_condition(Ast*& ast, const Instruction& instruction, const Function& /
     ast->context.is_jmp_block = false;
 }
 
-void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*function*/)
+void end_condition(State& state, Ast*& ast, const Instruction& instruction, const Function& /*function*/)
 {
     if(ast->context.is_condition)
     {
@@ -686,12 +690,12 @@ void end_condition(Ast*& ast, const Instruction& instruction, const Function& /*
     }
 }
 
-void make_closure(Ast*& ast, const Instruction& instruction, const Function& function)
+void make_closure(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     enter_block(ast);
 
     // Parse the closure body
-    parse_function(ast, function.functions[A(instruction)]);
+    parse_function(state, ast, function.functions[A(instruction)]);
 
     const auto locals = function.functions[A(instruction)].locals;
 
@@ -706,12 +710,12 @@ void make_closure(Ast*& ast, const Instruction& instruction, const Function& fun
 
     exit_block(ast);
 
-    ast->stack.push_back(Closure(ast->child->statements, arguments));
+    state.stack.push_back(Closure(ast->child->statements, arguments));
 }
 
 // Public functions
 
-void parse_function(Ast*& ast, const Function& function)
+void parse_function(State& state, Ast*& ast, const Function& function)
 {
     PC = 0;
 
@@ -725,7 +729,7 @@ void parse_function(Ast*& ast, const Function& function)
             return;
         }
 
-        if(PC > 0 && ast->stack.size())
+        if(PC > 0 && state.stack.size())
         {
             // TODO: Room for optimization
             for(const auto& local : function.locals)
@@ -733,24 +737,24 @@ void parse_function(Ast*& ast, const Function& function)
                 if(local.start_pc == PC)
                 {
                     const auto name  = Identifier(local.name);
-                    const auto value = std::get<Expression>(ast->stack.back());
+                    const auto value = std::get<Expression>(state.stack.back());
                     // For some reason the local needs to stay on the stack ???
-                    // ast->stack.pop_back();
+                    // state.stack.pop_back();
                     ast->statements.push_back(LocalAssignment(name, value));
                 }
             }
         }
 
-        TABLE[op](ast, i, function);
+        TABLE[op](state, ast, i, function);
 
         // Inline or comparison for an assignment (x = x or y)
         if(ast->context.is_or_block && PC == ast->context.jump_offset)
         {
-            auto right = std::get<Expression>(ast->stack.back());
-            ast->stack.pop_back();
+            auto right = std::get<Expression>(state.stack.back());
+            state.stack.pop_back();
 
             auto& operation =
-                std::get<AstOperation>(std::get<Expression>(ast->stack.back()));
+                std::get<AstOperation>(std::get<Expression>(state.stack.back()));
             operation.ex.insert(operation.ex.begin(), right);
 
             ast->context.is_or_block = false;

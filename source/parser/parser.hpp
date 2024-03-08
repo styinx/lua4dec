@@ -3,9 +3,17 @@
 
 #include "ast/ast.hpp"
 
-using Action      = void (*)(Ast*&, const Instruction&, const Function&);
+using Stack = Vector<AstElement>;
+
+struct State
+{
+    Stack    stack;
+    unsigned PC = 0;
+};
+
+using Action      = void (*)(State& state, Ast*&, const Instruction&, const Function&);
 using ActionTable = std::unordered_map<Operator, Action>;
 
-void parse_function(Ast*& ast, const Function&);
+void parse_function(State&, Ast*&, const Function&);
 
 #endif  // LUA4DEC_PARSER_H
