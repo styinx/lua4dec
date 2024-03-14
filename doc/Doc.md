@@ -172,6 +172,7 @@ x = 1
 
 
 **Visual Representation:**
+
 ![SETGLOBAL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/setglobal.svg)
 
 
@@ -228,6 +229,6 @@ f()
 
 **Visual Representation:**
 
-![SETGLOBAL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/setglobal.svg)
+![CALL](https://github.com/styinx/lua4dec/blob/master/doc/img/instructions/call.svg)
 
 
