@@ -697,7 +697,8 @@ void make_closure(State& state, Ast*& ast, const Instruction& instruction, const
     enter_block(ast);
 
     // Parse the closure body which requires a new state
-    parse_function(State(), ast, function.functions[A(instruction)]);
+    auto new_state = State();
+    parse_function(new_state, ast, function.functions[A(instruction)]);
 
     const auto locals = function.functions[A(instruction)].locals;
 

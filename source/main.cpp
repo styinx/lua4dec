@@ -29,8 +29,9 @@ int main(int argc, char** argv)
     debug_chunk(chunk);
 #endif
 
-    auto* ast = new Ast();
-    parse_function(State(), ast, chunk.main);
+    auto* ast   = new Ast();
+    auto  state = State();
+    parse_function(state, ast, chunk.main);
 
     print_ast(ast);
 
