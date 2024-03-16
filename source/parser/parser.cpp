@@ -389,8 +389,10 @@ void make_not(State& state, Ast*& ast, const Instruction& /*instruction*/, const
 
 void make_return(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    auto u = U(instruction);  // U marks the position of the arguments
+
     Vector<Expression> args;
-    while(state.stack.size() > 0)
+    while(state.stack.size() > u)
     {
         args.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
@@ -491,6 +493,8 @@ void make_call(State& state, Ast*& ast, const Instruction& instruction, const Fu
     else
     {
         // TODO
+        // exit(1);
+        int i = 0;
         state.stack.push_back(caller);
     }
 }
@@ -715,6 +719,16 @@ void make_closure(State& state, Ast*& ast, const Instruction& instruction, const
 
 void parse_function(State& state, Ast*& ast, const Function& function)
 {
+    // Arguments of the function if it is a closure, otherwise just locals
+    for(const auto& local : function.locals)
+    {
+        if(local.start_pc == 0)
+        {
+            const auto name = Identifier(local.name);
+            state.stack.push_back(name);
+        }
+    }
+
     for(const auto& i : function.instructions)
     {
         auto op = Operator(OP(i));
@@ -725,19 +739,27 @@ void parse_function(State& state, Ast*& ast, const Function& function)
             return;
         }
 
+        // Local variable assignment (may be more than one)
         if(state.PC > 0 && state.stack.size())
         {
-            // TODO: Room for optimization
+            Vector<Identifier> locals;
             for(const auto& local : function.locals)
             {
                 if(local.start_pc == state.PC)
                 {
-                    const auto name  = Identifier(local.name);
-                    const auto value = std::get<Expression>(state.stack.back());
-                    // For some reason the local needs to stay on the stack ???
-                    // state.stack.pop_back();
-                    ast->statements.push_back(LocalAssignment(name, value));
+                    locals.push_back(Identifier(local.name));
                 }
+            }
+
+            if(locals.size())
+            {
+                const auto value = std::get<Expression>(state.stack.back());
+                state.stack.pop_back();
+                ast->statements.push_back(LocalAssignment(locals, value));
+
+                // Locals need to be pushed on the stack
+                for(const auto& local : locals)
+                    state.stack.push_back(local);
             }
         }
 

@@ -248,10 +248,10 @@ struct ForInLoop
 
 struct LocalAssignment
 {
-    Identifier left;
+    Vector<Identifier> left;
     Expression right;
 
-    LocalAssignment(const Identifier& l, const Expression& r)
+    LocalAssignment(const Vector<Identifier>& l, const Expression& r)
         : left(l)
         , right(r)
     {

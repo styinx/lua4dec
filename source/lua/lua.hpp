@@ -114,15 +114,15 @@ struct Local
 struct Function
 {
     String              name;
-    int                 line_defined;
-    int                 number_of_params;
+    unsigned            line_defined;
+    unsigned            number_of_params;
     bool                is_variadic;
-    int                 max_stack_size;
+    unsigned            max_stack_size;
     Vector<Instruction> instructions;
     Vector<Number>      numbers;
     Vector<String>      globals;
     Vector<Local>       locals;
-    Vector<int>         lines;
+    Vector<unsigned>    lines;
 
     Vector<Function> functions;
 };
@@ -214,6 +214,7 @@ enum class Error : int
     NONE = 0x00,
     SIGNATURE_MISMATCH,
     ARCHITECTURE_MISMATCH,
+    FUNCTION_PARAM_MISMATCH,
 };
 
 void quit_on(const bool condition, const Error error, const char* message);

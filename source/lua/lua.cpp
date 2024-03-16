@@ -197,6 +197,7 @@ void debug_instruction(unsigned idx, Instruction instruction, Function& function
         S(instruction));
 
     std::string name;
+    bool        check_emptyness = true;
     switch(OP(instruction))
     {
     case Operator::GETGLOBAL:
@@ -222,8 +223,13 @@ void debug_instruction(unsigned idx, Instruction instruction, Function& function
     case Operator::PUSHNEGNUM:
         name = std::to_string(function.numbers[U(instruction)]);
         break;
+    default:
+        check_emptyness = false;
         // TODO: Add the rest of the operators
     }
+
+    if(check_emptyness && name.empty())
+        name = "\"\"";
 
     if(!name.empty())
         printf(" | %s", name.c_str());
