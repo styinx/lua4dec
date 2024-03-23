@@ -47,9 +47,10 @@ void make_local_assignment(State&, Ast*&, const Instruction&, const Function&);
 void make_return(State&, Ast*&, const Instruction&, const Function&);
 void make_assignment(State&, Ast*&, const Instruction&, const Function&);
 void make_table_assignment(State&, Ast*&, const Instruction&, const Function&);
+void enter_for_in_loop(State&, Ast*&, const Instruction&, const Function&);
 void enter_for_loop(State&, Ast*&, const Instruction&, const Function&);
-void make_for_loop(State&, Ast*&, const Instruction&, const Function&);
-void make_for_in_loop(State&, Ast*&, const Instruction&, const Function&);
+void exit_for_loop(State&, Ast*&, const Instruction&, const Function&);
+void exit_for_in_loop(State&, Ast*&, const Instruction&, const Function&);
 void make_or(State&, Ast*&, const Instruction&, const Function&);
 void make_condition(State&, Ast*&, const Instruction&, const Function&);
 void end_condition(State&, Ast*&, const Instruction&, const Function&);
@@ -97,10 +98,10 @@ auto TABLE = ActionTable
     {Operator::SETTABLE,    &make_table_assignment},
     // For loop
     {Operator::FORPREP,     &enter_for_loop},
-    {Operator::FORLOOP,     &make_for_loop},
+    {Operator::FORLOOP,     &exit_for_loop},
     // For in loop
-    {Operator::LFORPREP,    &enter_for_loop},
-    {Operator::LFORLOOP,    &make_for_in_loop},
+    {Operator::LFORPREP,    &enter_for_in_loop},
+    {Operator::LFORLOOP,    &exit_for_in_loop},
     // Conditions
     {Operator::JMPNE,       &make_condition},
     {Operator::JMPEQ,       &make_condition},
@@ -482,7 +483,7 @@ void make_call(State& state, Ast*& ast, const Instruction& instruction, const Fu
         if(B(instruction) == 0)
             ast->statements.push_back(Call(name, args));
         else
-            state.stack.push_back(Expression(Call(name, args)));
+            state.stack.push_back(Expression(Call(name, args, true)));
     }
     // Caller is a table
     else if(std::holds_alternative<AstTable>(caller))
@@ -520,21 +521,9 @@ void make_tail_call(State& state, Ast*& ast, const Instruction& instruction, con
 
 // For loops
 
-void enter_for_loop(State& state, Ast*& ast, const Instruction& /*instruction*/, const Function& /*function*/)
+void enter_for_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    enter_block(ast);
-}
-
-void make_for_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
-{
-    exit_block(ast);
-
-    // Locals are defined in a PC range. The first local defined from the current PC value
-    // is the counter variable. Since this function handles the end of the for loop we
-    // have to subtract the relative offset of the PC (S register of the instruction which
-    // is already negative).
-
-    const auto counter = get_local_from_pc(function, state.PC + S(instruction), 0);
+    const auto counter = get_local_from_pc(function, state.PC, 0);
 
     const auto increment = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -545,28 +534,40 @@ void make_for_loop(State& state, Ast*& ast, const Instruction& instruction, cons
     const auto begin = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const ForLoop loop(counter, begin, end, increment, ast->child->statements);
+    ForLoop loop(counter, begin, end, increment, Vector<Statement>{});
     ast->statements.push_back(loop);
+
+    enter_block(ast);
 }
 
-void make_for_in_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+void enter_for_in_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    exit_block(ast);
+    const auto key   = get_local_from_pc(function, state.PC, 1);
+    const auto value = get_local_from_pc(function, state.PC, 2);
 
-    // Locals are defined in a PC range. The first local defined from the current PC value
-    // is the list variable. Since this function handles the end of the for loop we have
-    // to subtract the relative offset of the PC (S register of the instruction which is
-    // already negative). The key variable is the next local defined after the list
-    // variable. The value variable is the second next local defined after the list
-    // variable.
-
-    const auto key   = get_local_from_pc(function, state.PC + S(instruction), 1);
-    const auto value = get_local_from_pc(function, state.PC + S(instruction), 2);
     const auto right = std::get<Identifier>(std::get<Expression>(state.stack.back())).name;
     state.stack.pop_back();
 
-    const ForInLoop loop(key, value, right, ast->child->statements);
+    ForInLoop loop(key, value, right, Vector<Statement>{});
     ast->statements.push_back(loop);
+
+    enter_block(ast);
+}
+
+void exit_for_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    auto& loop      = std::get<ForLoop>(ast->parent->statements.back());
+    loop.statements = ast->statements;
+
+    exit_block(ast);
+}
+
+void exit_for_in_loop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    auto& loop      = std::get<ForInLoop>(ast->parent->statements.back());
+    loop.statements = ast->statements;
+
+    exit_block(ast);
 }
 
 // While loop
@@ -655,7 +656,7 @@ void make_condition(State& state, Ast*& ast, const Instruction& instruction, con
     }
 
     // if block
-    if(!ast->context.is_condition)
+    if(!ast->context.is_condition || ast->context.jmp_offset == 0)
     {
         const auto operation = AstOperation(comparison, operands);
         const auto block     = ConditionBlock(operation, Vector<Statement>{});
@@ -688,10 +689,10 @@ void end_condition(State& state, Ast*& ast, const Instruction& instruction, cons
         ast->statements.clear();
 
         ast->context.jump_offset  = state.PC + S(instruction);
+        ast->context.jmp_offset   = state.PC + S(instruction);
         ast->context.is_jmp_block = true;
     }
 }
-
 void make_closure(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     enter_block(ast);
@@ -758,7 +759,8 @@ void parse_function(State& state, Ast*& ast, const Function& function)
                 state.stack.pop_back();
                 ast->statements.push_back(LocalAssignment(locals, value));
 
-                // Locals need to be pushed on the stack
+                // Locals need to be pushed onto the stack because of the offset of the
+                // CALL operator.
                 for(const auto& local : locals)
                     state.stack.push_back(local);
             }
@@ -766,38 +768,44 @@ void parse_function(State& state, Ast*& ast, const Function& function)
 
         TABLE[op](state, ast, i, function);
 
-        // Inline or comparison for an assignment (x = x or y)
-        if(ast->context.is_or_block && state.PC == ast->context.jump_offset)
+        if(state.PC == ast->context.jump_offset)
         {
-            auto right = std::get<Expression>(state.stack.back());
-            state.stack.pop_back();
-
-            auto& operation =
-                std::get<AstOperation>(std::get<Expression>(state.stack.back()));
-            operation.ex.insert(operation.ex.begin(), right);
-
-            ast->context.is_or_block = false;
-        }
-        // Handle the end of a condition block if the PC is right.
-        else if(ast->context.is_condition && state.PC == ast->context.jump_offset)
-        {
-            auto& condition = std::get<Condition>(ast->parent->statements.back());
-
-            // Create an else block if the last jump operator was a JMP
-            if(ast->context.is_jmp_block)
+            // Inline or comparison for an assignment (x = x or y)
+            if(ast->context.is_or_block)
             {
-                const auto operation = AstOperation("", Vector<Expression>{});
-                const auto block     = ConditionBlock(operation, Vector<Statement>{});
-                condition.blocks.push_back(block);
+                auto right = std::get<Expression>(state.stack.back());
+                state.stack.pop_back();
+
+                auto& operation =
+                    std::get<AstOperation>(std::get<Expression>(state.stack.back()));
+                operation.ex.insert(operation.ex.begin(), right);
+
+                ast->context.is_or_block = false;
             }
+            // Handle the end of a condition block if the PC is right.
+            else if(ast->context.is_condition)
+            {
+                while(state.PC == ast->context.jump_offset)
+                {
 
-            condition.blocks.back().statements = ast->statements;
-            ast->statements.clear();
+                    auto& condition = std::get<Condition>(ast->parent->statements.back());
 
-            ast->context.is_condition = false;
-            exit_block(ast);
+                    // Create an else block if the last jump operator was a JMP
+                    if(ast->context.is_jmp_block)
+                    {
+                        const auto operation = AstOperation("", Vector<Expression>{});
+                        const auto block = ConditionBlock(operation, Vector<Statement>{});
+                        condition.blocks.push_back(block);
+                    }
+
+                    condition.blocks.back().statements = ast->statements;
+                    ast->statements.clear();
+
+                    ast->context.is_condition = false;
+                    exit_block(ast);
+                }
+            }
         }
-
         state.PC++;
     }
 }

@@ -38,6 +38,8 @@ using AstElement = std::variant<Statement, Expression>;
 struct Context
 {
     unsigned jump_offset  = 0;
+    unsigned jmp_offset   = 0;
+    bool     is_jmp       = false;
     bool     is_condition = false;
     bool     is_jmp_block = false;
     bool     is_or_block  = false;
@@ -161,11 +163,13 @@ struct AstTable
 
 struct Call
 {
+    bool               is_expression;
     Identifier         name;
     Vector<Expression> arguments;
 
-    Call(const Identifier& i, const Vector<Expression>& a)
-        : name(i)
+    Call(const Identifier& i, const Vector<Expression>& a, const bool e = false)
+        : is_expression(e)
+        , name(i)
         , arguments(a)
     {
     }
@@ -249,7 +253,7 @@ struct ForInLoop
 struct LocalAssignment
 {
     Vector<Identifier> left;
-    Expression right;
+    Expression         right;
 
     LocalAssignment(const Vector<Identifier>& l, const Expression& r)
         : left(l)

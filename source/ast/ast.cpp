@@ -149,7 +149,9 @@ void print(const Assignment& assignment, StringBuffer& buffer, const int indent)
 
 void print(const Call& call, StringBuffer& buffer, const int indent)
 {
-    print_indent(buffer, indent);
+    if(!call.is_expression)
+        print_indent(buffer, indent);
+
     buffer << call.name.name << "(";
 
     auto it = call.arguments.begin();
