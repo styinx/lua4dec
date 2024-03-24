@@ -205,18 +205,4 @@ void debug_chunk(Chunk chunk);
 void debug_header(ChunkHeader chunk);
 void debug_function(Function function);
 
-/*
- * Error handling
- */
-
-enum class Error : int
-{
-    NONE = 0x00,
-    SIGNATURE_MISMATCH,
-    ARCHITECTURE_MISMATCH,
-    FUNCTION_PARAM_MISMATCH,
-};
-
-void quit_on(const bool condition, const Error error, const char* message);
-
 #endif  // LUA4DEC_LUA_H
