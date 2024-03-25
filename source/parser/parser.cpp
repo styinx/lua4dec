@@ -519,31 +519,23 @@ Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, 
  */
 Error handle_create_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    Vector<Expression> args;
-    for(unsigned i = 0; i < B(instruction); ++i)
+    // Its only a table if an identifier is on the stack before. Otherwise its a map or
+    // list.
+
+    std::string name;
+    if(state.stack.size())
     {
-        args.push_back(std::get<Expression>(state.stack.back()));
-        state.stack.pop_back();
+        const auto ex = std::get<Expression>(state.stack.back());
+        if(std::holds_alternative<Identifier>(ex))
+        {
+            name = std::get<Identifier>(ex).name;
+            state.stack.pop_back();
+        }
     }
 
-    std::reverse(args.begin(), args.end());
-
-    std::string left;
-    for(auto it = args.begin(); it != args.end() - 1; ++it)
-    {
-        if(std::holds_alternative<Identifier>(*it))
-            left.append(std::get<Identifier>(*it).name);
-        else if(std::holds_alternative<AstString>(*it))
-            left.append(std::get<AstString>(*it).value);
-
-        if(it != args.end() - 2)
-            left.append(".");
-    }
-
-    const auto right = args.back();
-    Assignment ass(Identifier(left), right);
-
-    ast->statements.push_back(ass);
+    const auto size = U(instruction);
+    AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
+    state.stack.push_back(table);
 
     return Error::NONE;
 }
@@ -578,23 +570,31 @@ Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction,
  */
 Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Its only a table if an identifier is on the stack before. Otherwise its a map or
-    // list.
-
-    std::string name;
-    if(state.stack.size())
+    Vector<Expression> args;
+    for(unsigned i = 0; i < B(instruction); ++i)
     {
-        const auto ex = std::get<Expression>(state.stack.back());
-        if(std::holds_alternative<Identifier>(ex))
-        {
-            name = std::get<Identifier>(ex).name;
-            state.stack.pop_back();
-        }
+        args.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
     }
 
-    const auto size = U(instruction);
-    AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
-    state.stack.push_back(table);
+    std::reverse(args.begin(), args.end());
+
+    std::string left;
+    for(auto it = args.begin(); it != args.end() - 1; ++it)
+    {
+        if(std::holds_alternative<Identifier>(*it))
+            left.append(std::get<Identifier>(*it).name);
+        else if(std::holds_alternative<AstString>(*it))
+            left.append(std::get<AstString>(*it).value);
+
+        if(it != args.end() - 2)
+            left.append(".");
+    }
+
+    const auto right = args.back();
+    Assignment ass(Identifier(left), right);
+
+    ast->statements.push_back(ass);
 
     return Error::NONE;
 }
@@ -1114,7 +1114,7 @@ Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, co
 
     // Arguments of the closure have to be searched in the local table.
     Vector<Identifier> arguments;
-    for(const auto& local : functions[a].locals)
+    for(const auto& local : function.functions[a].locals)
     {
         // Locals that start from PC = 0 are closure arguments.
         if(local.start_pc == 0)
@@ -1158,7 +1158,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         // local variable a local assignment is appended to the program. More than one
         // variable might be defined in one line.
         // The local variable definition is not encoded in the bytecode and has to be
-        // handled separatly from the ActionTable.
+        // handled separately from the ActionTable.
         if(state.PC > 0 && state.stack.size())
         {
             // Identify all the locals that are defined in this line.
