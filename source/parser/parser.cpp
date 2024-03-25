@@ -239,10 +239,10 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Arguments:       A B
+ * Stack before:    v_n - v_1  f (at A)     | meaning that function name is a position 'A'
+ * Stack after:     return
+ * Side effects:    f(v1, ..., v_n)
  *
  * @brief
  */
@@ -268,95 +268,100 @@ Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       -
+ * Arguments:       U
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     nil_1 - nil_u
  * Side effects:    -
  *
  * @brief
  */
 Error handle_push_nil(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    // TODO
     state.stack.push_back(Identifier("nil"));
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
+ * Arguments:       U
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     a_u - a_1
  * Side effects:    -
  *
  * @brief
  */
 Error handle_pop(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    auto elements = U(instruction);
-    while(elements > 0)
+    auto u = U(instruction);
+
+    while(u > 0)
     {
         if(state.stack.empty())
             return Error::EMPTY_STACK;
 
         state.stack.pop_back();
-        elements--;
+        u--;
     }
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
+ * Arguments:       S
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     (Number)s
  * Side effects:    -
  *
  * @brief
  */
 Error handle_push_int(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto value = S(instruction);
-    state.stack.push_back(AstInt(value));
+    const auto s = S(instruction);
+    state.stack.push_back(AstInt(s));
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
+ * Arguments:       K       | U used as index for the globals table
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     KSTR[k]
  * Side effects:    -
  *
  * @brief
  */
 Error handle_push_string(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto value = function.globals[U(instruction)];
-    state.stack.push_back(AstString(value));
+    const auto k      = U(instruction);
+    const auto string = function.globals[k];
+
+    state.stack.push_back(AstString(string));
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
+ * Arguments:       N       | U used as index for the number table
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     KNUM[n]
  * Side effects:    -
  *
  * @brief
  */
 Error handle_push_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto value = function.numbers[U(instruction)];
-    state.stack.push_back(AstNumber(value));
+    const auto n      = U(instruction);
+    const auto number = function.numbers[n];
+    state.stack.push_back(AstNumber(number));
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
+ * Arguments:       N       | U used as index for the number table
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     -KNUM[n]
  * Side effects:    -
  *
  * @brief
@@ -367,9 +372,9 @@ Error handle_push_neg_num(State& state, Ast*& ast, const Instruction& instructio
 }
 
 /*
- * Arguments:       -
+ * Arguments:       U
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     Closure[u]
  * Side effects:    -
  *
  * @brief
@@ -380,9 +385,9 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
 }
 
 /*
- * Arguments:       -
+ * Arguments:       L       | U used as index for the local table
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     LOC[l]
  * Side effects:    -
  *
  * @brief
@@ -400,9 +405,9 @@ Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       -
+ * Arguments:       K       | U used as index for the globals table
  * Stack before:    -
- * Stack after:     -
+ * Stack after:     VAR[KSTR[k]]
  * Side effects:    -
  *
  * @brief
@@ -417,8 +422,8 @@ Error handle_get_global(State& state, Ast*& ast, const Instruction& instruction,
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    i t
+ * Stack after:     t[i]
  * Side effects:    -
  *
  * @brief
@@ -437,9 +442,9 @@ Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Functi
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Arguments:       K
+ * Stack before:    t
+ * Stack after:     t[KSTR[k]]
  * Side effects:    -
  *
  * @brief
@@ -455,9 +460,9 @@ Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction,
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Arguments:       L
+ * Stack before:    t
+ * Stack after:     t[LOC[l]]
  * Side effects:    -
  *
  * @brief
@@ -473,9 +478,9 @@ Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Arguments:       K
+ * Stack before:    t
+ * Stack after:     t t[KSTR[k]]
  * Side effects:    -
  *
  * @brief
@@ -490,29 +495,9 @@ Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       -
+ * Arguments:       U
  * Stack before:    -
- * Stack after:     -
- * Side effects:    -
- *
- * @brief
- */
-Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
-{
-    const auto left  = Identifier(function.locals[B(instruction)].name);
-    const auto right = std::get<Expression>(state.stack.back());
-    Assignment ass(left, right);
-    state.stack.pop_back();
-
-    ast->statements.push_back(ass);
-
-    return Error::NONE;
-}
-
-/*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack after:     newarray(size = u)
  * Side effects:    -
  *
  * @brief
@@ -541,10 +526,30 @@ Error handle_create_table(State& state, Ast*& ast, const Instruction& instructio
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
+ * Arguments:       L
+ * Stack before:    x
  * Stack after:     -
- * Side effects:    -
+ * Side effects:    LOC[l] = x
+ *
+ * @brief
+ */
+Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+{
+    const auto left  = Identifier(function.locals[B(instruction)].name);
+    const auto right = std::get<Expression>(state.stack.back());
+    Assignment ass(left, right);
+    state.stack.pop_back();
+
+    ast->statements.push_back(ass);
+
+    return Error::NONE;
+}
+
+/*
+ * Arguments:       K
+ * Stack before:    x
+ * Stack after:     -
+ * Side effects:    VAR[KSTR[k]] = x
  *
  * @brief
  */
@@ -561,17 +566,18 @@ Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction,
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Arguments:       A B
+ * Stack before:    v a_a - a_1 i t
+ * Stack after:     (pops b values)
+ * Side effects:    t[i] = v
  *
  * @brief
  */
 Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    const auto         b = B(instruction);
     Vector<Expression> args;
-    for(unsigned i = 0; i < B(instruction); ++i)
+    for(unsigned i = 0; i < b; ++i)
     {
         args.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
@@ -600,17 +606,18 @@ Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Arguments:       A B
+ * Stack before:    v_b-v_1 t
+ * Stack after:     t
+ * Side effects:    t[i+a*FPF] = v_i
  *
  * @brief
  */
 Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    const auto         b = B(instruction);
     Vector<Expression> list;
-    for(unsigned i = 0; i < B(instruction); ++i)
+    for(unsigned i = 0; i < b; ++i)
     {
         list.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
@@ -625,10 +632,10 @@ Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, c
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Arguments:       U
+ * Stack before:    v_u k_u - v_1 k_1 t
+ * Stack after:     t
+ * Side effects:    t[k_i] = v_i
  *
  * @brief
  */
@@ -664,8 +671,8 @@ Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, co
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    y x
+ * Stack after:     x + y
  * Side effects:    -
  *
  * @brief
@@ -682,9 +689,9 @@ Error handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Arguments:       S
+ * Stack before:    x
+ * Stack after:     x + s
  * Side effects:    -
  *
  * @brief
@@ -701,8 +708,8 @@ Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    y x
+ * Stack after:     x - y
  * Side effects:    -
  *
  * @brief
@@ -720,8 +727,8 @@ Error handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    y x
+ * Stack after:     x * y
  * Side effects:    -
  *
  * @brief
@@ -739,8 +746,8 @@ Error handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    y x
+ * Stack after:     x / y
  * Side effects:    -
  *
  * @brief
@@ -758,8 +765,8 @@ Error handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    y x
+ * Stack after:     x ^ y
  * Side effects:    -
  *
  * @brief
@@ -776,9 +783,9 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Arguments:       U
+ * Stack before:    v_u - v_1
+ * Stack after:     v1 - v_u
  * Side effects:    -
  *
  * @brief
@@ -798,8 +805,8 @@ Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, con
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    x
+ * Stack after:     -x
  * Side effects:    -
  *
  * @brief
@@ -815,8 +822,8 @@ Error handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
 
 /*
  * Arguments:       -
- * Stack before:    -
- * Stack after:     -
+ * Stack before:    x
+ * Stack after:     (x == nil) ? 1 : nil
  * Side effects:    -
  *
  * @brief
@@ -826,28 +833,6 @@ Error handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
     state.stack.push_back(AstOperation("not", {right}));
-
-    return Error::NONE;
-}
-
-/*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
- *
- * @brief
- */
-Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, const Function&)
-{
-    auto left = std::get<Expression>(state.stack.back());
-    state.stack.pop_back();
-
-    AstOperation operation("or", {left});
-    state.stack.push_back(operation);
-
-    ast->context.is_or_block = true;
-    ast->context.jump_offset = state.PC + S(instruction);
 
     return Error::NONE;
 }
@@ -952,10 +937,32 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       -
+ * Arguments:       J
+ * Stack before:    x
+ * Stack after:     (x ~= nil) ? x : -
+ * Side effects:    (x ~= nil) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    AstOperation operation("or", {left});
+    state.stack.push_back(operation);
+
+    ast->context.is_or_block = true;
+    ast->context.jump_offset = state.PC + S(instruction);
+
+    return Error::NONE;
+}
+
+/*
+ * Arguments:       J
  * Stack before:    -
  * Stack after:     -
- * Side effects:    -
+ * Side effects:    PC += s
  *
  * @brief
  */
@@ -978,8 +985,8 @@ Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const 
 /*
  * Arguments:       -
  * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Stack after:     nil
+ * Side effects:    PC++
  *
  * @brief
  */
@@ -989,7 +996,7 @@ Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instructio
 }
 
 /*
- * Arguments:       -
+ * Arguments:       J
  * Stack before:    -
  * Stack after:     -
  * Side effects:    -
@@ -1018,7 +1025,7 @@ Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, co
 }
 
 /*
- * Arguments:       -
+ * Arguments:       J
  * Stack before:    -
  * Stack after:     -
  * Side effects:    -
@@ -1042,7 +1049,7 @@ Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, c
 }
 
 /*
- * Arguments:       -
+ * Arguments:       J
  * Stack before:    -
  * Stack after:     -
  * Side effects:    -
@@ -1060,7 +1067,7 @@ Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, co
 }
 
 /*
- * Arguments:       -
+ * Arguments:       J
  * Stack before:    -
  * Stack after:     -
  * Side effects:    -
@@ -1073,21 +1080,6 @@ Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, c
     loop.statements = ast->statements;
 
     exit_block(ast);
-
-    return Error::NONE;
-}
-
-/*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
- *
- * @brief
- */
-Error handle_while_loop(Ast*& /*ast*/, const Instruction&, const Function&)
-{
-    // TODO: while loop does not really exist in byte code
 
     return Error::NONE;
 }
