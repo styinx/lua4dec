@@ -15,8 +15,10 @@ String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned 
     return "";
 }
 
-Error enter_block(State&, Ast*&, const Instruction&, const Function&);
-Error exit_block(State&, Ast*&);
+Error enter_block(Ast*&);
+Error exit_block(Ast*&);
+
+Error handle_condition(State&, Ast*&, const Instruction&, const Function&);
 
 Error handle_end(State&, Ast*&, const Instruction&, const Function&);
 Error handle_return(State&, Ast*&, const Instruction&, const Function&);
@@ -58,8 +60,6 @@ Error handle_lforprep(State&, Ast*&, const Instruction&, const Function&);
 Error handle_forloop(State&, Ast*&, const Instruction&, const Function&);
 Error handle_lforloop(State&, Ast*&, const Instruction&, const Function&);
 Error handle_closure(State&, Ast*&, const Instruction&, const Function&);
-
-Error handle_condition(State&, Ast*&, const Instruction&, const Function&);
 
 // clang-format off
 auto TABLE = ActionTable
@@ -187,14 +187,13 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
 
 /*
  * Arguments:       A B
- * Stack before:    v_n - v_1  f (at A)     | meaning that function name is a position 'A'
- * Stack after:     r_b - r_1
- * Side effects:    f(v1, ..., v_n)
+ * Stack before:    v_n - v_1  f (at A)     | meaning that the function name is a position
+ * 'A' Stack after:     r_b - r_1 Side effects:    f(v1, ..., v_n)
  *
  * @brief   Pops elements from the stack until it has a size of 'A'. The last popped
  *          element is the caller. The rest of the popped elements are the arguments
  *          in reversed order.
- *          In case the caller is a table or a map (bot of type AstTable) we just push
+ *          In case the caller is a table or a map (both of type AstTable) we just push
  *          it back onto the stack.
  */
 Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
@@ -240,11 +239,14 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
 
 /*
  * Arguments:       A B
- * Stack before:    v_n - v_1  f (at A)     | meaning that function name is a position 'A'
- * Stack after:     return
- * Side effects:    f(v1, ..., v_n)
+ * Stack before:    v_n - v_1  f (at A)     | meaning that the function name is a position
+ * 'A' Stack after:     return Side effects:    f(v1, ..., v_n)
  *
- * @brief
+ * @brief   Special case of the call operator. However it is only used for proper function
+ * calls. The operator pops elements from the stack until it has a size of 'A'. The last
+ * popped element is the function caller. The rest of the popped elements are the
+ * arguments in reversed order. The value of the function is returned from the current
+ * closure.
  */
 Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
@@ -394,11 +396,13 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
  */
 Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    const auto l = U(instruction);
+
     // TODO: This is a special hack for SWBF
-    const auto pos  = U(instruction);
-    auto       name = String("local" + std::to_string(pos));
-    if(function.locals.size() > pos)
-        name = function.locals[pos].name;
+    auto name = String("local" + std::to_string(l));
+    if(function.locals.size() > l)
+        name = function.locals[l].name;
+
     state.stack.push_back(Identifier(name));
 
     return Error::NONE;
@@ -414,7 +418,8 @@ Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, 
  */
 Error handle_get_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name = function.globals[U(instruction)];
+    const auto k    = U(instruction);
+    const auto name = function.globals[k];
     state.stack.push_back(Identifier(name));
 
     return Error::NONE;
@@ -430,9 +435,11 @@ Error handle_get_global(State& state, Ast*& ast, const Instruction& instruction,
  */
 Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    // i
     const auto index = std::get<Identifier>(std::get<Expression>(state.stack.back()));
     state.stack.pop_back();
 
+    // t
     const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
     state.stack.pop_back();
 
@@ -451,10 +458,14 @@ Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Functi
  */
 Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name   = function.globals[U(instruction)];
-    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    const auto k    = U(instruction);
+    const auto name = function.globals[k];
+
+    // t
+    const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
     state.stack.pop_back();
-    state.stack.push_back(Identifier(parent.name + "." + name));
+
+    state.stack.push_back(Identifier(table.name + "." + name));
 
     return Error::NONE;
 }
@@ -469,10 +480,14 @@ Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction,
  */
 Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name   = function.locals[U(instruction)].name;
-    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    const auto l    = U(instruction);
+    const auto name = function.locals[l].name;
+
+    // t
+    const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
     state.stack.pop_back();
-    state.stack.push_back(Identifier(parent.name + "[" + name + "]"));
+
+    state.stack.push_back(Identifier(table.name + "[" + name + "]"));
 
     return Error::NONE;
 }
@@ -487,9 +502,12 @@ Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction
  */
 Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto name   = function.globals[U(instruction)];
-    const auto parent = std::get<Identifier>(std::get<Expression>(state.stack.back()));
-    state.stack.push_back(Identifier(parent.name + "." + name));
+    const auto k    = U(instruction);
+    const auto name = function.globals[k];
+
+    // t
+    const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
+    state.stack.push_back(Identifier(table.name + "." + name));
 
     return Error::NONE;
 }
@@ -500,7 +518,7 @@ Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, 
  * Stack after:     newarray(size = u)
  * Side effects:    -
  *
- * @brief
+ * @brief   Creates a new table element (may be list or map) of the given size.
  */
 Error handle_create_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
@@ -518,8 +536,8 @@ Error handle_create_table(State& state, Ast*& ast, const Instruction& instructio
         }
     }
 
-    const auto size = U(instruction);
-    AstTable   table(size, name, Vector<std::pair<Expression, Expression>>{});
+    const auto u = U(instruction);
+    AstTable   table(u, name, Vector<std::pair<Expression, Expression>>{});
     state.stack.push_back(table);
 
     return Error::NONE;
@@ -531,15 +549,17 @@ Error handle_create_table(State& state, Ast*& ast, const Instruction& instructio
  * Stack after:     -
  * Side effects:    LOC[l] = x
  *
- * @brief
+ * @brief   Sets the local variable at position l to the top-most value on the stack.
  */
 Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto left  = Identifier(function.locals[B(instruction)].name);
+    const auto l    = U(instruction);
+    const auto left = Identifier(function.locals[l].name);
+
     const auto right = std::get<Expression>(state.stack.back());
-    Assignment ass(left, right);
     state.stack.pop_back();
 
+    Assignment ass(left, right);
     ast->statements.push_back(ass);
 
     return Error::NONE;
@@ -551,15 +571,17 @@ Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, 
  * Stack after:     -
  * Side effects:    VAR[KSTR[k]] = x
  *
- * @brief
+ * @brief   Creates an assignment statement.
  */
 Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto left  = Identifier(function.globals[B(instruction)]);
+    const auto k    = U(instruction);
+    const auto left = Identifier(function.globals[k]);
+
     const auto right = std::get<Expression>(state.stack.back());
-    Assignment ass(left, right);
     state.stack.pop_back();
 
+    Assignment ass(left, right);
     ast->statements.push_back(ass);
 
     return Error::NONE;
@@ -571,11 +593,12 @@ Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction,
  * Stack after:     (pops b values)
  * Side effects:    t[i] = v
  *
- * @brief
+ * @brief   Creates a table assignment with b table elements.
  */
 Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto         b = B(instruction);
+    const auto b = B(instruction);
+
     Vector<Expression> args;
     for(unsigned i = 0; i < b; ++i)
     {
@@ -598,8 +621,8 @@ Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, 
     }
 
     const auto right = args.back();
-    Assignment ass(Identifier(left), right);
 
+    Assignment ass(Identifier(left), right);
     ast->statements.push_back(ass);
 
     return Error::NONE;
@@ -611,11 +634,12 @@ Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, 
  * Stack after:     t
  * Side effects:    t[i+a*FPF] = v_i
  *
- * @brief
+ * @brief   Creates a list of b elements that is pushed onto the stack.
  */
 Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto         b = B(instruction);
+    const auto b = B(instruction);
+
     Vector<Expression> list;
     for(unsigned i = 0; i < b; ++i)
     {
@@ -637,12 +661,15 @@ Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, c
  * Stack after:     t
  * Side effects:    t[k_i] = v_i
  *
- * @brief
+ * @brief   Sets the previous u pushed elements as values for a table if a table was
+ * created before. Otherwise a map of this size is created and pushed onto the stack.
  */
 Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    const auto u = U(instruction);
+
     Vector<std::pair<Expression, Expression>> map;
-    for(unsigned i = 0; i < U(instruction); ++i)
+    for(unsigned i = 0; i < u; ++i)
     {
         const auto value = std::get<Expression>(state.stack.back());
         state.stack.pop_back();
@@ -681,8 +708,10 @@ Error handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("+", {left, right}));
 
     return Error::NONE;
@@ -700,7 +729,9 @@ Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
-    const auto right = AstNumber(S(instruction));
+
+    const auto s     = S(instruction);
+    const auto right = AstNumber(s);
     state.stack.push_back(AstOperation("+", {right, left}));
 
     return Error::NONE;
@@ -718,8 +749,10 @@ Error handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("-", {left, right}));
 
     return Error::NONE;
@@ -737,8 +770,10 @@ Error handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("*", {left, right}));
 
     return Error::NONE;
@@ -756,8 +791,10 @@ Error handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("/", {left, right}));
 
     return Error::NONE;
@@ -775,8 +812,10 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("^", {left, right}));
 
     return Error::NONE;
@@ -788,12 +827,13 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
  * Stack after:     v1 - v_u
  * Side effects:    -
  *
- * @brief
+ * @brief   Concatenates u elements from the stack together.
  */
 Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    const auto         u = U(instruction);
     Vector<Expression> ex;
-    for(unsigned i = 0; i < U(instruction); ++i)
+    for(unsigned i = 0; i < u; ++i)
     {
         ex.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
@@ -809,12 +849,13 @@ Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, con
  * Stack after:     -x
  * Side effects:    -
  *
- * @brief
+ * @brief   Negates the numeric value of the top-most element on the stack.
  */
 Error handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("-", {right}));
 
     return Error::NONE;
@@ -826,24 +867,23 @@ Error handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
  * Stack after:     (x == nil) ? 1 : nil
  * Side effects:    -
  *
- * @brief
+ * @brief   Negates the truth value of the top-most element on the stack.
  */
 Error handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
+
     state.stack.push_back(AstOperation("not", {right}));
 
     return Error::NONE;
 }
 
 /*
- * Arguments:       -
- * Stack before:    -
- * Stack after:     -
- * Side effects:    -
+ * Helper function-
  *
- * @brief
+ * @brief   Each conditional operator can have 0, 1, or 2 arguments. The operation
+ * determines how the arguments are handled.
  */
 Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
@@ -852,7 +892,7 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
     if(op < Operator::JMPNE || op > Operator::JMPONF)
     {
         printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
-        exit(1);
+        return Error::UNDEFINED;
     }
 
     std::string comparison;
@@ -886,7 +926,7 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
         break;
     default:
         printf("OP %d not covered for conditions\n", (int)op);
-        exit(1);
+        return Error::UNDEFINED;
     }
 
     Vector<Expression> operands;
@@ -992,6 +1032,7 @@ Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const 
  */
 Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    // TODO
     return Error::NONE;
 }
 

@@ -14,6 +14,7 @@ enum class Error : int
     FUNCTION_PARAM_MISMATCH,
     EMPTY_STACK,
     BAD_VARIANT,
+    UNDEFINED,
 };
 
 void quit_on(const bool condition, const Error error, const char* message);
