@@ -70,7 +70,7 @@ int main(int argc, char** argv)
             delete ast;
 
             int res = system(cmd.c_str());
-            printf("%s %s\n", res == -1 ? ERR : OK, name.c_str());
+            printf("%s %s\n", res == 0 ? OK : ERR, name.c_str());
         }
     }
 
