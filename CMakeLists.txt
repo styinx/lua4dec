@@ -102,6 +102,7 @@ add_subdirectory(lua4)
 #
 
 set(SOURCES_LIB
+    source/errors.cpp
     source/lua4dec.cpp
     source/ast/ast.cpp
     source/lua/lua.cpp
@@ -113,7 +114,8 @@ set(SOURCES_EXE
 )
 
 # Source filters
-source_group("source"         FILES source/lua4dec.cpp source/lua4dec.hpp)
+source_group("source"         FILES source/lua4dec.cpp source/lua4dec.hpp
+                                    source/errors.cpp source/errors.hpp)
 source_group("source/ast"     FILES source/ast/ast.cpp source/ast/ast.hpp)
 source_group("source/lua"     FILES source/lua/lua.cpp source/lua/lua.hpp)
 source_group("source/parser"  FILES source/parser/parser.cpp source/parser/parser.hpp)
