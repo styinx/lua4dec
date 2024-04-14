@@ -200,9 +200,15 @@ ChunkHeader read_header(ByteIterator&);
 Function    read_function(ByteIterator&);
 Chunk       read_chunk(ByteIterator&);
 
-void debug_instruction(unsigned idx, Instruction, Function&);
+struct DebugState
+{
+    unsigned local_offset = 0;
+    unsigned PC = 0;
+};
+
 void debug_chunk(Chunk chunk);
 void debug_header(ChunkHeader chunk);
-void debug_function(Function function);
+void debug_function(DebugState& ctx, Function function);
+void debug_instruction(DebugState& ctx, unsigned idx, Instruction, Function&);
 
 #endif  // LUA4DEC_LUA_H

@@ -179,7 +179,76 @@ std::unordered_map<Operator, std::string> OP_TO_STR = {
 };
 // clang-format on
 
-void debug_instruction(unsigned idx, Instruction instruction, Function& function)
+void debug_chunk(Chunk chunk)
+{
+    DebugState state;
+
+    debug_header(chunk.header);
+    debug_function(state, chunk.main);
+}
+
+void debug_header(ChunkHeader header)
+{
+    printf("=== Chunk Header ===\n");
+    printf("Endianness:            %s\n", header.is_little_endian ? "little" : "big");
+    printf("Bytes for int:         %2u B\n", header.bytes_for_int);
+    printf("Bytes for size_t:      %2u B\n", header.bytes_for_size_t);
+    printf("Bytes for instruction: %2u B\n", header.bytes_for_instruction);
+    printf("Bits for instruction:  %2u bits\n", header.bits_for_instruction);
+    printf("Bits for operator:     %2u bits\n", header.bits_for_operator);
+    printf("Bits for register B:   %2u bits\n", header.bits_for_register_b);
+    printf("Bytes for test number: %2u B\n", header.bytes_for_test_number);
+    printf("Test number:           %1.16e\n\n", header.test_number);
+}
+
+void debug_function(DebugState& state, Function function)
+{
+    printf("=== Function ===\n");
+    printf("Name:         \"%s\"\n", function.name.c_str());
+    printf("Line:         %d\n", function.line_defined);
+    printf("Params:       %d\n", function.number_of_params);
+    printf("Variadic:     %s\n", function.is_variadic ? "true" : "false");
+    printf("Stack:        %d\n", function.max_stack_size);
+
+    printf("Locals:       %zu\n", function.locals.size());
+    unsigned n = 0;
+    for(const auto& l : function.locals)
+    {
+        printf(" %3d: \"%s\" (%u - %u)\n", n++, l.name.c_str(), l.start_pc, l.end_pc);
+    }
+
+    printf("Globals:      %zu\n", function.globals.size());
+    n = 0;
+    for(const auto& g : function.globals)
+    {
+        printf(" %3d: \"%s\"\n", n++, g.c_str());
+    }
+
+    printf("Instructions: %zu\n", function.instructions.size());
+    n = 0;
+    for(const auto& i : function.instructions)
+    {
+        debug_instruction(state, n, i, function);
+        n++;
+
+        for(const auto& local : function.locals)
+        {
+            if(local.start_pc == state.PC)
+            {
+                state.local_offset++;
+            }
+        }
+        state.PC++;
+    }
+    printf("\n");
+
+    for(const auto& fun : function.functions)
+    {
+        debug_function(state, fun);
+    }
+}
+
+void debug_instruction(DebugState& state, unsigned idx, Instruction instruction, Function& function)
 {
     printf(
         " %3d: %11d (0x%08x) | OP: %2d (0x%02x) (%11s) | "
@@ -211,12 +280,8 @@ void debug_instruction(unsigned idx, Instruction instruction, Function& function
     case Operator::GETLOCAL:
     case Operator::SETLOCAL:
     {
-        // TODO: This is a special hack for SWBF
         const auto pos = U(instruction);
-        if(function.locals.size() > pos)
-            name = function.locals[pos].name;
-        else
-            name = String("local" + std::to_string(pos));
+        name           = function.locals[pos].name;
         break;
     }
     case Operator::PUSHINT:
@@ -238,64 +303,6 @@ void debug_instruction(unsigned idx, Instruction instruction, Function& function
         printf(" | %s", name.c_str());
 
     printf("\n");
-}
-
-void debug_chunk(Chunk chunk)
-{
-    debug_header(chunk.header);
-    debug_function(chunk.main);
-}
-
-void debug_header(ChunkHeader header)
-{
-    printf("=== Chunk Header ===\n");
-    printf("Endianness:            %s\n", header.is_little_endian ? "little" : "big");
-    printf("Bytes for int:         %2u B\n", header.bytes_for_int);
-    printf("Bytes for size_t:      %2u B\n", header.bytes_for_size_t);
-    printf("Bytes for instruction: %2u B\n", header.bytes_for_instruction);
-    printf("Bits for instruction:  %2u bits\n", header.bits_for_instruction);
-    printf("Bits for operator:     %2u bits\n", header.bits_for_operator);
-    printf("Bits for register B:   %2u bits\n", header.bits_for_register_b);
-    printf("Bytes for test number: %2u B\n", header.bytes_for_test_number);
-    printf("Test number:           %1.16e\n\n", header.test_number);
-}
-
-void debug_function(Function function)
-{
-    printf("=== Function ===\n");
-    printf("Name:         \"%s\"\n", function.name.c_str());
-    printf("Line:         %d\n", function.line_defined);
-    printf("Params:       %d\n", function.number_of_params);
-    printf("Variadic:     %s\n", function.is_variadic ? "true" : "false");
-    printf("Stack:        %d\n", function.max_stack_size);
-
-    printf("Locals:       %zu\n", function.locals.size());
-    unsigned n = 0;
-    for(const auto& l : function.locals)
-    {
-        printf(" %3d: \"%s\" (%u - %u)\n", n++, l.name.c_str(), l.start_pc, l.end_pc);
-    }
-
-    printf("Globals:      %zu\n", function.globals.size());
-    n = 0;
-    for(const auto& g : function.globals)
-    {
-        printf(" %3d: \"%s\"\n", n++, g.c_str());
-    }
-
-    printf("Instructions: %zu\n", function.instructions.size());
-    n = 0;
-    for(const auto& i : function.instructions)
-    {
-        debug_instruction(n, i, function);
-        n++;
-    }
-    printf("\n");
-
-    for(const auto& fun : function.functions)
-    {
-        debug_function(fun);
-    }
 }
 
 void quit_on(const bool condition, const Error error, const char* message)

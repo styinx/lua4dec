@@ -29,14 +29,24 @@ int main(int argc, char** argv)
     debug_chunk(chunk);
 #endif
 
-    auto* ast   = new Ast();
-    auto  state = State();
-    parse_function(state, ast, chunk.main);
+    auto* ast    = new Ast();
+    auto  state  = State();
+    auto  result = parse_function(state, ast, chunk.main);
 
-    print_ast(ast);
+    if(result == Error::NONE)
+    {
+        print_ast(ast);
 
-    if(argc == 3)
-        write_file(argv[2], ast);
+        if(argc == 3)
+            write_file(argv[2], ast);
+    }
+    else
+    {
+        printf(
+            "Parser stopped with error %u (%s).\n",
+            static_cast<unsigned>(result),
+            ERROR_TO_STR[result].c_str());
+    }
 
-    return 0;
+    return static_cast<unsigned>(result);
 }

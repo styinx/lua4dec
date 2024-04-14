@@ -6,10 +6,13 @@
 
 /*
  * Remembering the state of a closure. Every closure needs their own stack and PC.
+ * Local offsets depend on the scope which has to be kept track of.
  */
 struct State
 {
     unsigned           PC = 0;
+    unsigned           local_offset = 0;
+    unsigned           scope_level = 0;
     Vector<AstElement> stack;
 };
 
