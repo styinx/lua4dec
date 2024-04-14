@@ -5,7 +5,9 @@ print(l)
 a, b = 8, 5
 
 for j = 0, 20, 5 do
+    local dummy = 4
     k = 9
+    print(k)
 end
 
 --while false do
@@ -31,9 +33,11 @@ a = b * c
 a = b ^ c
 a = -c
 a = not c
-d = e .. f .. g 
+d = e .. f .. g
 
 for k, v in e do
+    print(k, v)
+    local r = 9
 end
 
 print()
@@ -52,15 +56,15 @@ function add(x, y, z)
     s = 19
 end
 
-clo = function(u, v) 
+clo = function(u, v)
     w = 12
 end
 
-clo1 = function(u) 
+clo1 = function(u)
     r = 13
 end
 
-clo2 = function(x, a, b, c) 
+clo2 = function(x, a, b, c)
     r = 13
 end
 
