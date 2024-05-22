@@ -2,6 +2,77 @@
 
 #include <algorithm>
 
+void State::print()
+{
+    printf("Stack:\n");
+    for(const auto& el : stack)
+    {
+        printf("  ");
+        switch(el.index())
+        {
+        case 0:
+        {
+            auto statement = std::get<Statement>(el);
+            switch(statement.index())
+            {
+            case 0:
+                printf("Assignment\n");
+                break;
+            case 1:
+                printf("Call\n");
+                break;
+            case 2:
+                printf("Condition\n");
+                break;
+            default:
+                printf("TODO\n");
+            }
+            break;
+        }
+        case 1:
+        {
+            auto expression = std::get<Expression>(el);
+            switch(expression.index())
+            {
+            case 0:
+                printf("Call\n");
+                break;
+            case 1:
+                printf("Closure\n");
+                break;
+            case 2:
+                printf("Identifier: %s\n", std::get<Identifier>(expression).name.c_str());
+                break;
+            case 3:
+                printf("AstInt: %d\n", std::get<AstInt>(expression).value);
+                break;
+            case 4:
+                printf("AstList\n");
+                break;
+            case 5:
+                printf("AstMap\n");
+                break;
+            case 6:
+                printf("AstNumber: %f\n", std::get<AstNumber>(expression).value);
+                break;
+            case 7:
+                printf("AstOperation\n");
+                break;
+            case 8:
+                printf("AstString: %s\n", std::get<AstString>(expression).value.c_str());
+                break;
+            case 9:
+                printf("AstTable\n");
+                break;
+            default:
+                printf("TODO\n");
+            }
+            break;
+        }
+        }
+    }
+}
+
 // Get a local variable that is defined at the current PC offset.
 // Use the index to get the nth next variable.
 String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned index = 0)
@@ -199,7 +270,7 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto a = A(instruction);  // The caller is at position a
+    const auto a = A(instruction) - state.call_offset;  // The caller is at position a
     const auto b = B(instruction);  // Is expression (!=0) or statement (0)
 
     Vector<Expression> args;
@@ -398,7 +469,7 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
 Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     auto l    = U(instruction);
-    auto name = function.locals[l].name;
+    auto name = function.locals[l + state.local_offset].name;
 
     state.stack.push_back(Identifier(name));
 
@@ -1046,7 +1117,6 @@ Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, co
     enter_block(state, ast);
 
     // TODO
-    state.stack.push_back(Identifier("loop_counter"));
 
     return Error::NONE;
 }
@@ -1061,11 +1131,10 @@ Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    enter_block(state, ast);
-
     // TODO
-    state.stack.push_back(Identifier("loop_key"));
-    state.stack.push_back(Identifier("loop_value"));
+    state.call_offset += 2;
+
+    enter_block(state, ast);
 
     return Error::NONE;
 }
@@ -1081,8 +1150,6 @@ Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, c
 Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto counter = get_local_from_pc(function, state.PC + S(instruction) + 1, 0);
-
-    state.stack.pop_back();  // TODO: loop_counter
 
     const auto increment = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -1112,11 +1179,9 @@ Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    state.call_offset -= 2;
     const auto key   = get_local_from_pc(function, state.PC + S(instruction) + 1, 1);
     const auto value = get_local_from_pc(function, state.PC + S(instruction) + 1, 2);
-
-    state.stack.pop_back();  // TODO: loop_key
-    state.stack.pop_back();  // TODO: loop_value
 
     const auto right = std::get<Identifier>(std::get<Expression>(state.stack.back())).name;
     state.stack.pop_back();
@@ -1216,11 +1281,23 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                     locals.push_back(Identifier(function.locals[index].name));
                 }
 
+                /*
+                Vector<Expression> values;
+                const auto size = locals.size();
+                for(auto i = size; i > 0; --i)
+                {
+                    values.push_back(std::get<Expression>(state.stack.at(size - i)));
+                }
+                */
                 const auto value = std::get<Expression>(state.stack.back());
                 ast->statements.push_back(LocalAssignment(locals, value));
             }
             if(local_kill[state.PC].size() > 0)
             {
+                for(const auto& _ : local_kill[state.PC])
+                {
+                    state.local_offset++;
+                }
             }
         }
 
@@ -1229,7 +1306,19 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
 
         // Return on error.
         if(result != Error::NONE)
+        {
+            printf(
+                "Parser error %u (%s) at instruction %08X (%s) at PC %d.\n",
+                static_cast<unsigned>(result),
+                ERROR_TO_STR[result].c_str(),
+                i,
+                OP_TO_STR[OP(i)].c_str(),
+                state.PC);
+
+            state.print();
+
             return result;
+        }
 
         // Conditional statements are handled implicitly through the jump offset
         // (S register) of the instruction. The offset has to be checked if the parser

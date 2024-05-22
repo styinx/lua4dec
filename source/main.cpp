@@ -40,13 +40,6 @@ int main(int argc, char** argv)
         if(argc == 3)
             write_file(argv[2], ast);
     }
-    else
-    {
-        printf(
-            "Parser stopped with error %u (%s).\n",
-            static_cast<unsigned>(result),
-            ERROR_TO_STR[result].c_str());
-    }
 
     return static_cast<unsigned>(result);
 }

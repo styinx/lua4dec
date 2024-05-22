@@ -281,7 +281,7 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
     case Operator::SETLOCAL:
     {
         const auto pos = U(instruction);
-        name           = function.locals[pos].name;
+        name           = function.locals[pos].name;  // TODO add offset
         break;
     }
     case Operator::PUSHINT:
