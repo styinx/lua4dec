@@ -33,14 +33,14 @@ void write_file(const char* filename, Ast const* const ast)
     fclose(stream);
 }
 
-void create_ast(Ast*& ast, const char* filename)
+Error create_ast(Ast*& ast, const char* filename)
 {
     auto  buffer = read_file(filename);
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
     auto state = State();
-    parse_function(state, ast, chunk.main);
+    return parse_function(state, ast, chunk.main);
 }
 
 void delete_ast(Ast*& ast)
@@ -57,13 +57,17 @@ void delete_ast(Ast*& ast)
     }
 }
 
-void parse(Ast*& ast, const char* filename, FILE* stream)
+Error parse(Ast*& ast, const char* filename, FILE* stream)
 {
     auto  buffer = read_file(filename);
     auto* iter   = buffer.data();
     auto  chunk  = read_chunk(iter);
 
     auto state = State();
-    parse_function(state, ast, chunk.main);
-    print_ast(ast, stream);
+    auto error = parse_function(state, ast, chunk.main);
+
+    if(error != Error::NONE)
+        print_ast(ast, stream);
+
+    return error;
 }

@@ -1213,7 +1213,7 @@ Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, co
 
     // Each closure needs a new state.
     auto new_state = State();
-    parse_function(new_state, ast, function.functions[a]);
+    auto error     = parse_function(new_state, ast, function.functions[a]);
 
     // Arguments of the closure have to be searched in the local table.
     Vector<Identifier> arguments;
@@ -1230,7 +1230,7 @@ Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, co
 
     state.stack.push_back(Closure(ast->child->statements, arguments));
 
-    return Error::NONE;
+    return error;
 }
 
 // Public functions
@@ -1262,7 +1262,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         if(TABLE.count(op) == 0)
         {
             printf("DEBUG: No action for %d (%s) in table\n", (int)op, OP_TO_STR[op].c_str());
-            return Error::NONE;  // TODO
+            return Error::UNDEFINED;  // TODO
         }
 
         // Local lifetime is defined by the PC range. If the PC hits the start PC of a
@@ -1307,6 +1307,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         // Return on error.
         if(result != Error::NONE)
         {
+#ifndef NDEBUG
             printf(
                 "Parser error %u (%s) at instruction %08X (%s) at PC %d.\n",
                 static_cast<unsigned>(result),
@@ -1316,6 +1317,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                 state.PC);
 
             state.print();
+#endif
 
             return result;
         }

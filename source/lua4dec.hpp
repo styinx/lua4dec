@@ -2,6 +2,6 @@
 
 Vector<Byte> read_file(const char* filename);
 void         write_file(const char* filename, Ast const* const ast);
-void         create_ast(Ast*& ast, const char* filename);
+Error        create_ast(Ast*& ast, const char* filename);
 void         delete_ast(Ast*& ast);
-void         parse(Ast*& ast, const char* filename, FILE* stream);
+Error        parse(Ast*& ast, const char* filename, FILE* stream);
