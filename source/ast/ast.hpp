@@ -301,31 +301,33 @@ struct WhileLoop
  */
 
 void print_ast(const Ast*, FILE* stream = stdout);
-void print_ast(const Ast*, StringBuffer& buffer);
+void print_ast(const Ast*, StringBuffer&);
 
-void print_indent(const int, StringBuffer& buffer);
+void print_indent(const int, StringBuffer&);
 
-void print_statements(const Vector<Statement>&, StringBuffer& buffer, const int indent = 0);
+void print_statements(const Vector<Statement>&, StringBuffer&, const int indent = 0);
+void print_statement(const Statement&, StringBuffer&, const int indent = 0);
+void print_expression(const Expression&, StringBuffer&, const int indent = 0);
 
 void print(const Closure&, FILE* stream = stdout, const int indent = 0);
-void print(const Closure&, StringBuffer& buffer, const int indent = 0);
-void print(const Identifier&, StringBuffer& buffer, const int indent = 0);
-void print(const AstInt&, StringBuffer& buffer, const int indent = 0);
-void print(const AstList&, StringBuffer& buffer, const int indent = 0);
-void print(const AstMap&, StringBuffer& buffer, const int indent = 0);
-void print(const AstNumber&, StringBuffer& buffer, const int indent = 0);
-void print(const AstOperation&, StringBuffer& buffer, const int indent = 0);
-void print(const AstString&, StringBuffer& buffer, const int indent = 0);
-void print(const AstTable&, StringBuffer& buffer, const int indent = 0);
+void print(const Closure&, StringBuffer&, const int indent = 0);
+void print(const Identifier&, StringBuffer&, const int indent = 0);
+void print(const AstInt&, StringBuffer&, const int indent = 0);
+void print(const AstList&, StringBuffer&, const int indent = 0);
+void print(const AstMap&, StringBuffer&, const int indent = 0);
+void print(const AstNumber&, StringBuffer&, const int indent = 0);
+void print(const AstOperation&, StringBuffer&, const int indent = 0);
+void print(const AstString&, StringBuffer&, const int indent = 0);
+void print(const AstTable&, StringBuffer&, const int indent = 0);
 
-void print(const Assignment&, StringBuffer& buffer, const int indent = 0);
-void print(const Call&, StringBuffer& buffer, const int indent = 0);
-void print(const Condition&, StringBuffer& buffer, const int indent = 0);
-void print(const ForLoop&, StringBuffer& buffer, const int indent = 0);
-void print(const ForInLoop&, StringBuffer& buffer, const int indent = 0);
-void print(const LocalAssignment&, StringBuffer& buffer, const int indent = 0);
-void print(const Return&, StringBuffer& buffer, const int indent = 0);
-void print(const TailCall&, StringBuffer& buffer, const int indent = 0);
-void print(const WhileLoop&, StringBuffer& buffer, const int indent = 0);
+void print(const Assignment&, StringBuffer&, const int indent = 0);
+void print(const Call&, StringBuffer&, const int indent = 0);
+void print(const Condition&, StringBuffer&, const int indent = 0);
+void print(const ForLoop&, StringBuffer&, const int indent = 0);
+void print(const ForInLoop&, StringBuffer&, const int indent = 0);
+void print(const LocalAssignment&, StringBuffer&, const int indent = 0);
+void print(const Return&, StringBuffer&, const int indent = 0);
+void print(const TailCall&, StringBuffer&, const int indent = 0);
+void print(const WhileLoop&, StringBuffer&, const int indent = 0);
 
 #endif  // LUA4DEC_AST_H

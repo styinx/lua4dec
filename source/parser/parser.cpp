@@ -120,7 +120,16 @@ Error handle_pow(State&, Ast*&, const Instruction&, const Function&);
 Error handle_concat(State&, Ast*&, const Instruction&, const Function&);
 Error handle_minus(State&, Ast*&, const Instruction&, const Function&);
 Error handle_not(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpne(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpeq(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmplt(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmple(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpgt(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpge(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpt(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmpf(State&, Ast*&, const Instruction&, const Function&);
 Error handle_jmpont(State&, Ast*&, const Instruction&, const Function&);
+Error handle_jmponf(State&, Ast*&, const Instruction&, const Function&);
 Error handle_jmp(State&, Ast*&, const Instruction&, const Function&);
 Error handle_push_niljump(State&, Ast*&, const Instruction&, const Function&);
 Error handle_forprep(State&, Ast*&, const Instruction&, const Function&);
@@ -208,6 +217,101 @@ Error exit_block(State& state, Ast*& ast)
         ast = ast->parent;
 
     state.scope_level -= 1;
+
+    return Error::NONE;
+}
+
+/*
+ * @brief   Each conditional operator can have 0, 1, or 2 arguments. The operation
+ * determines how the arguments are handled.
+ */
+Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    const auto op = OP(instruction);
+
+    if(op < Operator::JMPNE || op > Operator::JMPONF)
+    {
+        printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
+        return Error::UNDEFINED;
+    }
+
+    std::string comparison;
+
+    switch(op)
+    {
+    case Operator::JMPNE:
+        comparison = "==";
+        break;
+    case Operator::JMPEQ:
+        comparison = "~=";
+        break;
+    case Operator::JMPLT:
+        comparison = ">=";
+        break;
+    case Operator::JMPLE:
+        comparison = ">";
+        break;
+    case Operator::JMPGT:
+        comparison = "<=";
+        break;
+    case Operator::JMPGE:
+        comparison = "<";
+        break;
+    case Operator::JMPT:
+        comparison = "~=";
+        break;
+    case Operator::JMPF:
+    case Operator::JMPONF:
+        comparison = "==";
+        break;
+    default:
+        printf("OP %d not covered for conditions\n", (int)op);
+        return Error::UNDEFINED;
+    }
+
+    Vector<Expression> operands;
+
+    if(op >= Operator::JMPNE && op <= Operator::JMPGE)
+    {
+        auto left = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
+
+        auto right = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
+
+        operands = {left, right};
+    }
+    else if(op >= Operator::JMPT && op <= Operator::JMPONF)
+    {
+        auto left = std::get<Expression>(state.stack.back());
+        state.stack.pop_back();
+
+        operands = {left, Identifier("nil")};
+    }
+
+    // if block
+    if(!ast->context.is_condition || ast->context.jmp_offset == 0)
+    {
+        const auto operation = AstOperation(comparison, operands);
+        const auto block     = ConditionBlock(operation, Vector<Statement>{});
+        const auto condition = Condition(Vector<ConditionBlock>{block});
+        ast->statements.push_back(condition);
+
+        enter_block(state, ast);
+        ast->context.is_condition = true;
+        ast->context.jump_offset  = state.PC + S(instruction);
+    }
+    // elseif block
+    else
+    {
+        auto&      condition = std::get<Condition>(ast->parent->statements.back());
+        const auto operation = AstOperation(comparison, operands);
+        const auto block     = ConditionBlock(operation, Vector<Statement>{});
+        condition.blocks.push_back(block);
+
+        ast->context.jump_offset = state.PC + S(instruction);
+    }
+    ast->context.is_jmp_block = false;
 
     return Error::NONE;
 }
@@ -303,7 +407,6 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
     }
     else
     {
-        printf("%d\n", caller.index());
         return Error::BAD_VARIANT;
     }
 
@@ -352,8 +455,12 @@ Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, 
  */
 Error handle_push_nil(State& state, Ast*& ast, const Instruction&, const Function&)
 {
-    // TODO
-    state.stack.push_back(Identifier("nil"));
+    auto u = U(instruction);
+
+    for(auto i = u; i > 0; --i)
+    {
+        state.stack.push_back(Identifier("nil"));
+    }
 
     return Error::NONE;
 }
@@ -443,7 +550,11 @@ Error handle_push_num(State& state, Ast*& ast, const Instruction& instruction, c
  */
 Error handle_push_neg_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    return handle_push_num(state, ast, instruction, function);
+    const auto n      = U(instruction);
+    const auto number = function.numbers[n];
+    state.stack.push_back(AstNumber(-number));
+
+    return Error::NONE;
 }
 
 /*
@@ -801,7 +912,8 @@ Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const
 
     const auto s     = S(instruction);
     const auto right = AstNumber(s);
-    state.stack.push_back(AstOperation("+", {right, left}));
+
+    state.stack.push_back(AstOperation("+", {left, right}));
 
     return Error::NONE;
 }
@@ -901,13 +1013,14 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto         u = U(instruction);
-    Vector<Expression> ex;
+    Vector<Expression> expressions;
     for(unsigned i = 0; i < u; ++i)
     {
-        ex.push_back(std::get<Expression>(state.stack.back()));
+        expressions.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
     }
-    state.stack.push_back(AstOperation("..", ex));
+
+    state.stack.push_back(AstOperation("..", expressions));
 
     return Error::NONE;
 }
@@ -949,99 +1062,114 @@ Error handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
 }
 
 /*
- * Helper function-
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x ~= y) ? PC += s
  *
- * @brief   Each conditional operator can have 0, 1, or 2 arguments. The operation
- * determines how the arguments are handled.
+ * @brief
  */
-Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Error handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto op = OP(instruction);
+    // TODO
+    return Error::NONE;
+}
 
-    if(op < Operator::JMPNE || op > Operator::JMPONF)
-    {
-        printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
-        return Error::UNDEFINED;
-    }
+/*
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x == y) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-    std::string comparison;
+/*
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x < y) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-    switch(op)
-    {
-    case Operator::JMPNE:
-        comparison = "==";
-        break;
-    case Operator::JMPEQ:
-        comparison = "~=";
-        break;
-    case Operator::JMPLT:
-        comparison = ">=";
-        break;
-    case Operator::JMPLE:
-        comparison = ">";
-        break;
-    case Operator::JMPGT:
-        comparison = "<=";
-        break;
-    case Operator::JMPGE:
-        comparison = "<";
-        break;
-    case Operator::JMPT:
-        comparison = "~=";
-        break;
-    case Operator::JMPF:
-    case Operator::JMPONF:
-        comparison = "==";
-        break;
-    default:
-        printf("OP %d not covered for conditions\n", (int)op);
-        return Error::UNDEFINED;
-    }
+/*
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x <= y) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-    Vector<Expression> operands;
+/*
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x > y) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-    if(op >= Operator::JMPNE && op <= Operator::JMPGE)
-    {
-        auto left = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
+/*
+ * Arguments:       J
+ * Stack before:    y x
+ * Stack after:     -
+ * Side effects:    (x >= y) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-        auto right = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
+/*
+ * Arguments:       J
+ * Stack before:    x
+ * Stack after:     -
+ * Side effects:    (x ~= nil) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
+    return Error::NONE;
+}
 
-        operands = {left, right};
-    }
-    else if(op >= Operator::JMPT && op <= Operator::JMPONF)
-    {
-        auto left = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
-
-        operands = {left, Identifier("nil")};
-    }
-
-    // if block
-    if(!ast->context.is_condition || ast->context.jmp_offset == 0)
-    {
-        const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Vector<Statement>{});
-        const auto condition = Condition(Vector<ConditionBlock>{block});
-        ast->statements.push_back(condition);
-
-        enter_block(state, ast);
-        ast->context.is_condition = true;
-        ast->context.jump_offset  = state.PC + S(instruction);
-    }
-    // elseif block
-    else
-    {
-        auto&      condition = std::get<Condition>(ast->parent->statements.back());
-        const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Vector<Statement>{});
-        condition.blocks.push_back(block);
-
-        ast->context.jump_offset = state.PC + S(instruction);
-    }
-    ast->context.is_jmp_block = false;
-
+/*
+ * Arguments:       J
+ * Stack before:    x
+ * Stack after:     -
+ * Side effects:    (x == nil) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
     return Error::NONE;
 }
 
@@ -1064,6 +1192,20 @@ Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, con
     ast->context.is_or_block = true;
     ast->context.jump_offset = state.PC + S(instruction);
 
+    return Error::NONE;
+}
+
+/*
+ * Arguments:       J
+ * Stack before:    x
+ * Stack after:     (x == nil) ? x : -
+ * Side effects:    (x == nil) ? PC += s
+ *
+ * @brief
+ */
+Error handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+{
+    // TODO
     return Error::NONE;
 }
 
@@ -1101,7 +1243,7 @@ Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const 
  */
 Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
+    state.stack.push_back(Identifier("nil"));
     return Error::NONE;
 }
 
@@ -1260,12 +1402,6 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
     {
         auto op = Operator(OP(i));
 
-        if(TABLE.count(op) == 0)
-        {
-            printf("DEBUG: No action for %d (%s) in table\n", (int)op, OP_TO_STR[op].c_str());
-            return Error::UNDEFINED;  // TODO
-        }
-
         // Local lifetime is defined by the PC range. If the PC hits the start PC of a
         // local variable a local assignment is appended to the program. More than one
         // variable might be defined in one line.
@@ -1283,6 +1419,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                 }
 
                 /*
+                TODO
                 Vector<Expression> values;
                 const auto size = locals.size();
                 for(auto i = size; i > 0; --i)
@@ -1292,6 +1429,8 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                 */
                 const auto value = std::get<Expression>(state.stack.back());
                 ast->statements.push_back(LocalAssignment(locals, value));
+                // TODO: does local need to be pushed to stack?
+                // state.stack.push_back(Identifier("TODO"));
             }
             if(local_kill[state.PC].size() > 0)
             {
@@ -1310,7 +1449,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         {
 #ifndef NDEBUG
             printf(
-                "Parser error at line %d: %u (%s), instruction %08X (%s) at PC %d.\n",
+                "Parser error at line %d: %u (%s), instruction 0x%08X (%s) at PC %d.\n",
                 function.line_defined,
                 static_cast<unsigned>(result),
                 ERROR_TO_STR[result].c_str(),

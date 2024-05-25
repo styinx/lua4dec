@@ -23,9 +23,19 @@ void print_statements(const std::vector<Statement>& statements, StringBuffer& bu
 {
     for(const auto& statement : statements)
     {
-        std::visit([&buffer, indent](auto&& s) { print(s, buffer, indent); }, statement);
+        print_statement(statement, buffer, indent);
         buffer << "\n";
     }
+}
+
+void print_statement(const Statement& statement, StringBuffer& buffer, const int indent)
+{
+    std::visit([&buffer, indent](auto&& s) { print(s, buffer, indent); }, statement);
+}
+
+void print_expression(const Expression& expression, StringBuffer& buffer, const int indent)
+{
+    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, expression);
 }
 
 // Expressions
@@ -65,7 +75,7 @@ void print(const AstList& list, StringBuffer& buffer, const int indent)
     buffer << "{";
     for(const auto& el : list.elements)
     {
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, el);
+        print_expression(el, buffer, indent);
 
         if(&el != &list.elements.back())
             buffer << ", ";
@@ -81,7 +91,7 @@ void print(const AstMap& map, StringBuffer& buffer, const int indent)
         print_indent(buffer, indent);
         buffer << std::get<AstString>(p.first).value;
         buffer << " = ";
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, p.second);
+        print_expression(p.second, buffer, indent);
 
         if(&p != &map.pairs.back())
             buffer << ", ";
@@ -102,7 +112,7 @@ void print(const AstOperation& operation, StringBuffer& buffer, const int indent
     auto it = operation.ex.rbegin();
     while(it != operation.ex.rend())
     {
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, *it);
+        print_expression(*it, buffer, indent);
 
         it++;
 
@@ -128,7 +138,7 @@ void print(const AstTable& table, StringBuffer& buffer, const int indent)
             buffer << std::get<Identifier>(p.first).name;
 
         buffer << " = ";
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent + 1); }, p.second);
+        print_expression(p.second, buffer, indent + 1);
 
         if(&p != &table.pairs.back())
             buffer << ",\n";
@@ -144,7 +154,7 @@ void print(const Assignment& assignment, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
     buffer << assignment.left.name << " = ";
-    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, assignment.right);
+    print_expression(assignment.right, buffer, indent);
 }
 
 void print(const Call& call, StringBuffer& buffer, const int indent)
@@ -157,7 +167,7 @@ void print(const Call& call, StringBuffer& buffer, const int indent)
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, *it);
+        print_expression(*it, buffer, indent);
 
         if(it != call.arguments.end() - 1)
             buffer << ", ";
@@ -203,11 +213,11 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
     print_indent(buffer, indent);
     buffer << "for " << loop.counter << " = ";
 
-    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, loop.begin);
+    print_expression(loop.begin, buffer, indent);
     buffer << " , ";
-    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, loop.end);
+    print_expression(loop.end, buffer, indent);
     buffer << " , ";
-    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, loop.increment);
+    print_expression(loop.increment, buffer, indent);
 
     buffer << " do\n";
 
@@ -242,7 +252,7 @@ void print(const LocalAssignment& assignment, StringBuffer& buffer, const int in
         it++;
     }
     buffer << " = ";
-    std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, assignment.right);
+    print_expression(assignment.right, buffer, indent);
 }
 
 void print(const Return& ret, StringBuffer& buffer, const int indent)
@@ -253,7 +263,7 @@ void print(const Return& ret, StringBuffer& buffer, const int indent)
     auto it = ret.ex.begin();
     while(it != ret.ex.end())
     {
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, *it);
+        print_expression(*it, buffer, indent);
 
         if(it != ret.ex.end() - 1)
             buffer << ", ";
@@ -270,7 +280,7 @@ void print(const TailCall& call, StringBuffer& buffer, const int indent)
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {
-        std::visit([&buffer, indent](auto&& e) { print(e, buffer, indent); }, *it);
+        print_expression(*it, buffer, indent);
 
         if(it != call.arguments.end() - 1)
             buffer << ", ";
