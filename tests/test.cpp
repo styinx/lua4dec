@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     constexpr char* OK  = "OK ";
     Map             results;
 
-    if(argc < 5)
+    if(argc < 4)
     {
         printf("Provide path to compiler, decompiler, and lua scripts.\n");
         return 1;
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
     fs::path compiler(argv[1]);
     fs::path decompiler(argv[2]);
-    fs::path scripts(argv[4]);
+    fs::path scripts(argv[3]);
 
     std::string luac(compiler.u8string());
     std::string luadec(decompiler.u8string());

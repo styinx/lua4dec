@@ -303,6 +303,7 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
     }
     else
     {
+        printf("%d\n", caller.index());
         return Error::BAD_VARIANT;
     }
 
@@ -1309,7 +1310,8 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         {
 #ifndef NDEBUG
             printf(
-                "Parser error %u (%s) at instruction %08X (%s) at PC %d.\n",
+                "Parser error at line %d: %u (%s), instruction %08X (%s) at PC %d.\n",
+                function.line_defined,
                 static_cast<unsigned>(result),
                 ERROR_TO_STR[result].c_str(),
                 i,
