@@ -222,8 +222,8 @@ Error exit_block(State& state, Ast*& ast)
 }
 
 /*
- * @brief   Each conditional operator can have 0, 1, or 2 arguments. The operation
- * determines how the arguments are handled.
+ * @brief   Each conditional operator can have 0, 1, or 2 arguments.
+ *          The operation determines how the arguments are handled.
  */
 Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
@@ -363,8 +363,9 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
 
 /*
  * Arguments:       A B
- * Stack before:    v_n - v_1  f (at A)     | meaning that the function name is a position
- * 'A' Stack after:     r_b - r_1 Side effects:    f(v1, ..., v_n)
+ * Stack before:    v_n - v_1  f (at A)     | function name is a position 'A'
+ * Stack after:     r_b - r_1
+ * Side effects:    f(v1, ..., v_n)
  *
  * @brief   Pops elements from the stack until it has a size of 'A'. The last popped
  *          element is the caller. The rest of the popped elements are the arguments
@@ -415,14 +416,15 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
 
 /*
  * Arguments:       A B
- * Stack before:    v_n - v_1  f (at A)     | meaning that the function name is a position
- * 'A' Stack after:     return Side effects:    f(v1, ..., v_n)
+ * Stack before:    v_n - v_1  f (at A)     | function name is a position 'A'
+ * Stack after:     return
+ * Side effects:    f(v1, ..., v_n)
  *
  * @brief   Special case of the call operator. However it is only used for proper function
- * calls. The operator pops elements from the stack until it has a size of 'A'. The last
- * popped element is the function caller. The rest of the popped elements are the
- * arguments in reversed order. The value of the function is returned from the current
- * closure.
+ *          calls. The operator pops elements from the stack until it has a size of 'A'.
+ *          The last popped element is the function caller. The rest of the popped
+ *          elements are the arguments in reversed order. The value of the function is
+ *          returned from the current closure.
  */
 Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
@@ -453,7 +455,7 @@ Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief
  */
-Error handle_push_nil(State& state, Ast*& ast, const Instruction&, const Function&)
+Error handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto u = U(instruction);
 
@@ -506,7 +508,7 @@ Error handle_push_int(State& state, Ast*& ast, const Instruction& instruction, c
 }
 
 /*
- * Arguments:       K       | U used as index for the globals table
+ * Arguments:       K       | K/U used as index for the globals table
  * Stack before:    -
  * Stack after:     KSTR[k]
  * Side effects:    -
@@ -524,7 +526,7 @@ Error handle_push_string(State& state, Ast*& ast, const Instruction& instruction
 }
 
 /*
- * Arguments:       N       | U used as index for the number table
+ * Arguments:       N       | N/U used as index for the number table
  * Stack before:    -
  * Stack after:     KNUM[n]
  * Side effects:    -
@@ -541,7 +543,7 @@ Error handle_push_num(State& state, Ast*& ast, const Instruction& instruction, c
 }
 
 /*
- * Arguments:       N       | U used as index for the number table
+ * Arguments:       N       | N/U used as index for the number table
  * Stack before:    -
  * Stack after:     -KNUM[n]
  * Side effects:    -
@@ -571,7 +573,7 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
 }
 
 /*
- * Arguments:       L       | U used as index for the local table
+ * Arguments:       L       | L/U used as index for the local table
  * Stack before:    -
  * Stack after:     LOC[l]
  * Side effects:    -
@@ -589,7 +591,7 @@ Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, 
 }
 
 /*
- * Arguments:       K       | U used as index for the globals table
+ * Arguments:       K       | K/U used as index for the globals table
  * Stack before:    -
  * Stack after:     VAR[KSTR[k]]
  * Side effects:    -
@@ -841,8 +843,9 @@ Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, c
  * Stack after:     t
  * Side effects:    t[k_i] = v_i
  *
- * @brief   Sets the previous u pushed elements as values for a table if a table was
- * created before. Otherwise a map of this size is created and pushed onto the stack.
+ * @brief   Sets the previous u pushed elements as values for a table if a table
+ *          was created before. Otherwise a map of this size is created and pushed
+ *          onto the stack.
  */
 Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
