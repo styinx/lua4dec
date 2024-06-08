@@ -243,16 +243,25 @@ void print(const LocalAssignment& assignment, StringBuffer& buffer, const int in
     print_indent(buffer, indent);
     buffer << "local ";
 
-    auto it = assignment.left.begin();
-    while(it != assignment.left.end())
+    auto key = assignment.left.begin();
+    while(key != assignment.left.end())
     {
-        buffer << it->name;
-        if(it != assignment.left.end() - 1)
+        buffer << key->name;
+        if(key != assignment.left.end() - 1)
             buffer << ", ";
-        it++;
+        key++;
     }
+
     buffer << " = ";
-    print_expression(assignment.right, buffer, indent);
+
+    auto val = assignment.right.begin();
+    while(val != assignment.right.end())
+    {
+        print_expression(*val, buffer, indent);
+        if(val != assignment.right.end() - 1)
+            buffer << ", ";
+        val++;
+    }
 }
 
 void print(const Return& ret, StringBuffer& buffer, const int indent)

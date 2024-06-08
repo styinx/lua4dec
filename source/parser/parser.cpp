@@ -73,19 +73,6 @@ void State::print()
     }
 }
 
-// Get a local variable that is defined at the current PC offset.
-// Use the index to get the nth next variable.
-String get_local_from_pc(const Function& function, unsigned pc_offset, unsigned index = 0)
-{
-    for(unsigned i = 0; i < function.locals.size(); ++i)
-    {
-        if(function.locals[i].start_pc >= pc_offset)
-            if(i + index < function.locals.size())
-                return function.locals[i + index].name;
-    }
-    return "";
-}
-
 Error handle_condition(State&, Ast*&, const Instruction&, const Function&);
 
 Error handle_end(State&, Ast*&, const Instruction&, const Function&);
@@ -375,7 +362,7 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto a = A(instruction) - state.call_offset;  // The caller is at position a
+    const auto a = A(instruction);  // The caller is at position a
     const auto b = B(instruction);  // Is expression (!=0) or statement (0)
 
     Vector<Expression> args;
@@ -578,12 +565,24 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
  * Stack after:     LOC[l]
  * Side effects:    -
  *
- * @brief
+ * @brief Pushes the l-th valid local onto the stack. The index of the local has to
+ *        be normalized according to the validity range.
  */
 Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    auto l    = U(instruction);
-    auto name = function.locals[l + state.local_offset].name;
+    auto l = U(instruction);
+
+    auto index = 0;
+    auto i     = 0;
+    while(i != l)
+    {
+        if(function.locals[index].start_pc <= state.PC &&
+           function.locals[index].end_pc >= state.PC)
+            i++;
+        index++;
+    }
+
+    auto name = function.locals[index].name;
 
     state.stack.push_back(Identifier(name));
 
@@ -1256,13 +1255,27 @@ Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instructio
  * Stack after:     -
  * Side effects:    -
  *
- * @brief
+ * @brief Pop the loop increment, end, and start from the stack.
  */
 Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    enter_block(state, ast);
+    const auto back = state.stack.size() - 1;
+    const auto step = std::get<Identifier>(std::get<Expression>(state.stack.at(back)));
+    const auto limit = std::get<Identifier>(std::get<Expression>(state.stack.at(back - 1)));
+    const auto counter =
+        std::get<Identifier>(std::get<Expression>(state.stack.at(back - 2)));
 
-    // TODO
+    const auto increment_value = std::get<Expression>(state.stack.at(back - 3));
+    const auto end_value       = std::get<Expression>(state.stack.at(back - 4));
+    const auto begin_value     = std::get<Expression>(state.stack.at(back - 5));
+    state.stack.pop_back();
+    state.stack.pop_back();
+    state.stack.pop_back();
+
+    ForLoop loop(counter.name, begin_value, end_value, increment_value, {});
+    ast->statements.push_back(loop);
+
+    enter_block(state, ast);
 
     return Error::NONE;
 }
@@ -1277,8 +1290,16 @@ Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // TODO
-    state.call_offset += 2;
+    const auto back = state.stack.size() - 1;
+    const auto val  = std::get<Identifier>(std::get<Expression>(state.stack.at(back)));
+    const auto key = std::get<Identifier>(std::get<Expression>(state.stack.at(back - 1)));
+    const auto table = std::get<Identifier>(std::get<Expression>(state.stack.at(back - 2)));
+
+    const auto right = std::get<Identifier>(std::get<Expression>(state.stack.at(back - 3)));
+    state.stack.pop_back();
+
+    ForInLoop loop(key.name, val.name, right.name, {});
+    ast->statements.push_back(loop);
 
     enter_block(state, ast);
 
@@ -1295,22 +1316,16 @@ Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, c
  */
 Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    const auto counter = get_local_from_pc(function, state.PC + S(instruction) + 1, 0);
-
-    const auto increment = std::get<Expression>(state.stack.back());
-    state.stack.pop_back();
-
-    const auto end = std::get<Expression>(state.stack.back());
-    state.stack.pop_back();
-
-    const auto begin = std::get<Expression>(state.stack.back());
-    state.stack.pop_back();
-
-    ForLoop loop(counter, begin, end, increment, ast->statements);
+    const auto nested_statements = ast->statements;
 
     exit_block(state, ast);
 
-    ast->statements.push_back(loop);
+    auto& loop      = std::get<ForLoop>(ast->statements.back());
+    loop.statements = nested_statements;
+
+    state.stack.pop_back();
+    state.stack.pop_back();
+    state.stack.pop_back();
 
     return Error::NONE;
 }
@@ -1325,18 +1340,16 @@ Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    state.call_offset -= 2;
-    const auto key   = get_local_from_pc(function, state.PC + S(instruction) + 1, 1);
-    const auto value = get_local_from_pc(function, state.PC + S(instruction) + 1, 2);
-
-    const auto right = std::get<Identifier>(std::get<Expression>(state.stack.back())).name;
-    state.stack.pop_back();
-
-    ForInLoop loop(key, value, right, ast->statements);
+    const auto nested_statements = ast->statements;
 
     exit_block(state, ast);
 
-    ast->statements.push_back(loop);
+    auto& loop      = std::get<ForInLoop>(ast->statements.back());
+    loop.statements = nested_statements;
+
+    state.stack.pop_back();
+    state.stack.pop_back();
+    state.stack.pop_back();
 
     return Error::NONE;
 }
@@ -1383,20 +1396,16 @@ Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, co
 
 Error parse_function(State& state, Ast*& ast, const Function& function)
 {
-    // Lookup table for locals based on their starting and ending lifetime.
+    // Lookup table for locals based on their starting lifetime.
     std::unordered_map<unsigned, Vector<unsigned>> local_spawn;
-    std::unordered_map<unsigned, Vector<unsigned>> local_kill;
 
     unsigned local_index = 0;
     for(const auto& local : function.locals)
     {
         if(local_spawn.count(local.start_pc) == 0)
             local_spawn[local.start_pc] = Vector<unsigned>{};
-        if(local_kill.count(local.end_pc) == 0)
-            local_kill[local.end_pc] = Vector<unsigned>{};
 
         local_spawn[local.start_pc].push_back(local_index);
-        local_kill[local.end_pc].push_back(local_index);
 
         local_index++;
     }
@@ -1405,6 +1414,8 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
     {
         auto op = Operator(OP(i));
 
+        unsigned locals_defined = 0;
+
         // Local lifetime is defined by the PC range. If the PC hits the start PC of a
         // local variable a local assignment is appended to the program. More than one
         // variable might be defined in one line.
@@ -1412,37 +1423,17 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         // handled separately from the ActionTable.
         if(state.PC > 0)
         {
-            // Make a local assignment is a local is defined in this line.
-            if(local_spawn[state.PC].size() > 0)
+            if(local_spawn[state.PC + 1].size() > 0)
             {
-                Vector<Identifier> locals;
-                for(const auto& index : local_spawn[state.PC])
+                for(const auto& index : local_spawn[state.PC + 1])
                 {
-                    locals.push_back(Identifier(function.locals[index].name));
-                }
-
-                /*
-                TODO
-                Vector<Expression> values;
-                const auto size = locals.size();
-                for(auto i = size; i > 0; --i)
-                {
-                    values.push_back(std::get<Expression>(state.stack.at(size - i)));
-                }
-                */
-                const auto value = std::get<Expression>(state.stack.back());
-                ast->statements.push_back(LocalAssignment(locals, value));
-                // TODO: does local need to be pushed to stack?
-                // state.stack.push_back(Identifier("TODO"));
-            }
-            if(local_kill[state.PC].size() > 0)
-            {
-                for(const auto& _ : local_kill[state.PC])
-                {
-                    state.local_offset++;
+                    state.stack.push_back(Identifier(function.locals[index].name));
+                    locals_defined += 1;
                 }
             }
         }
+
+        unsigned stack_size = state.stack.size();
 
         // Run the parsing function for the current operator.
         const auto result = TABLE[op](state, ast, i, function);
@@ -1464,6 +1455,30 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
 #endif
 
             return result;
+        }
+
+        // If a new local is defined and some values lies on top of the stack,
+        // make a local assignment.
+        if(locals_defined > 0 && state.stack.size() > stack_size)
+        {
+            auto values = Vector<Expression>();
+            while(state.stack.size() > stack_size)
+            {
+                values.push_back(std::get<Expression>(state.stack.back()));
+                state.stack.pop_back();
+            }
+
+            auto locals = Vector<Identifier>();
+            auto back   = state.stack.size();
+            while(locals_defined > 0)
+            {
+                auto local = std::get<Expression>(state.stack.at(back - locals_defined));
+                locals.push_back(std::get<Identifier>(local));
+                locals_defined--;
+            }
+
+            auto assignment = LocalAssignment(locals, values);
+            ast->statements.push_back(assignment);
         }
 
         // Conditional statements are handled implicitly through the jump offset

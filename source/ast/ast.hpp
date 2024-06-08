@@ -253,9 +253,9 @@ struct ForInLoop
 struct LocalAssignment
 {
     Vector<Identifier> left;
-    Expression         right;
+    Vector<Expression> right;
 
-    LocalAssignment(const Vector<Identifier>& l, const Expression& r)
+    LocalAssignment(const Vector<Identifier>& l, const Vector<Expression>& r)
         : left(l)
         , right(r)
     {

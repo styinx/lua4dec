@@ -244,7 +244,8 @@ void debug_function(DebugState& state, Function function)
 
     for(const auto& fun : function.functions)
     {
-        debug_function(state, fun);
+        auto new_state = DebugState();
+        debug_function(new_state, fun);
     }
 }
 
@@ -281,7 +282,18 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
     case Operator::SETLOCAL:
     {
         const auto pos = U(instruction);
-        name           = function.locals[pos].name;  // TODO add offset
+
+        auto index = 0;
+        auto i     = 0;
+        while(i != pos)
+        {
+            if(function.locals[index].start_pc <= state.PC &&
+               function.locals[index].end_pc >= state.PC)
+                i++;
+            index++;
+        }
+
+        name = function.locals[index].name;
         break;
     }
     case Operator::PUSHINT:
