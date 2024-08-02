@@ -8,7 +8,6 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ## TODOs
 
-- Produce correct Lua code
 - JMPONF might be used different
 - JMPONT
 - Complete documentation
