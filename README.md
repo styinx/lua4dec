@@ -8,9 +8,9 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 ## TODOs
 
-- Implement the rest of the operators
+- Produce correct Lua code
 - JMPONF might be used different
-- POP command needs more attention
+- JMPONT
 - Complete documentation
 
 
@@ -18,6 +18,12 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 
 Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/doc/Doc.md)
 
+
+## Checkout
+
+```
+git clone --recursive https://github.com/styinx/lua4dec.git
+```
 
 ## Build
 

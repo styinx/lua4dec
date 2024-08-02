@@ -10,10 +10,8 @@
  */
 struct State
 {
-    unsigned           PC           = 0;
-    unsigned           call_offset  = 0;
-    unsigned           local_offset = 0;
-    unsigned           scope_level  = 0;
+    unsigned           PC          = 0;
+    unsigned           scope_level = 0;
     Vector<AstElement> stack;
 
     void print();

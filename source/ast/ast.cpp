@@ -107,16 +107,23 @@ void print(const AstNumber& number, StringBuffer& buffer, const int indent)
 void print(const AstOperation& operation, StringBuffer& buffer, const int indent)
 {
     if(operation.ex.size() == 1)
-        buffer << operation.op << " ";
+        buffer << operation.op;
 
-    auto it = operation.ex.rbegin();
-    while(it != operation.ex.rend())
+    auto it = operation.ex.begin();
+    while(it != operation.ex.end())
     {
-        print_expression(*it, buffer, indent);
+        if(std::holds_alternative<AstOperation>(*it))
+        {
+            buffer << "(";
+            print_expression(*it, buffer, indent);
+            buffer << ")";
+        }
+        else
+            print_expression(*it, buffer, indent);
 
         it++;
 
-        if(it != operation.ex.rend())
+        if(it != operation.ex.end())
             buffer << " " << operation.op << " ";
     }
 }
@@ -230,7 +237,7 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
 void print(const ForInLoop& loop, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
-    buffer << "for " << loop.key << " , " << loop.value << " in " << loop.right << " do\n";
+    buffer << "for " << loop.key << " , " << loop.value << " in " << loop.table << " do\n";
 
     print_statements(loop.statements, buffer, indent + 1);
 

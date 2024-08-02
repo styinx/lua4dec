@@ -238,13 +238,13 @@ struct ForInLoop
 {
     String            key;
     String            value;
-    String            right;
+    String            table;
     Vector<Statement> statements;
 
-    ForInLoop(const String& k, const String& v, const String& r, const Vector<Statement>& s)
+    ForInLoop(const String& k, const String& v, const String& t, const Vector<Statement>& s)
         : key(k)
         , value(v)
-        , right(r)
+        , table(t)
         , statements(s)
     {
     }
