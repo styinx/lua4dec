@@ -90,7 +90,7 @@ int main(int argc, char** argv)
         if(ext.compare(".out") == 0)
         {
             auto* ast   = new Ast();
-            Error error = create_ast(ast, file.c_str());
+            Status error = create_ast(ast, file.c_str());
 
             StringBuffer stream;
             print_ast(ast, stream);
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
             results[stem][1] = Buffer(text.begin(), text.end());
             delete_ast(ast);
 
-            printf("%s %s\n", error == Error::NONE ? OK : ERR, file.c_str());
+            printf("%s %s\n", error == Status::OK ? OK : ERR, file.c_str());
         }
     }
 
