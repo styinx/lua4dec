@@ -31,7 +31,7 @@ ChunkHeader read_header(ByteIterator& iter)
     signature_ok &= read<Byte>(iter) == 0x61;  // a
     signature_ok &= read<Byte>(iter) == 0x40;  // @ (4.0)
 
-    quit_on(!signature_ok, Error::SIGNATURE_MISMATCH, "Header mismatch! '.Lua@' not found");
+    quit_on(!signature_ok, Status::SIGNATURE_MISMATCH, "Header mismatch! '.Lua@' not found");
 
     // Read size of types, registers, and the test number
     header.is_little_endian      = read<Byte>(iter) == 0x01;
@@ -56,7 +56,7 @@ ChunkHeader read_header(ByteIterator& iter)
 
     quit_on(
         !architecture_ok,
-        Error::ARCHITECTURE_MISMATCH,
+        Status::ARCHITECTURE_MISMATCH,
         "Architecture mismatch! (32 bit <-> 64 bit)");
 
     return header;
@@ -317,7 +317,7 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
     printf("\n");
 }
 
-void quit_on(const bool condition, const Error error, const char* message)
+void quit_on(const bool condition, const Status error, const char* message)
 {
     if(condition)
     {

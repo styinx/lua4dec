@@ -11,9 +11,11 @@ int main(int argc, char** argv)
     }
     else if(argc == 2)
     {
+
 #ifndef NDEBUG
         printf("Reading file: %s\n", argv[1]);
 #endif
+
         buffer = read_file(argv[1]);
     }
     else if(argc > 3)
@@ -33,7 +35,7 @@ int main(int argc, char** argv)
     auto  state  = State();
     auto  result = parse_function(state, ast, chunk.main);
 
-    if(result == Error::NONE)
+    if(result == Status::OK)
     {
         print_ast(ast);
 

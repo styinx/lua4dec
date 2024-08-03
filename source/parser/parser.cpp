@@ -73,57 +73,57 @@ void State::print()
     }
 }
 
-Error handle_condition(State&, Ast*&, const Instruction&, const Function&);
+Status handle_condition(State&, Ast*&, const Instruction&, const Function&);
 
-Error handle_end(State&, Ast*&, const Instruction&, const Function&);
-Error handle_return(State&, Ast*&, const Instruction&, const Function&);
-Error handle_call(State&, Ast*&, const Instruction&, const Function&);
-Error handle_tail_call(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_nil(State&, Ast*&, const Instruction&, const Function&);
-Error handle_pop(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_int(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_string(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_num(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_neg_num(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_upvalue(State&, Ast*&, const Instruction&, const Function&);
-Error handle_get_local(State&, Ast*&, const Instruction&, const Function&);
-Error handle_get_global(State&, Ast*&, const Instruction&, const Function&);
-Error handle_get_table(State&, Ast*&, const Instruction&, const Function&);
-Error handle_get_dotted(State&, Ast*&, const Instruction&, const Function&);
-Error handle_get_indexed(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_self(State&, Ast*&, const Instruction&, const Function&);
-Error handle_create_table(State&, Ast*&, const Instruction&, const Function&);
-Error handle_set_local(State&, Ast*&, const Instruction&, const Function&);
-Error handle_set_global(State&, Ast*&, const Instruction&, const Function&);
-Error handle_set_table(State&, Ast*&, const Instruction&, const Function&);
-Error handle_set_list(State&, Ast*&, const Instruction&, const Function&);
-Error handle_set_map(State&, Ast*&, const Instruction&, const Function&);
-Error handle_add(State&, Ast*&, const Instruction&, const Function&);
-Error handle_addi(State&, Ast*&, const Instruction&, const Function&);
-Error handle_sub(State&, Ast*&, const Instruction&, const Function&);
-Error handle_mult(State&, Ast*&, const Instruction&, const Function&);
-Error handle_div(State&, Ast*&, const Instruction&, const Function&);
-Error handle_pow(State&, Ast*&, const Instruction&, const Function&);
-Error handle_concat(State&, Ast*&, const Instruction&, const Function&);
-Error handle_minus(State&, Ast*&, const Instruction&, const Function&);
-Error handle_not(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpne(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpeq(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmplt(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmple(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpgt(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpge(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpt(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpf(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmpont(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmponf(State&, Ast*&, const Instruction&, const Function&);
-Error handle_jmp(State&, Ast*&, const Instruction&, const Function&);
-Error handle_push_niljump(State&, Ast*&, const Instruction&, const Function&);
-Error handle_forprep(State&, Ast*&, const Instruction&, const Function&);
-Error handle_lforprep(State&, Ast*&, const Instruction&, const Function&);
-Error handle_forloop(State&, Ast*&, const Instruction&, const Function&);
-Error handle_lforloop(State&, Ast*&, const Instruction&, const Function&);
-Error handle_closure(State&, Ast*&, const Instruction&, const Function&);
+Status handle_end(State&, Ast*&, const Instruction&, const Function&);
+Status handle_return(State&, Ast*&, const Instruction&, const Function&);
+Status handle_call(State&, Ast*&, const Instruction&, const Function&);
+Status handle_tail_call(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_nil(State&, Ast*&, const Instruction&, const Function&);
+Status handle_pop(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_int(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_string(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_num(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_neg_num(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_upvalue(State&, Ast*&, const Instruction&, const Function&);
+Status handle_get_local(State&, Ast*&, const Instruction&, const Function&);
+Status handle_get_global(State&, Ast*&, const Instruction&, const Function&);
+Status handle_get_table(State&, Ast*&, const Instruction&, const Function&);
+Status handle_get_dotted(State&, Ast*&, const Instruction&, const Function&);
+Status handle_get_indexed(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_self(State&, Ast*&, const Instruction&, const Function&);
+Status handle_create_table(State&, Ast*&, const Instruction&, const Function&);
+Status handle_set_local(State&, Ast*&, const Instruction&, const Function&);
+Status handle_set_global(State&, Ast*&, const Instruction&, const Function&);
+Status handle_set_table(State&, Ast*&, const Instruction&, const Function&);
+Status handle_set_list(State&, Ast*&, const Instruction&, const Function&);
+Status handle_set_map(State&, Ast*&, const Instruction&, const Function&);
+Status handle_add(State&, Ast*&, const Instruction&, const Function&);
+Status handle_addi(State&, Ast*&, const Instruction&, const Function&);
+Status handle_sub(State&, Ast*&, const Instruction&, const Function&);
+Status handle_mult(State&, Ast*&, const Instruction&, const Function&);
+Status handle_div(State&, Ast*&, const Instruction&, const Function&);
+Status handle_pow(State&, Ast*&, const Instruction&, const Function&);
+Status handle_concat(State&, Ast*&, const Instruction&, const Function&);
+Status handle_minus(State&, Ast*&, const Instruction&, const Function&);
+Status handle_not(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpne(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpeq(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmplt(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmple(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpgt(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpge(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpt(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpf(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmpont(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmponf(State&, Ast*&, const Instruction&, const Function&);
+Status handle_jmp(State&, Ast*&, const Instruction&, const Function&);
+Status handle_push_niljump(State&, Ast*&, const Instruction&, const Function&);
+Status handle_forprep(State&, Ast*&, const Instruction&, const Function&);
+Status handle_lforprep(State&, Ast*&, const Instruction&, const Function&);
+Status handle_forloop(State&, Ast*&, const Instruction&, const Function&);
+Status handle_lforloop(State&, Ast*&, const Instruction&, const Function&);
+Status handle_closure(State&, Ast*&, const Instruction&, const Function&);
 
 // clang-format off
 auto TABLE = ActionTable
@@ -185,7 +185,7 @@ auto TABLE = ActionTable
  * Helper functions
  */
 
-Error enter_block(State& state, Ast*& ast)
+Status enter_block(State& state, Ast*& ast)
 {
     auto* child   = new Ast();
     child->parent = ast;
@@ -195,31 +195,31 @@ Error enter_block(State& state, Ast*& ast)
 
     state.scope_level += 1;
 
-    return Error::NONE;
+    return Status::OK;
 }
 
-Error exit_block(State& state, Ast*& ast)
+Status exit_block(State& state, Ast*& ast)
 {
     if(ast->parent)
         ast = ast->parent;
 
     state.scope_level -= 1;
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
  * @brief   Each conditional operator can have 0, 1, or 2 arguments.
  *          The operation determines how the arguments are handled.
  */
-Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto op = OP(instruction);
 
     if(op < Operator::JMPNE || op > Operator::JMPONF)
     {
         printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
-        return Error::UNDEFINED;
+        return Status::UNDEFINED;
     }
 
     std::string comparison;
@@ -253,7 +253,7 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
         break;
     default:
         printf("OP %d not covered for conditions\n", (int)op);
-        return Error::UNDEFINED;
+        return Status::UNDEFINED;
     }
 
     Vector<Expression> operands;
@@ -300,7 +300,7 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
     }
     ast->context.is_jmp_block = false;
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -315,9 +315,9 @@ Error handle_condition(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief   Operator has no effect and is handled implicitly by the other operators.
  */
-Error handle_end(State&, Ast*&, const Instruction&, const Function&)
+Status handle_end(State&, Ast*&, const Instruction&, const Function&)
 {
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -329,7 +329,7 @@ Error handle_end(State&, Ast*&, const Instruction&, const Function&)
  * @brief   Pops elements from the stack until it has a size of 'U'. The popped elements
  *          are returned in reverse order.
  */
-Error handle_return(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_return(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     auto u = U(instruction);  // U marks the position of the arguments
 
@@ -345,7 +345,7 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
     Return ret(args);
     ast->statements.push_back(ret);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -360,7 +360,7 @@ Error handle_return(State& state, Ast*& ast, const Instruction& instruction, con
  *          In case the caller is a table or a map (both of type AstTable) we just push
  *          it back onto the stack.
  */
-Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);  // The caller is at position a
     const auto b = B(instruction);  // Is expression (!=0) or statement (0)
@@ -395,10 +395,10 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
     }
     else
     {
-        return Error::BAD_VARIANT;
+        return Status::BAD_VARIANT;
     }
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -413,7 +413,7 @@ Error handle_call(State& state, Ast*& ast, const Instruction& instruction, const
  *          elements are the arguments in reversed order. The value of the function is
  *          returned from the current closure.
  */
-Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);  // The caller is at position a
 
@@ -431,7 +431,7 @@ Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, 
 
     ast->statements.push_back(TailCall(name, args));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -442,7 +442,7 @@ Error handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief
  */
-Error handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto u = U(instruction);
 
@@ -451,7 +451,7 @@ Error handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, c
         state.stack.push_back(Identifier("nil"));
     }
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -462,20 +462,20 @@ Error handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, c
  *
  * @brief
  */
-Error handle_pop(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_pop(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto u = U(instruction);
 
     while(u > 0)
     {
         if(state.stack.empty())
-            return Error::EMPTY_STACK;
+            return Status::EMPTY_STACK;
 
         state.stack.pop_back();
         u--;
     }
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -486,12 +486,12 @@ Error handle_pop(State& state, Ast*& ast, const Instruction& instruction, const 
  *
  * @brief
  */
-Error handle_push_int(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_push_int(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto s = S(instruction);
     state.stack.push_back(AstInt(s));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -502,14 +502,14 @@ Error handle_push_int(State& state, Ast*& ast, const Instruction& instruction, c
  *
  * @brief
  */
-Error handle_push_string(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_push_string(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto k      = U(instruction);
     const auto string = function.globals[k];
 
     state.stack.push_back(AstString(string));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -520,13 +520,13 @@ Error handle_push_string(State& state, Ast*& ast, const Instruction& instruction
  *
  * @brief
  */
-Error handle_push_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_push_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto n      = U(instruction);
     const auto number = function.numbers[n];
     state.stack.push_back(AstNumber(number));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -537,13 +537,13 @@ Error handle_push_num(State& state, Ast*& ast, const Instruction& instruction, c
  *
  * @brief
  */
-Error handle_push_neg_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_push_neg_num(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto n      = U(instruction);
     const auto number = function.numbers[n];
     state.stack.push_back(AstNumber(-number));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -554,9 +554,9 @@ Error handle_push_neg_num(State& state, Ast*& ast, const Instruction& instructio
  *
  * @brief
  */
-Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_push_upvalue(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -568,7 +568,7 @@ Error handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructio
  * @brief Pushes the l-th valid local onto the stack. The index of the local has to
  *        be normalized according to the validity range.
  */
-Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     auto l = U(instruction);
 
@@ -586,7 +586,7 @@ Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, 
 
     state.stack.push_back(Identifier(name));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -597,13 +597,13 @@ Error handle_get_local(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief
  */
-Error handle_get_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_get_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
     state.stack.push_back(Identifier(name));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -614,7 +614,7 @@ Error handle_get_global(State& state, Ast*& ast, const Instruction& instruction,
  *
  * @brief
  */
-Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_get_table(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     // i
     const auto index = std::get<Identifier>(std::get<Expression>(state.stack.back()));
@@ -626,7 +626,7 @@ Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Functi
 
     state.stack.push_back(Identifier(table.name + "[" + index.name + "]"));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -637,7 +637,7 @@ Error handle_get_table(State& state, Ast*& ast, const Instruction&, const Functi
  *
  * @brief
  */
-Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
@@ -648,7 +648,7 @@ Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction,
 
     state.stack.push_back(Identifier(table.name + "." + name));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -659,7 +659,7 @@ Error handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction,
  *
  * @brief
  */
-Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto l    = U(instruction);
     const auto name = function.locals[l].name;
@@ -670,7 +670,7 @@ Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction
 
     state.stack.push_back(Identifier(table.name + "[" + name + "]"));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -681,7 +681,7 @@ Error handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction
  *
  * @brief
  */
-Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_push_self(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
@@ -690,7 +690,7 @@ Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, 
     const auto table = std::get<Identifier>(std::get<Expression>(state.stack.back()));
     state.stack.push_back(Identifier(table.name + "." + name));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -701,7 +701,7 @@ Error handle_push_self(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief   Creates a new table element (may be list or map) of the given size.
  */
-Error handle_create_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_create_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     // Its only a table if an identifier is on the stack before. Otherwise its a map or
     // list.
@@ -721,7 +721,7 @@ Error handle_create_table(State& state, Ast*& ast, const Instruction& instructio
     AstTable   table(u, name, Vector<std::pair<Expression, Expression>>{});
     state.stack.push_back(table);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -732,7 +732,7 @@ Error handle_create_table(State& state, Ast*& ast, const Instruction& instructio
  *
  * @brief   Sets the local variable at position l to the top-most value on the stack.
  */
-Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto l    = U(instruction);
     const auto left = Identifier(function.locals[l].name);
@@ -743,7 +743,7 @@ Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, 
     Assignment ass(left, right);
     ast->statements.push_back(ass);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -754,7 +754,7 @@ Error handle_set_local(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief   Creates an assignment statement.
  */
-Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_set_global(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto k    = U(instruction);
     const auto left = Identifier(function.globals[k]);
@@ -765,7 +765,7 @@ Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction,
     Assignment ass(left, right);
     ast->statements.push_back(ass);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -776,7 +776,7 @@ Error handle_set_global(State& state, Ast*& ast, const Instruction& instruction,
  *
  * @brief   Creates a table assignment with b table elements.
  */
-Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto b = B(instruction);
 
@@ -806,7 +806,7 @@ Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, 
     Assignment ass(Identifier(left), right);
     ast->statements.push_back(ass);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -817,7 +817,7 @@ Error handle_set_table(State& state, Ast*& ast, const Instruction& instruction, 
  *
  * @brief   Creates a list of b elements that is pushed onto the stack.
  */
-Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_set_list(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto b = B(instruction);
 
@@ -833,7 +833,7 @@ Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, c
     state.stack.pop_back();  // empty AstTable
     state.stack.push_back(AstList(list));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -846,7 +846,7 @@ Error handle_set_list(State& state, Ast*& ast, const Instruction& instruction, c
  *          was created before. Otherwise a map of this size is created and pushed
  *          onto the stack.
  */
-Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_set_map(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto u = U(instruction);
 
@@ -875,7 +875,7 @@ Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, co
         table.pairs = map;
     }
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -886,7 +886,7 @@ Error handle_set_map(State& state, Ast*& ast, const Instruction& instruction, co
  *
  * @brief
  */
-Error handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -896,7 +896,7 @@ Error handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
 
     state.stack.push_back(AstOperation("+", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -907,7 +907,7 @@ Error handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief
  */
-Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_addi(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -917,7 +917,7 @@ Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const
 
     state.stack.push_back(AstOperation("+", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -928,7 +928,7 @@ Error handle_addi(State& state, Ast*& ast, const Instruction& instruction, const
  *
  * @brief
  */
-Error handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -938,7 +938,7 @@ Error handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
 
     state.stack.push_back(AstOperation("-", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -949,7 +949,7 @@ Error handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief
  */
-Error handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -959,7 +959,7 @@ Error handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
 
     state.stack.push_back(AstOperation("*", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -970,7 +970,7 @@ Error handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief
  */
-Error handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -980,7 +980,7 @@ Error handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
 
     state.stack.push_back(AstOperation("/", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -991,7 +991,7 @@ Error handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief
  */
-Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -1001,7 +1001,7 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 
     state.stack.push_back(AstOperation("^", {left, right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1012,7 +1012,7 @@ Error handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief   Concatenates u elements from the stack together.
  */
-Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_concat(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto         u = U(instruction);
     Vector<Expression> expressions;
@@ -1025,7 +1025,7 @@ Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, con
     std::reverse(expressions.begin(), expressions.end());
     state.stack.push_back(AstOperation("..", expressions));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1036,14 +1036,14 @@ Error handle_concat(State& state, Ast*& ast, const Instruction& instruction, con
  *
  * @brief   Negates the numeric value of the top-most element on the stack.
  */
-Error handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     state.stack.push_back(AstOperation("-", {right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1054,14 +1054,14 @@ Error handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief   Negates the truth value of the top-most element on the stack.
  */
-Error handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
+Status handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
 {
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     state.stack.push_back(AstOperation("not ", {right}));
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1072,10 +1072,10 @@ Error handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
  *
  * @brief
  */
-Error handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1086,10 +1086,10 @@ Error handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1100,10 +1100,10 @@ Error handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1114,10 +1114,10 @@ Error handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1128,10 +1128,10 @@ Error handle_jmple(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1142,10 +1142,10 @@ Error handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1156,10 +1156,10 @@ Error handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, cons
  *
  * @brief
  */
-Error handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1170,10 +1170,10 @@ Error handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const
  *
  * @brief
  */
-Error handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1184,7 +1184,7 @@ Error handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const
  *
  * @brief
  */
-Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -1195,7 +1195,7 @@ Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, con
     ast->context.is_or_block = true;
     ast->context.jump_offset = state.PC + S(instruction);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1206,10 +1206,10 @@ Error handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, con
  *
  * @brief
  */
-Error handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     // TODO
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1220,7 +1220,7 @@ Error handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, con
  *
  * @brief
  */
-Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     if(ast->context.is_condition)
     {
@@ -1233,7 +1233,7 @@ Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const 
         ast->context.is_jmp_block = true;
     }
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1244,10 +1244,10 @@ Error handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const 
  *
  * @brief
  */
-Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_push_niljump(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     state.stack.push_back(Identifier("nil"));
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1260,14 +1260,14 @@ Error handle_push_niljump(State& state, Ast*& ast, const Instruction& instructio
  *        Therefore, we declare placeholder values and assign the real values
  *        when we reach the end of the loop.
  */
-Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_forprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     ForLoop loop("", Identifier(""), Identifier(""), Identifier(""), {});
     ast->statements.push_back(loop);
 
     enter_block(state, ast);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1280,7 +1280,7 @@ Error handle_forprep(State& state, Ast*& ast, const Instruction& instruction, co
  *        Therefore, we declare placeholder values and assign the real values
  *        when we reach the end of the loop.
  */
-Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     state.stack.push_back(Identifier(""));  // value
     state.stack.push_back(Identifier(""));  // key
@@ -1290,7 +1290,7 @@ Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, c
 
     enter_block(state, ast);
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1303,7 +1303,7 @@ Error handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, c
  *        definitions (key, value, table) from the first statement (the local
  *        definition) and remove it from the statements.
  */
-Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_forloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto nested_statements = ast->statements;
     const auto loop_variables    = std::get<LocalAssignment>(nested_statements.front());
@@ -1322,7 +1322,7 @@ Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, co
     state.stack.pop_back();
     state.stack.pop_back();
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1335,7 +1335,7 @@ Error handle_forloop(State& state, Ast*& ast, const Instruction& instruction, co
  *        definitions (key, value, table) from the first statement (the local
  *        definition) and remove it from the statements.
  */
-Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto nested_statements = ast->statements;
     const auto loop_variables    = std::get<LocalAssignment>(nested_statements.front());
@@ -1353,7 +1353,7 @@ Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, c
     state.stack.pop_back();
     state.stack.pop_back();
 
-    return Error::NONE;
+    return Status::OK;
 }
 
 /*
@@ -1366,7 +1366,7 @@ Error handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, c
  *          chunk. The arguments of the closure are defined implicitly by the number of
  *          their PC start.
  */
-Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
+Status handle_closure(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);
 
@@ -1396,21 +1396,31 @@ Error handle_closure(State& state, Ast*& ast, const Instruction& instruction, co
 
 // Public functions
 
-Error parse_function(State& state, Ast*& ast, const Function& function)
+Status parse_function(State& state, Ast*& ast, const Function& function)
 {
+    unsigned reserved_stack_elements = 0;
+
     // Lookup table for locals based on their starting lifetime.
     std::unordered_map<unsigned, Vector<unsigned>> local_spawn;
+    std::unordered_map<unsigned, Vector<unsigned>> local_kill;
 
     unsigned local_index = 0;
     for(const auto& local : function.locals)
     {
         if(local.start_pc == 0)
+        {
             state.stack.push_back(Identifier(local.name));
+            reserved_stack_elements += 1;
+        }
 
         if(local_spawn.count(local.start_pc) == 0)
             local_spawn[local.start_pc] = Vector<unsigned>{};
 
+        if(local_kill.count(local.end_pc) == 0)
+            local_kill[local.end_pc] = Vector<unsigned>{};
+
         local_spawn[local.start_pc].push_back(local_index);
+        local_kill[local.end_pc].push_back(local_index);
 
         local_index++;
     }
@@ -1424,6 +1434,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         // Local lifetime is defined by the PC range. If the PC hits the start PC of a
         // local variable a local assignment is appended to the program. More than one
         // variable might be defined in one line.
+        // However, on scope exit the VM pops the 'killed' local from the stack.
         // The local variable definition is not encoded in the bytecode and has to be
         // handled separately from the ActionTable.
         if(state.PC > 0)
@@ -1435,12 +1446,19 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                     locals_defined += 1;
                 }
             }
+            if(local_kill[state.PC].size() > 0)
+            {
+                for(const auto& index : local_kill[state.PC])
+                {
+                    reserved_stack_elements -= 1;
+                }
+            }
 
             if(locals_defined > 0)
             {
                 // Pop the value(s) assigned to that local from the stack.
                 auto values = Vector<Expression>();
-                for(auto l = locals_defined; l > 0; --l)
+                for(auto l = state.stack.size() - reserved_stack_elements; l > 0; --l)
                 {
                     values.push_back(std::get<Expression>(state.stack.back()));
                     state.stack.pop_back();
@@ -1453,6 +1471,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                     auto local = Identifier(function.locals[index].name);
                     locals.push_back(local);
                     state.stack.push_back(local);
+                    reserved_stack_elements += 1;
                 }
 
                 // Make the local assignment
@@ -1466,7 +1485,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         const auto result = TABLE[op](state, ast, i, function);
 
         // Return on error.
-        if(result != Error::NONE)
+        if(result != Status::OK)
         {
 
 #ifndef NDEBUG
@@ -1474,7 +1493,7 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
                 "Parser error at line %d: %u (%s), instruction 0x%08X (%s) at PC %d.\n",
                 function.line_defined,
                 static_cast<unsigned>(result),
-                ERROR_TO_STR[result].c_str(),
+                STATUS_TO_STR[result].c_str(),
                 i,
                 OP_TO_STR[OP(i)].c_str(),
                 state.PC);
@@ -1528,5 +1547,5 @@ Error parse_function(State& state, Ast*& ast, const Function& function)
         state.PC++;
     }
 
-    return Error::NONE;
+    return Status::OK;
 }

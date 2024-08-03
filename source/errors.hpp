@@ -9,9 +9,9 @@
  * Error handling
  */
 
-enum class Error : unsigned
+enum class Status : unsigned
 {
-    NONE = 0x00,
+    OK = 0x00,
     SIGNATURE_MISMATCH,
     ARCHITECTURE_MISMATCH,
     FUNCTION_PARAM_MISMATCH,
@@ -20,8 +20,8 @@ enum class Error : unsigned
     UNDEFINED,
 };
 
-extern std::unordered_map<Error, std::string> ERROR_TO_STR;
+extern std::unordered_map<Status, std::string> STATUS_TO_STR;
 
-void quit_on(const bool condition, const Error error, const char* message);
+void quit_on(const bool condition, const Status status, const char* message);
 
 #endif  // LUA4DEC_ERRORS_H

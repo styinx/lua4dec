@@ -23,9 +23,9 @@ struct State
  * instruction, and the lua function that is parsed.
  * The parsing function returns a value > 0 if an errors occurred.
  */
-using Action      = Error (*)(State& state, Ast*&, const Instruction&, const Function&);
+using Action      = Status (*)(State& state, Ast*&, const Instruction&, const Function&);
 using ActionTable = std::unordered_map<Operator, Action>;
 
-Error parse_function(State&, Ast*&, const Function&);
+Status parse_function(State&, Ast*&, const Function&);
 
 #endif  // LUA4DEC_PARSER_H
