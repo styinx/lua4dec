@@ -60,9 +60,24 @@ void print(const Closure& closure, StringBuffer& buffer, const int indent)
     buffer << "end";
 }
 
+void print(const Dotted& dotted, StringBuffer& buffer, const int indent)
+{
+    print_expression(dotted.ex[0], buffer, indent);
+    buffer << ".";
+    print_expression(dotted.ex[1], buffer, 0);
+}
+
 void print(const Identifier& identifier, StringBuffer& buffer, const int indent)
 {
     buffer << identifier.name;
+}
+
+void print(const Indexed& indexed, StringBuffer& buffer, const int indent)
+{
+    print_expression(indexed.ex[0], buffer, indent);
+    buffer << "[";
+    print_expression(indexed.ex[1], buffer, 0);
+    buffer << "]";
 }
 
 void print(const AstInt& number, StringBuffer& buffer, const int indent)
@@ -160,21 +175,44 @@ void print(const AstTable& table, StringBuffer& buffer, const int indent)
 void print(const Assignment& assignment, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
-    buffer << assignment.left.name << " = ";
-    print_expression(assignment.right, buffer, indent);
+
+    auto lit = assignment.left.begin();
+    while(lit != assignment.left.end())
+    {
+        buffer << lit->name;
+
+        if(lit != assignment.left.end() - 1)
+            buffer << ", ";
+
+        lit++;
+    }
+
+    buffer << " = ";
+
+    auto rit = assignment.right.begin();
+    while(rit != assignment.right.end())
+    {
+        print_expression(*rit, buffer, 0);
+
+        if(rit != assignment.right.end() - 1)
+            buffer << ", ";
+
+        rit++;
+    }
 }
 
 void print(const Call& call, StringBuffer& buffer, const int indent)
 {
-    if(!call.is_expression)
+    if(!(call.return_values > 0))
         print_indent(buffer, indent);
 
-    buffer << call.name.name << "(";
+    print_expression(call.caller[0], buffer, 0);
 
+    buffer << "(";
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {
-        print_expression(*it, buffer, indent);
+        print_expression(*it, buffer, 0);
 
         if(it != call.arguments.end() - 1)
             buffer << ", ";
@@ -220,11 +258,11 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
     print_indent(buffer, indent);
     buffer << "for " << loop.counter << " = ";
 
-    print_expression(loop.begin, buffer, indent);
+    print_expression(loop.begin, buffer, 0);
     buffer << " , ";
-    print_expression(loop.end, buffer, indent);
+    print_expression(loop.end, buffer, 0);
     buffer << " , ";
-    print_expression(loop.increment, buffer, indent);
+    print_expression(loop.increment, buffer, 0);
 
     buffer << " do\n";
 
@@ -237,7 +275,11 @@ void print(const ForLoop& loop, StringBuffer& buffer, const int indent)
 void print(const ForInLoop& loop, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
-    buffer << "for " << loop.key << " , " << loop.value << " in " << loop.table << " do\n";
+    buffer << "for " << loop.key << " , " << loop.value << " in ";
+
+    print_expression(loop.table, buffer, 0);
+
+    buffer << " do\n";
 
     print_statements(loop.statements, buffer, indent + 1);
 
@@ -245,27 +287,27 @@ void print(const ForInLoop& loop, StringBuffer& buffer, const int indent)
     buffer << "end";
 }
 
-void print(const LocalAssignment& assignment, StringBuffer& buffer, const int indent)
+void print(const LocalDefinition& definition, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
     buffer << "local ";
 
-    auto key = assignment.left.begin();
-    while(key != assignment.left.end())
+    auto key = definition.left.begin();
+    while(key != definition.left.end())
     {
         buffer << key->name;
-        if(key != assignment.left.end() - 1)
+        if(key != definition.left.end() - 1)
             buffer << ", ";
         key++;
     }
 
     buffer << " = ";
 
-    auto val = assignment.right.begin();
-    while(val != assignment.right.end())
+    auto val = definition.right.begin();
+    while(val != definition.right.end())
     {
         print_expression(*val, buffer, indent);
-        if(val != assignment.right.end() - 1)
+        if(val != definition.right.end() - 1)
             buffer << ", ";
         val++;
     }
@@ -291,8 +333,12 @@ void print(const Return& ret, StringBuffer& buffer, const int indent)
 void print(const TailCall& call, StringBuffer& buffer, const int indent)
 {
     print_indent(buffer, indent);
-    buffer << "return " << call.name.name << "(";
 
+    buffer << "return ";
+
+    print_expression(call.caller[0], buffer, indent);
+
+    buffer << "(";
     auto it = call.arguments.begin();
     while(it != call.arguments.end())
     {

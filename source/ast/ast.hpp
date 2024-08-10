@@ -10,7 +10,9 @@
 using StringBuffer = std::stringstream;
 
 struct Closure;
+struct Dotted;
 struct Identifier;
+struct Indexed;
 struct AstInt;
 struct AstList;
 struct AstMap;
@@ -24,15 +26,15 @@ struct Call;
 struct Condition;
 struct ForLoop;
 struct ForInLoop;
-struct LocalAssignment;
+struct LocalDefinition;
 struct Return;
 struct TailCall;
 struct WhileLoop;
 
 using Expression =
-    std::variant<Call, Closure, Identifier, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString, AstTable>;
+    std::variant<Call, Closure, Dotted, Identifier, Indexed, AstInt, AstList, AstMap, AstNumber, AstOperation, AstString, AstTable>;
 using Statement =
-    std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalAssignment, Return, TailCall, WhileLoop>;
+    std::variant<Assignment, Call, Condition, ForLoop, ForInLoop, LocalDefinition, Return, TailCall, WhileLoop>;
 using AstElement = std::variant<Statement, Expression>;
 
 struct Context
@@ -67,12 +69,32 @@ struct Closure
     }
 };
 
+struct Dotted
+{
+    Vector<Expression> ex;
+
+    Dotted(const Vector<Expression>& e)
+        : ex(e)
+    {
+    }
+};
+
 struct Identifier
 {
     String name;
 
     Identifier(const String& n)
         : name(n)
+    {
+    }
+};
+
+struct Indexed
+{
+    Vector<Expression> ex;
+
+    Indexed(const Vector<Expression>& e)
+        : ex(e)
     {
     }
 };
@@ -163,14 +185,14 @@ struct AstTable
 
 struct Call
 {
-    bool               is_expression;
-    Identifier         name;
+    Vector<Expression> caller;
     Vector<Expression> arguments;
+    unsigned           return_values;
 
-    Call(const Identifier& i, const Vector<Expression>& a, const bool e = false)
-        : is_expression(e)
-        , name(i)
+    Call(const Vector<Expression>& c, const Vector<Expression>& a, const unsigned r = 0)
+        : caller(c)
         , arguments(a)
+        , return_values(r)
     {
     }
 };
@@ -179,12 +201,20 @@ struct Call
 
 struct Assignment
 {
-    Identifier left;
-    Expression right;
+    Vector<Identifier> left;
+    Vector<Expression> right;
+    unsigned           num_variables;
+    unsigned           num_values;
 
-    Assignment(const Identifier& i, const Expression& e)
+    Assignment(
+        const Vector<Identifier>& i,
+        const Vector<Expression>& e,
+        const unsigned            vars = 1,
+        const unsigned            vals = 1)
         : left(i)
         , right(e)
+        , num_variables(vars)
+        , num_values(vals)
     {
     }
 };
@@ -238,10 +268,10 @@ struct ForInLoop
 {
     String            key;
     String            value;
-    String            table;
+    Expression        table;
     Vector<Statement> statements;
 
-    ForInLoop(const String& k, const String& v, const String& t, const Vector<Statement>& s)
+    ForInLoop(const String& k, const String& v, const Expression& t, const Vector<Statement>& s)
         : key(k)
         , value(v)
         , table(t)
@@ -250,12 +280,12 @@ struct ForInLoop
     }
 };
 
-struct LocalAssignment
+struct LocalDefinition
 {
     Vector<Identifier> left;
     Vector<Expression> right;
 
-    LocalAssignment(const Vector<Identifier>& l, const Vector<Expression>& r)
+    LocalDefinition(const Vector<Identifier>& l, const Vector<Expression>& r)
         : left(l)
         , right(r)
     {
@@ -274,11 +304,11 @@ struct Return
 
 struct TailCall
 {
-    Identifier         name;
+    Vector<Expression> caller;
     Vector<Expression> arguments;
 
-    TailCall(const Identifier& i, const Vector<Expression>& a)
-        : name(i)
+    TailCall(const Vector<Expression>& c, const Vector<Expression>& a)
+        : caller(c)
         , arguments(a)
     {
     }
@@ -311,7 +341,9 @@ void print_expression(const Expression&, StringBuffer&, const int indent = 0);
 
 void print(const Closure&, FILE* stream = stdout, const int indent = 0);
 void print(const Closure&, StringBuffer&, const int indent = 0);
+void print(const Dotted&, StringBuffer&, const int indent = 0);
 void print(const Identifier&, StringBuffer&, const int indent = 0);
+void print(const Indexed&, StringBuffer&, const int indent = 0);
 void print(const AstInt&, StringBuffer&, const int indent = 0);
 void print(const AstList&, StringBuffer&, const int indent = 0);
 void print(const AstMap&, StringBuffer&, const int indent = 0);
@@ -325,7 +357,7 @@ void print(const Call&, StringBuffer&, const int indent = 0);
 void print(const Condition&, StringBuffer&, const int indent = 0);
 void print(const ForLoop&, StringBuffer&, const int indent = 0);
 void print(const ForInLoop&, StringBuffer&, const int indent = 0);
-void print(const LocalAssignment&, StringBuffer&, const int indent = 0);
+void print(const LocalDefinition&, StringBuffer&, const int indent = 0);
 void print(const Return&, StringBuffer&, const int indent = 0);
 void print(const TailCall&, StringBuffer&, const int indent = 0);
 void print(const WhileLoop&, StringBuffer&, const int indent = 0);
