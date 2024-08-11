@@ -231,13 +231,6 @@ void debug_function(DebugState& state, Function function)
         debug_instruction(state, n, i, function);
         n++;
 
-        for(const auto& local : function.locals)
-        {
-            if(local.start_pc == state.PC)
-            {
-                state.local_offset++;
-            }
-        }
         state.PC++;
     }
     printf("\n");
@@ -273,6 +266,9 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
     bool        check_emptyness = true;
     switch(OP(instruction))
     {
+    case Operator::CALL:
+    case Operator::TAILCALL:
+        break;
     case Operator::GETGLOBAL:
     case Operator::PUSHSTRING:
     case Operator::SETGLOBAL:

@@ -146,16 +146,16 @@ auto TABLE = ActionTable
     {Operator::CONCAT,      &handle_concat},
     {Operator::MINUS,       &handle_minus},
     {Operator::NOT,         &handle_not},
-    {Operator::JMPNE,       &handle_condition},
-    {Operator::JMPEQ,       &handle_condition},
-    {Operator::JMPLT,       &handle_condition},
-    {Operator::JMPLE,       &handle_condition},
-    {Operator::JMPGT,       &handle_condition},
-    {Operator::JMPGE,       &handle_condition},
-    {Operator::JMPT,        &handle_condition},
-    {Operator::JMPF,        &handle_condition},
+    {Operator::JMPNE,       &handle_jmpne},
+    {Operator::JMPEQ,       &handle_jmpeq},
+    {Operator::JMPLT,       &handle_jmplt},
+    {Operator::JMPLE,       &handle_jmple},
+    {Operator::JMPGT,       &handle_jmpgt},
+    {Operator::JMPGE,       &handle_jmpge},
+    {Operator::JMPT,        &handle_jmpt},
+    {Operator::JMPF,        &handle_jmpf},
     {Operator::JMPONT,      &handle_jmpont},
-    {Operator::JMPONF,      &handle_condition},
+    {Operator::JMPONF,      &handle_jmponf},
     {Operator::JMP,         &handle_jmp},
     {Operator::PUSHNILJMP,  &handle_push_niljump},
     {Operator::FORPREP,     &handle_forprep},
@@ -198,70 +198,13 @@ Status exit_block(State& state, Ast*& ast)
  * @brief   Each conditional operator can have 0, 1, or 2 arguments.
  *          The operation determines how the arguments are handled.
  */
-Status handle_condition(State& state, Ast*& ast, const Instruction& instruction, const Function&)
+Status handle_condition(
+    State&                    state,
+    Ast*&                     ast,
+    const Instruction&        instruction,
+    const String&             comparison,
+    const Vector<Expression>& operands)
 {
-    const auto op = OP(instruction);
-
-    if(op < Operator::JMPNE || op > Operator::JMPONF)
-    {
-        printf("Invalid binary operator OP %d (%s) \n", (int)op, OP_TO_STR[op].c_str());
-        return Status::UNDEFINED;
-    }
-
-    std::string comparison;
-
-    switch(op)
-    {
-    case Operator::JMPNE:
-        comparison = "==";
-        break;
-    case Operator::JMPEQ:
-        comparison = "~=";
-        break;
-    case Operator::JMPLT:
-        comparison = ">=";
-        break;
-    case Operator::JMPLE:
-        comparison = ">";
-        break;
-    case Operator::JMPGT:
-        comparison = "<=";
-        break;
-    case Operator::JMPGE:
-        comparison = "<";
-        break;
-    case Operator::JMPT:
-        comparison = "~=";
-        break;
-    case Operator::JMPF:
-    case Operator::JMPONF:
-        comparison = "==";
-        break;
-    default:
-        printf("OP %d not covered for conditions\n", (int)op);
-        return Status::UNDEFINED;
-    }
-
-    Vector<Expression> operands;
-
-    if(op >= Operator::JMPNE && op <= Operator::JMPGE)
-    {
-        auto left = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
-
-        auto right = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
-
-        operands = {left, right};
-    }
-    else if(op >= Operator::JMPT && op <= Operator::JMPONF)
-    {
-        auto left = std::get<Expression>(state.stack.back());
-        state.stack.pop_back();
-
-        operands = {left, Identifier("nil")};
-    }
-
     // if block
     if(!ast->context.is_condition || ast->context.jmp_offset == 0)
     {
@@ -285,6 +228,48 @@ Status handle_condition(State& state, Ast*& ast, const Instruction& instruction,
         ast->context.jump_offset = state.PC + S(instruction);
     }
     ast->context.is_jmp_block = false;
+
+    return Status::OK;
+}
+
+/*
+ * @brief   Assignment may spread accross multiple instructions. The Assignment statement
+ *          has therefore be stored and reused conditionally. This is the case if multiple
+ *          values are pushed to the stack before the first SET_LOCAL or SET_GLOBAL
+ * instruction appears. Expressions like a function may return multiples values so it has
+ * to be kept track of how many values are actually on the right side. The values have to
+ * be 'adjusted' when reassembling the statement.
+ */
+Status handle_assignment(State& state, Ast*& ast, const Identifier& left)
+{
+    auto values_on_stack = state.stack.size() - state.reserved_elements;
+    if(values_on_stack > 0)
+    {
+        // Get all values that were previously pushed onto the stack.
+        Vector<Expression> values;
+        while(values_on_stack > 0)
+        {
+            values.push_back(std::get<Expression>(state.stack.back()));
+            state.stack.pop_back();
+            --values_on_stack;
+        }
+
+        Assignment ass({left}, values, 1, values.size());
+        ast->statements.push_back(ass);
+    }
+    else
+    {
+        // A function call with multiple return values represents the right.
+        if(std::holds_alternative<Assignment>(ast->statements.back()))
+        {
+            auto& ass = std::get<Assignment>(ast->statements.back());
+            ass.left.push_back(left);
+        }
+        else
+        {
+            return Status::BAD_VARIANT;
+        }
+    }
 
     return Status::OK;
 }
@@ -419,7 +404,7 @@ Status handle_tail_call(State& state, Ast*& ast, const Instruction& instruction,
  * Stack after:     nil_1 - nil_u
  * Side effects:    -
  *
- * @brief
+ * @brief   Pushes one or multiple nil values on to the stack.
  */
 Status handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
@@ -439,19 +424,15 @@ Status handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, 
  * Stack after:     -
  * Side effects:    -
  *
- * @brief
+ * @brief   Pops one or multiple values from the stack.
  */
 Status handle_pop(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto u = U(instruction);
 
-    while(u > 0)
+    for(auto i = u; i > 0; --i)
     {
-        if(state.stack.empty())
-            return Status::EMPTY_STACK;
-
         state.stack.pop_back();
-        u--;
     }
 
     return Status::OK;
@@ -468,6 +449,7 @@ Status handle_pop(State& state, Ast*& ast, const Instruction& instruction, const
 Status handle_push_int(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto s = S(instruction);
+
     state.stack.push_back(AstInt(s));
 
     return Status::OK;
@@ -503,6 +485,7 @@ Status handle_push_num(State& state, Ast*& ast, const Instruction& instruction, 
 {
     const auto n      = U(instruction);
     const auto number = function.numbers[n];
+
     state.stack.push_back(AstNumber(number));
 
     return Status::OK;
@@ -520,6 +503,7 @@ Status handle_push_neg_num(State& state, Ast*& ast, const Instruction& instructi
 {
     const auto n      = U(instruction);
     const auto number = function.numbers[n];
+
     state.stack.push_back(AstNumber(-number));
 
     return Status::OK;
@@ -535,6 +519,7 @@ Status handle_push_neg_num(State& state, Ast*& ast, const Instruction& instructi
  */
 Status handle_push_upvalue(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    // TODO
     return Status::OK;
 }
 
@@ -544,8 +529,8 @@ Status handle_push_upvalue(State& state, Ast*& ast, const Instruction& instructi
  * Stack after:     LOC[l]
  * Side effects:    -
  *
- * @brief Pushes the l-th valid local onto the stack. The index of the local has to
- *        be normalized according to the validity range.
+ * @brief   Pushes the l-th valid local onto the stack. The index of the local has to
+ *          be normalized according to the validity range.
  */
 Status handle_get_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
@@ -580,6 +565,7 @@ Status handle_get_global(State& state, Ast*& ast, const Instruction& instruction
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
+
     state.stack.push_back(Identifier(name));
 
     return Status::OK;
@@ -716,36 +702,7 @@ Status handle_set_local(State& state, Ast*& ast, const Instruction& instruction,
     const auto l    = U(instruction);
     const auto left = Identifier(function.locals[l].name);
 
-    auto values_on_stack = state.stack.size() - state.reserved_elements;
-    if(values_on_stack > 0)
-    {
-        // Get all values that were previously pushed onto the stack.
-        Vector<Expression> values;
-        while(values_on_stack > 0)
-        {
-            values.push_back(std::get<Expression>(state.stack.back()));
-            state.stack.pop_back();
-            --values_on_stack;
-        }
-
-        Assignment ass({left}, values, 1, values.size());
-        ast->statements.push_back(ass);
-    }
-    else
-    {
-        // A function call with multiple return values represents the right.
-        if(std::holds_alternative<Assignment>(ast->statements.back()))
-        {
-            auto& ass = std::get<Assignment>(ast->statements.back());
-            ass.left.push_back(left);
-        }
-        else
-        {
-            return Status::BAD_VARIANT;
-        }
-    }
-
-    return Status::OK;
+    return handle_assignment(state, ast, left);
 }
 
 /*
@@ -761,36 +718,7 @@ Status handle_set_global(State& state, Ast*& ast, const Instruction& instruction
     const auto k    = U(instruction);
     const auto left = Identifier(function.globals[k]);
 
-    auto values_on_stack = state.stack.size() - state.reserved_elements;
-    if(values_on_stack > 0)
-    {
-        // Get all values that were previously pushed onto the stack.
-        Vector<Expression> values;
-        while(values_on_stack > 0)
-        {
-            values.push_back(std::get<Expression>(state.stack.back()));
-            state.stack.pop_back();
-            --values_on_stack;
-        }
-
-        Assignment ass({left}, values, 1, values.size());
-        ast->statements.push_back(ass);
-    }
-    else
-    {
-        // A function call with multiple return values represents the right.
-        if(std::holds_alternative<Assignment>(ast->statements.back()))
-        {
-            auto& ass = std::get<Assignment>(ast->statements.back());
-            ass.left.push_back(left);
-        }
-        else
-        {
-            auto& ass = std::get<Assignment>(ast->statements.back());
-        }
-    }
-
-    return Status::OK;
+    return handle_assignment(state, ast, left);
 }
 
 /*
@@ -1099,8 +1027,13 @@ Status handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "==", {left, right});
 }
 
 /*
@@ -1113,8 +1046,13 @@ Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "~=", {left, right});
 }
 
 /*
@@ -1127,8 +1065,13 @@ Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, ">=", {left, right});
 }
 
 /*
@@ -1141,8 +1084,13 @@ Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, ">", {left, right});
 }
 
 /*
@@ -1155,8 +1103,13 @@ Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "<=", {left, right});
 }
 
 /*
@@ -1169,8 +1122,13 @@ Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    const auto right = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "<", {left, right});
 }
 
 /*
@@ -1183,8 +1141,10 @@ Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "~=", {left, Identifier("nil")});
 }
 
 /*
@@ -1197,8 +1157,10 @@ Status handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, cons
  */
 Status handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "==", {left, Identifier("nil")});
 }
 
 /*
@@ -1233,8 +1195,10 @@ Status handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Status handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    // TODO
-    return Status::OK;
+    const auto left = std::get<Expression>(state.stack.back());
+    state.stack.pop_back();
+
+    return handle_condition(state, ast, instruction, "==", {left, Identifier("nil")});
 }
 
 /*

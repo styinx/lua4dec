@@ -202,8 +202,6 @@ Chunk       read_chunk(ByteIterator&);
 
 struct DebugState
 {
-    unsigned call_offset  = 0;
-    unsigned local_offset = 0;
     unsigned PC           = 0;
 };
 
