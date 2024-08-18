@@ -209,8 +209,8 @@ Status handle_condition(
     if(!ast->context.is_condition || ast->context.jmp_offset == 0)
     {
         const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Vector<Statement>{});
-        const auto condition = Condition(Vector<ConditionBlock>{block});
+        const auto block     = ConditionBlock(operation, {});
+        const auto condition = Condition({block});
         ast->statements.push_back(condition);
 
         enter_block(state, ast);
@@ -222,7 +222,7 @@ Status handle_condition(
     {
         auto&      condition = std::get<Condition>(ast->parent->statements.back());
         const auto operation = AstOperation(comparison, operands);
-        const auto block     = ConditionBlock(operation, Vector<Statement>{});
+        const auto block     = ConditionBlock(operation, {});
         condition.blocks.push_back(block);
 
         ast->context.jump_offset = state.PC + S(instruction);
@@ -683,7 +683,7 @@ Status handle_create_table(State& state, Ast*& ast, const Instruction& instructi
     }
 
     const auto u = U(instruction);
-    AstTable   table(u, name, Vector<std::pair<Expression, Expression>>{});
+    AstTable   table(u, name, {});
     state.stack.push_back(table);
 
     return Status::OK;
@@ -1027,10 +1027,10 @@ Status handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, "==", {left, right});
@@ -1046,10 +1046,10 @@ Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, "~=", {left, right});
@@ -1065,10 +1065,10 @@ Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, ">=", {left, right});
@@ -1084,10 +1084,10 @@ Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, ">", {left, right});
@@ -1103,10 +1103,10 @@ Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, "<=", {left, right});
@@ -1122,10 +1122,10 @@ Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
-    const auto left = std::get<Expression>(state.stack.back());
+    const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    const auto right = std::get<Expression>(state.stack.back());
+    const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
     return handle_condition(state, ast, instruction, "<", {left, right});
@@ -1211,6 +1211,25 @@ Status handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Status handle_jmp(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(ast->context.is_condition && state.PC >= ast->context.jump_offset)
+    {
+        auto& condition = std::get<Condition>(ast->parent->statements.back());
+
+        // Create an else block if the last jump operator was a JMP
+        if(ast->context.is_jmp_block)
+        {
+            const auto operation = AstOperation("", {});
+            const auto block     = ConditionBlock(operation, {});
+            condition.blocks.push_back(block);
+        }
+
+        condition.blocks.back().statements = ast->statements;
+        ast->statements.clear();
+
+        ast->context.is_condition = false;
+        exit_block(state, ast);
+    }
+
     if(ast->context.is_condition)
     {
         auto& condition = std::get<Condition>(ast->parent->statements.back());
@@ -1401,10 +1420,10 @@ Status parse_function(State& state, Ast*& ast, const Function& function)
         }
 
         if(local_spawn.count(local.start_pc) == 0)
-            local_spawn[local.start_pc] = Vector<unsigned>{};
+            local_spawn[local.start_pc] = {};
 
         if(local_kill.count(local.end_pc) == 0)
-            local_kill[local.end_pc] = Vector<unsigned>{};
+            local_kill[local.end_pc] = {};
 
         local_spawn[local.start_pc].push_back(local_index);
         local_kill[local.end_pc].push_back(local_index);
@@ -1509,26 +1528,23 @@ Status parse_function(State& state, Ast*& ast, const Function& function)
                 ast->context.is_or_block = false;
             }
             // Handle the end of a condition block if the PC is right.
-            else if(ast->context.is_condition)
+            while(ast->context.is_condition && state.PC >= ast->context.jump_offset)
             {
-                while(state.PC == ast->context.jump_offset)
+                auto& condition = std::get<Condition>(ast->parent->statements.back());
+
+                // Create an else block if the last jump operator was a JMP
+                if(ast->context.is_jmp_block)
                 {
-                    auto& condition = std::get<Condition>(ast->parent->statements.back());
-
-                    // Create an else block if the last jump operator was a JMP
-                    if(ast->context.is_jmp_block)
-                    {
-                        const auto operation = AstOperation("", Vector<Expression>{});
-                        const auto block = ConditionBlock(operation, Vector<Statement>{});
-                        condition.blocks.push_back(block);
-                    }
-
-                    condition.blocks.back().statements = ast->statements;
-                    ast->statements.clear();
-
-                    ast->context.is_condition = false;
-                    exit_block(state, ast);
+                    const auto operation = AstOperation("", {});
+                    const auto block     = ConditionBlock(operation, {});
+                    condition.blocks.push_back(block);
                 }
+
+                condition.blocks.back().statements = ast->statements;
+                ast->statements.clear();
+
+                ast->context.is_condition = false;
+                exit_block(state, ast);
             }
         }
         state.PC++;
