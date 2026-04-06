@@ -6,16 +6,25 @@ Uses compiled Lua 4 bytecode as input and converts it to readable Lua 4 code.
 - [Lua 4.0 Reference](https://www.lua.org/manual/4.0)
 
 
+## Usage
+
+- Pre-build binaries of the pipeline: [https://github.com/styinx/lua4dec/actions](https://github.com/styinx/lua4dec/actions)
+- Binaries of Releases: [https://github.com/styinx/lua4dec/releases](https://github.com/styinx/lua4dec/releases)
+
+
+### Run
+
+```
+./luadec_64 luac.out
+.\luadec_64.exe luac.out
+```
+
+
 ## TODOs
 
 - JMPONF might be used different
 - JMPONT
 - Complete documentation
-
-
-## Documentation
-
-Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/doc/Doc.md)
 
 
 ## Checkout
@@ -24,7 +33,8 @@ Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/
 git clone --recursive https://github.com/styinx/lua4dec.git
 ```
 
-## Build
+
+## Pipeline
 
 [![Windows MSVC Build @ master](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml/badge.svg?branch=master)](https://github.com/styinx/lua4dec/actions/workflows/build-windows-msvc.yml)
 
@@ -40,25 +50,19 @@ cmake -S . -B build -DTARGET_ARCH=64  # 32 for 32bit lua bytecode
 cmake --build build --config Release
 ```
 
-### Pre-built binaries
 
-- Pre-build binaries of the pipeline: [https://github.com/styinx/lua4dec/actions](https://github.com/styinx/lua4dec/actions)
-- Binaries of Releases: [https://github.com/styinx/lua4dec/releases](https://github.com/styinx/lua4dec/releases)
+## Documentation
 
-
-## Run
-
-```
-./luadec_64 luac.out
-.\luadec_64.exe luac.out
-```
+Beginner-friendly [Documentation](https://github.com/styinx/lua4dec/blob/master/doc/Doc.md)
 
 
 ## Run test (compiles and decompiles scripts in the tests/scripts folder)
 
 ```
-test.exe lua4\luac_64.exe luadec_64.exe differ.exe tests\scripts\
+test.exe lua4\luac_64.exe luadec_64.exe tests\scripts\
+test.exe lua4\luac_32.exe luadec_32.exe tests\scripts\
 ```
+
 
 ## Inspect the byte code with a GUI (WIP)
 

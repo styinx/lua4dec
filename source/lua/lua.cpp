@@ -281,7 +281,7 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
 
         auto index = 0;
         auto i     = 0;
-        while(i != pos)
+        while(i != pos && index < function.locals.size())
         {
             if(function.locals[index].start_pc <= state.PC &&
                function.locals[index].end_pc >= state.PC)
@@ -289,7 +289,11 @@ void debug_instruction(DebugState& state, unsigned idx, Instruction instruction,
             index++;
         }
 
-        name = function.locals[index].name;
+        if(index < function.locals.size())
+            name = function.locals[index].name;
+        else
+            name = "local_" + std::to_string(pos);
+
         break;
     }
     case Operator::PUSHINT:

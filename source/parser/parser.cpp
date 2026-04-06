@@ -538,7 +538,7 @@ Status handle_get_local(State& state, Ast*& ast, const Instruction& instruction,
 
     auto index = 0;
     auto i     = 0;
-    while(i != l)
+    while(i != l && index < function.locals.size())
     {
         if(function.locals[index].start_pc <= state.PC &&
            function.locals[index].end_pc >= state.PC)
@@ -546,9 +546,10 @@ Status handle_get_local(State& state, Ast*& ast, const Instruction& instruction,
         index++;
     }
 
-    auto name = function.locals[index].name;
-
-    state.stack.push_back(Identifier(name));
+    if(index < function.locals.size())
+        state.stack.push_back(Identifier(function.locals[index].name));
+    else
+        state.stack.push_back(Identifier("local_" + std::to_string(l)));
 
     return Status::OK;
 }
@@ -627,13 +628,18 @@ Status handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction
 Status handle_get_indexed(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto l    = U(instruction);
-    const auto name = function.locals[l].name;
+    auto identifier = Identifier("");
+
+    if(l < function.locals.size())
+        identifier.name = function.locals[l].name;
+    else
+        identifier.name = "local_" + std::to_string(l);
 
     // t
     const auto table = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
-    state.stack.push_back(Indexed({table, Identifier(name)}));
+    state.stack.push_back(Indexed({table, identifier}));
 
     return Status::OK;
 }
@@ -700,7 +706,12 @@ Status handle_create_table(State& state, Ast*& ast, const Instruction& instructi
 Status handle_set_local(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto l    = U(instruction);
-    const auto left = Identifier(function.locals[l].name);
+    auto left = Identifier("");
+
+    if(l < function.locals.size())
+        left.name = function.locals[l].name;
+    else
+        left.name = "local_" + std::to_string(l);
 
     return handle_assignment(state, ast, left);
 }
