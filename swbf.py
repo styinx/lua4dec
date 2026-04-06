@@ -30,7 +30,7 @@ def main(argv: list[str] = sys.argv[1:]):
             bytecode.write(blob.read(body_size))
 
     try:
-        decompile = run(['luadec_32_deb.exe', lua_code.absolute()], capture_output=True, text=True, check=True)
+        decompile = run(['luadec_32.exe', lua_code.absolute()], capture_output=True, text=True, check=True)
         print(decompile.stdout)
         return decompile.returncode
 
