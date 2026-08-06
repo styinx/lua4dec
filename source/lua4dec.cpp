@@ -28,7 +28,7 @@ Vector<Byte> read_file(const char* filename)
 
 void write_file(const char* filename, Ast const* const ast)
 {
-    auto* stream = fopen(std::string(filename).append(".lua").c_str(), "w+");
+    auto* stream = fopen(std::string(filename).c_str(), "w+");
     print_ast(ast, stream);
     fclose(stream);
 }

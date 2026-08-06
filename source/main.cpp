@@ -9,7 +9,7 @@ int main(int argc, char** argv)
         printf("Please provide a compiled lua script as argument.\n");
         return 1;
     }
-    else if(argc == 2)
+    else if(argc > 1)
     {
 
 #ifndef NDEBUG
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     {
         print_ast(ast);
 
-        if(argc == 3)
+        if(argc > 2)
             write_file(argv[2], ast);
     }
 
