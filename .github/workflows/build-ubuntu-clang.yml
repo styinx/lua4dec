@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
       with:
         submodules: 'true'
 
@@ -43,7 +43,7 @@ jobs:
       run: cmake --build ${{ env.BUILD32 }} --config Release
 
     - name: Upload Build Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: binaries-ubuntu-clang-${{ github.sha }}
         path: |
