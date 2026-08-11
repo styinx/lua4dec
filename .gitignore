@@ -1,11 +1,16 @@
 .idea/
-build/
+build*/
+custom/
+lib/
 
 *.exe
-*.pdb
-*.swp
 *.o
 *.out
+*.pdb
+*.sln
+*.swp
 *.vcxproj
 *.vcxproj.filters
-*.sln
+*.vim
+
+/*.lua
