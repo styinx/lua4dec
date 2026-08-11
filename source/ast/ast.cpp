@@ -6,7 +6,7 @@ void print_ast(const Ast* ast, FILE* stream)
 {
     StringBuffer buffer;
     print_ast(ast, buffer);
-    fprintf(stream, buffer.str().c_str());
+    fprintf(stream, "%s", buffer.str().c_str());
 }
 
 void print_ast(const Ast* ast, StringBuffer& buffer)
