@@ -58,6 +58,20 @@ int main(int argc, char** argv)
 
     const auto cwd = fs::current_path();
 
+    printf("Cleaning ...\n");
+    for(const auto& entry : fs::recursive_directory_iterator(scripts))
+    {
+        const auto path = fs::path(entry);
+        const auto file = path.u8string();
+        const auto name = path.filename().u8string();
+        const auto ext  = path.extension().u8string();
+
+        if(ext.compare(".out") == 0)
+        {
+            fs::remove(entry);
+        }
+    }
+
     printf("Start compiling ...\n");
     for(const auto& entry : fs::recursive_directory_iterator(scripts))
     {

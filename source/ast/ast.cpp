@@ -100,17 +100,19 @@ void print(const AstList& list, StringBuffer& buffer, const int indent)
 
 void print(const AstMap& map, StringBuffer& buffer, const int indent)
 {
-    buffer << "{";
+    buffer << "{\n";
     for(const auto& p : map.pairs)
     {
-        print_indent(buffer, indent);
+        print_indent(buffer, indent + 1);
         buffer << std::get<AstString>(p.first).value;
         buffer << " = ";
         print_expression(p.second, buffer, indent);
 
         if(&p != &map.pairs.back())
-            buffer << ", ";
+            buffer << ",\n";
     }
+    buffer << "\n";
+    print_indent(buffer, indent);
     buffer << "}";
 }
 

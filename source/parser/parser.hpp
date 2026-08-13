@@ -16,6 +16,7 @@ struct State
     Vector<AstElement> stack;
 
     void print();
+    bool check_stack(unsigned const minimum_size);
 };
 
 /*

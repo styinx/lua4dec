@@ -16,6 +16,7 @@ enum class Status : unsigned
     ARCHITECTURE_MISMATCH,
     FUNCTION_PARAM_MISMATCH,
     EMPTY_STACK,
+    STACK_UNDERFLOW,
     BAD_VARIANT,
     UNDEFINED,
 };
