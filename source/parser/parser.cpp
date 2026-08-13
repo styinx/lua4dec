@@ -59,6 +59,15 @@ void State::print()
     }
 }
 
+bool State::check_stack(unsigned const minimum_size)
+{
+    bool const enough_on_stack = stack.size() >= minimum_size;
+#ifdef NDEBUG
+    quit_on(!enough_on_stack, Status::STACK_UNDERFLOW, "Not enough values on stack.");
+#endif
+    return enough_on_stack;
+}
+
 Status handle_condition(State&, Ast*&, const Instruction&, const Function&);
 
 Status handle_end(State&, Ast*&, const Instruction&, const Function&);
@@ -304,6 +313,9 @@ Status handle_return(State& state, Ast*& ast, const Instruction& instruction, co
 {
     auto u = U(instruction);  // U marks the position of the arguments
 
+    if(!state.check_stack(u))
+        return Status::STACK_UNDERFLOW;
+
     Vector<Expression> args;
     while(state.stack.size() > u)
     {
@@ -336,6 +348,9 @@ Status handle_call(State& state, Ast*& ast, const Instruction& instruction, cons
     const auto a = A(instruction);  // The caller is at position a
     const auto b = B(instruction);  // > 0 if it is an expression call returning b
                                     // arguments.
+
+    if(!state.check_stack(a + 1))
+        return Status::STACK_UNDERFLOW;
 
     Vector<Expression> args;
     while(state.stack.size() > a + 1)
@@ -380,6 +395,9 @@ Status handle_call(State& state, Ast*& ast, const Instruction& instruction, cons
 Status handle_tail_call(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);  // The caller is at position a
+
+    if(!state.check_stack(a + 1))
+        return Status::STACK_UNDERFLOW;
 
     Vector<Expression> args;
     while(state.stack.size() > a + 1)
@@ -429,6 +447,9 @@ Status handle_push_nil(State& state, Ast*& ast, const Instruction& instruction, 
 Status handle_pop(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     auto u = U(instruction);
+
+    if(!state.check_stack(u))
+        return Status::STACK_UNDERFLOW;
 
     for(auto i = u; i > 0; --i)
     {
@@ -582,6 +603,9 @@ Status handle_get_global(State& state, Ast*& ast, const Instruction& instruction
  */
 Status handle_get_table(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     // i
     const auto index = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -607,6 +631,9 @@ Status handle_get_dotted(State& state, Ast*& ast, const Instruction& instruction
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
+
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
 
     // t
     const auto table = std::get<Expression>(state.stack.back());
@@ -635,6 +662,9 @@ Status handle_get_indexed(State& state, Ast*& ast, const Instruction& instructio
     else
         identifier.name = "local_" + std::to_string(l);
 
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     // t
     const auto table = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
@@ -656,6 +686,9 @@ Status handle_push_self(State& state, Ast*& ast, const Instruction& instruction,
 {
     const auto k    = U(instruction);
     const auto name = function.globals[k];
+
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
 
     // t
     const auto table = std::get<Expression>(state.stack.back());
@@ -735,14 +768,17 @@ Status handle_set_global(State& state, Ast*& ast, const Instruction& instruction
 /*
  * Arguments:       A B
  * Stack before:    v a_a - a_1 i t
- * Stack after:     (pops b values)
- * Side effects:    t[i] = v
+ * Stack after:                             | (pops a values)
+ * Side effects:    t[i] = v                | (alias for t.i = v)
  *
  * @brief   Creates a table assignment with b table elements.
  */
 Status handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto b = B(instruction);
+
+    if(!state.check_stack(b))
+        return Status::STACK_UNDERFLOW;
 
     Vector<Expression> args;
     for(unsigned i = 0; i < b; ++i)
@@ -785,6 +821,9 @@ Status handle_set_list(State& state, Ast*& ast, const Instruction& instruction, 
 {
     const auto b = B(instruction);
 
+    if(!state.check_stack(b))
+        return Status::STACK_UNDERFLOW;
+
     Vector<Expression> list;
     for(unsigned i = 0; i < b; ++i)
     {
@@ -813,6 +852,9 @@ Status handle_set_list(State& state, Ast*& ast, const Instruction& instruction, 
 Status handle_set_map(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto u = U(instruction);
+
+    if(!state.check_stack(u * 2))
+        return Status::STACK_UNDERFLOW;
 
     Vector<std::pair<Expression, Expression>> map;
     for(unsigned i = 0; i < u; ++i)
@@ -852,6 +894,9 @@ Status handle_set_map(State& state, Ast*& ast, const Instruction& instruction, c
  */
 Status handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -873,6 +918,9 @@ Status handle_add(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_addi(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -894,6 +942,9 @@ Status handle_addi(State& state, Ast*& ast, const Instruction& instruction, cons
  */
 Status handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -915,6 +966,9 @@ Status handle_sub(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -936,6 +990,9 @@ Status handle_mult(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -957,6 +1014,9 @@ Status handle_div(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -979,6 +1039,10 @@ Status handle_pow(State& state, Ast*& ast, const Instruction&, const Function&)
 Status handle_concat(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
     const auto         u = U(instruction);
+
+    if(!state.check_stack(u))
+        return Status::STACK_UNDERFLOW;
+
     Vector<Expression> expressions;
     for(unsigned i = 0; i < u; ++i)
     {
@@ -1002,6 +1066,9 @@ Status handle_concat(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Status handle_minus(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1020,6 +1087,9 @@ Status handle_minus(State& state, Ast*& ast, const Instruction&, const Function&
  */
 Status handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1038,6 +1108,9 @@ Status handle_not(State& state, Ast*& ast, const Instruction&, const Function&)
  */
 Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1057,6 +1130,9 @@ Status handle_jmpne(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1076,6 +1152,9 @@ Status handle_jmpeq(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1095,6 +1174,9 @@ Status handle_jmplt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1114,6 +1196,9 @@ Status handle_jmple(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1133,6 +1218,9 @@ Status handle_jmpgt(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(2))
+        return Status::STACK_UNDERFLOW;
+
     const auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1152,6 +1240,9 @@ Status handle_jmpge(State& state, Ast*& ast, const Instruction& instruction, con
  */
 Status handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1168,6 +1259,9 @@ Status handle_jmpt(State& state, Ast*& ast, const Instruction& instruction, cons
  */
 Status handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1184,6 +1278,9 @@ Status handle_jmpf(State& state, Ast*& ast, const Instruction& instruction, cons
  */
 Status handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     auto right = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 
@@ -1206,6 +1303,9 @@ Status handle_jmpont(State& state, Ast*& ast, const Instruction& instruction, co
  */
 Status handle_jmponf(State& state, Ast*& ast, const Instruction& instruction, const Function&)
 {
+    if(!state.check_stack(1))
+        return Status::STACK_UNDERFLOW;
+
     const auto left = std::get<Expression>(state.stack.back());
     state.stack.pop_back();
 

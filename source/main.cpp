@@ -37,11 +37,22 @@ int main(int argc, char** argv)
 
     if(result == Status::OK)
     {
+#ifndef NDEBUG
         print_ast(ast);
+#endif
 
         if(argc > 2)
+        {
+#ifndef NDEBUG
+        printf("Writing file: %s\n", argv[1]);
+#endif
             write_file(argv[2], ast);
+        }
     }
+
+#ifndef NDEBUG
+    printf("Exit Code: %d (%s)", result, STATUS_TO_STR[result].c_str());
+#endif
 
     return static_cast<unsigned>(result);
 }
