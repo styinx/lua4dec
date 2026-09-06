@@ -104,7 +104,18 @@ void print(const AstMap& map, StringBuffer& buffer, const int indent)
     for(const auto& p : map.pairs)
     {
         print_indent(buffer, indent + 1);
-        buffer << std::get<AstString>(p.first).value;
+
+        if(std::holds_alternative<AstString>(p.first))
+            buffer << std::get<AstString>(p.first).value;
+        else if(std::holds_alternative<Identifier>(p.first))
+            buffer << std::get<Identifier>(p.first).name;
+        else
+        {
+            buffer << "[";
+            print_expression(p.first, buffer, 0);
+            buffer << "]";
+        }
+
         buffer << " = ";
         print_expression(p.second, buffer, indent);
 
