@@ -14,6 +14,8 @@ struct State
     unsigned           scope_level       = 0;
     unsigned           reserved_elements = 0;
     Vector<AstElement> stack;
+    Vector<Expression> upvalues;
+    bool               chained_assignment = false;
 
     void print();
     bool check_stack(unsigned const minimum_size);

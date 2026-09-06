@@ -34,6 +34,7 @@ using Number      = double;
 #endif
 
 static constexpr unsigned MAX_INT    = 2147483647 - 2;
+static constexpr unsigned MULT_RET   = 255;
 static constexpr Number   LUA_NUMBER = 3.14159265358979323846e8;
 
 enum class Operator : Byte

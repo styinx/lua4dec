@@ -46,13 +46,13 @@ void State::print()
         case 0:
         {
             auto statement = std::get<Statement>(el);
-            printf("%s\n", STATEMENT_VARIANTS.at(el.index()).c_str());
+            printf("%s\n", STATEMENT_VARIANTS.at(statement.index()).c_str());
             break;
         }
         case 1:
         {
             auto expression = std::get<Expression>(el);
-            printf("%s\n", EXPRESSION_VARIANTS.at(el.index()).c_str());
+            printf("%s\n", EXPRESSION_VARIANTS.at(expression.index()).c_str());
             break;
         }
         }
@@ -66,6 +66,36 @@ bool State::check_stack(unsigned const minimum_size)
     quit_on(!enough_on_stack, Status::STACK_UNDERFLOW, "Not enough values on stack.");
 #endif
     return enough_on_stack;
+}
+
+static bool is_name(const String& value)
+{
+    if(value.empty() || (value[0] >= '0' && value[0] <= '9'))
+        return false;
+
+    for(const auto c : value)
+    {
+        const bool valid = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                           || (c >= '0' && c <= '9') || c == '_';
+
+        if(!valid)
+            return false;
+    }
+
+    return true;
+}
+
+static String expression_name(const Expression& ex)
+{
+    if(std::holds_alternative<Identifier>(ex))
+        return std::get<Identifier>(ex).name;
+
+    if(std::holds_alternative<AstString>(ex))
+        return std::get<AstString>(ex).value;
+
+    StringBuffer buffer;
+    print_expression(ex, buffer);
+    return buffer.str();
 }
 
 Status handle_condition(State&, Ast*&, const Instruction&, const Function&);
@@ -540,7 +570,16 @@ Status handle_push_neg_num(State& state, Ast*& ast, const Instruction& instructi
  */
 Status handle_push_upvalue(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // TODO
+    const auto u = U(instruction);
+
+    if(u < state.upvalues.size() && std::holds_alternative<Identifier>(state.upvalues[u]))
+        state.stack.push_back(
+            Expression(Identifier("%" + std::get<Identifier>(state.upvalues[u]).name)));
+    else if(u < state.upvalues.size())
+        state.stack.push_back(state.upvalues[u]);
+    else
+        state.stack.push_back(Expression(Identifier("upvalue_" + std::to_string(u))));
+
     return Status::OK;
 }
 
@@ -707,22 +746,8 @@ Status handle_push_self(State& state, Ast*& ast, const Instruction& instruction,
  */
 Status handle_create_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
-    // Its only a table if an identifier is on the stack before. Otherwise its a map or
-    // list.
-
-    std::string name;
-    if(state.stack.size() > state.reserved_elements)
-    {
-        const auto ex = std::get<Expression>(state.stack.back());
-        if(std::holds_alternative<Identifier>(ex))
-        {
-            name = std::get<Identifier>(ex).name;
-            state.stack.pop_back();
-        }
-    }
-
     const auto u = U(instruction);
-    AstTable   table(u, name, {});
+    AstTable   table(u, Identifier(""), {});
     state.stack.push_back(table);
 
     return Status::OK;
@@ -775,36 +800,81 @@ Status handle_set_global(State& state, Ast*& ast, const Instruction& instruction
  */
 Status handle_set_table(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    const auto a = A(instruction);
     const auto b = B(instruction);
+
+    if(a < 2 || state.stack.empty())
+        return Status::STACK_UNDERFLOW;
+
+    auto&    top     = std::get<Expression>(state.stack.back());
+    unsigned pending = 0;
+
+    if(std::holds_alternative<Call>(top))
+    {
+        const auto returns = std::get<Call>(top).return_values;
+
+        if(returns > 1 && returns < MULT_RET)
+            pending = returns - 1;
+    }
+
+    const auto size = state.stack.size() + pending;
+
+    if(a > size || size - a + 1 >= state.stack.size())
+        return Status::STACK_UNDERFLOW;
+
+    const auto table = std::get<Expression>(state.stack[size - a]);
+    const auto key   = std::get<Expression>(state.stack[size - a + 1]);
+    const auto right = top;
+
+    auto left = expression_name(table);
+
+    if(std::holds_alternative<AstString>(key) && is_name(std::get<AstString>(key).value))
+    {
+        left.append(".");
+        left.append(std::get<AstString>(key).value);
+    }
+    else if(std::holds_alternative<AstString>(key))
+    {
+        left.append("[\"");
+        left.append(std::get<AstString>(key).value);
+        left.append("\"]");
+    }
+    else
+    {
+        StringBuffer buffer;
+        print_expression(key, buffer);
+
+        left.append("[");
+        left.append(buffer.str());
+        left.append("]");
+    }
+
+    if(state.chained_assignment && !ast->statements.empty()
+       && std::holds_alternative<Assignment>(ast->statements.back()))
+    {
+        auto& ass = std::get<Assignment>(ast->statements.back());
+        ass.left.insert(ass.left.begin(), Identifier(left));
+        ass.num_variables = ass.left.size();
+    }
+    else
+    {
+        Assignment ass({Identifier(left)}, {right});
+        ast->statements.push_back(ass);
+    }
+
+    state.chained_assignment = pending > 0;
+
+    if(pending > 0)
+    {
+        std::get<Call>(top).return_values -= 1;
+        return Status::OK;
+    }
 
     if(!state.check_stack(b))
         return Status::STACK_UNDERFLOW;
 
-    Vector<Expression> args;
     for(unsigned i = 0; i < b; ++i)
-    {
-        args.push_back(std::get<Expression>(state.stack.back()));
         state.stack.pop_back();
-    }
-
-    std::reverse(args.begin(), args.end());
-
-    std::string left;
-    for(auto it = args.begin(); it != args.end() - 1; ++it)
-    {
-        if(std::holds_alternative<Identifier>(*it))
-            left.append(std::get<Identifier>(*it).name);
-        else if(std::holds_alternative<AstString>(*it))
-            left.append(std::get<AstString>(*it).value);
-
-        if(it != args.end() - 2)
-            left.append(".");
-    }
-
-    const auto right = args.back();
-
-    Assignment ass({Identifier(left)}, {right});
-    ast->statements.push_back(ass);
 
     return Status::OK;
 }
@@ -821,7 +891,7 @@ Status handle_set_list(State& state, Ast*& ast, const Instruction& instruction, 
 {
     const auto b = B(instruction);
 
-    if(!state.check_stack(b))
+    if(!state.check_stack(b + 1))
         return Status::STACK_UNDERFLOW;
 
     Vector<Expression> list;
@@ -833,8 +903,22 @@ Status handle_set_list(State& state, Ast*& ast, const Instruction& instruction, 
 
     std::reverse(list.begin(), list.end());
 
-    state.stack.pop_back();  // empty AstTable
-    state.stack.push_back(AstList(list));
+    auto& ex = std::get<Expression>(state.stack.back());
+
+    if(std::holds_alternative<AstList>(ex))
+    {
+        auto& existing = std::get<AstList>(ex);
+        existing.elements.insert(existing.elements.end(), list.begin(), list.end());
+    }
+    else if(std::holds_alternative<AstTable>(ex))
+    {
+        state.stack.pop_back();  // empty AstTable
+        state.stack.push_back(AstList(list));
+    }
+    else
+    {
+        return Status::BAD_VARIANT;
+    }
 
     return Status::OK;
 }
@@ -853,7 +937,7 @@ Status handle_set_map(State& state, Ast*& ast, const Instruction& instruction, c
 {
     const auto u = U(instruction);
 
-    if(!state.check_stack(u * 2))
+    if(!state.check_stack(u * 2 + 1))
         return Status::STACK_UNDERFLOW;
 
     Vector<std::pair<Expression, Expression>> map;
@@ -870,15 +954,30 @@ Status handle_set_map(State& state, Ast*& ast, const Instruction& instruction, c
 
     std::reverse(map.begin(), map.end());
 
-    auto& table = std::get<AstTable>(std::get<Expression>(state.stack.back()));
-    if(table.name.name.empty())
+    auto& ex = std::get<Expression>(state.stack.back());
+
+    if(std::holds_alternative<AstMap>(ex))
     {
-        state.stack.pop_back();  // empty AstTable
-        state.stack.push_back(AstMap(map));
+        auto& existing = std::get<AstMap>(ex);
+        existing.pairs.insert(existing.pairs.end(), map.begin(), map.end());
+    }
+    else if(std::holds_alternative<AstTable>(ex))
+    {
+        auto& table = std::get<AstTable>(ex);
+
+        if(table.name.name.empty())
+        {
+            state.stack.pop_back();  // empty AstTable
+            state.stack.push_back(AstMap(map));
+        }
+        else
+        {
+            table.pairs.insert(table.pairs.end(), map.begin(), map.end());
+        }
     }
     else
     {
-        table.pairs = map;
+        return Status::BAD_VARIANT;
     }
 
     return Status::OK;
@@ -1412,6 +1511,24 @@ Status handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, 
     return Status::OK;
 }
 
+static void close_conditions(State& state, Ast*& ast)
+{
+    while(ast->context.is_condition && ast->parent && !ast->parent->statements.empty()
+          && std::holds_alternative<Condition>(ast->parent->statements.back()))
+    {
+        auto& condition = std::get<Condition>(ast->parent->statements.back());
+
+        if(ast->context.is_jmp_block)
+            condition.blocks.push_back(ConditionBlock(AstOperation("", {}), {}));
+
+        condition.blocks.back().statements = ast->statements;
+        ast->statements.clear();
+        ast->context.is_condition = false;
+
+        exit_block(state, ast);
+    }
+}
+
 /*
  * Arguments:       J
  * Stack before:    -
@@ -1424,6 +1541,8 @@ Status handle_lforprep(State& state, Ast*& ast, const Instruction& instruction, 
  */
 Status handle_forloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    close_conditions(state, ast);
+
     const auto nested_statements = ast->statements;
     const auto loop_variables    = std::get<LocalDefinition>(nested_statements.front());
 
@@ -1456,6 +1575,8 @@ Status handle_forloop(State& state, Ast*& ast, const Instruction& instruction, c
  */
 Status handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
+    close_conditions(state, ast);
+
     const auto nested_statements = ast->statements;
     const auto loop_variables    = std::get<LocalDefinition>(nested_statements.front());
 
@@ -1488,12 +1609,26 @@ Status handle_lforloop(State& state, Ast*& ast, const Instruction& instruction, 
 Status handle_closure(State& state, Ast*& ast, const Instruction& instruction, const Function& function)
 {
     const auto a = A(instruction);
+    const auto b = B(instruction);
+
+    if(!state.check_stack(b))
+        return Status::STACK_UNDERFLOW;
+
+    Vector<Expression> upvalues;
+    for(unsigned i = 0; i < b; ++i)
+    {
+        upvalues.push_back(std::get<Expression>(state.stack.back()));
+        state.stack.pop_back();
+    }
+
+    std::reverse(upvalues.begin(), upvalues.end());
 
     enter_block(state, ast);
 
     // Each closure needs a new state.
-    auto new_state = State();
-    auto error     = parse_function(new_state, ast, function.functions[a]);
+    auto new_state     = State();
+    new_state.upvalues = upvalues;
+    auto error         = parse_function(new_state, ast, function.functions[a]);
 
     // Arguments of the closure have to be searched in the local table.
     Vector<Identifier> arguments;
